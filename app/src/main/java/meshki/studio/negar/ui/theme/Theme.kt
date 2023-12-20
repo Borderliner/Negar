@@ -2,6 +2,8 @@ package meshki.studio.negar.ui.theme
 
 import android.app.Activity
 import android.os.Build
+import android.view.ViewGroup
+import android.view.ViewGroup.MarginLayoutParams
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -11,10 +13,14 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 
 private val DarkColorScheme = darkColorScheme(
         primary = Purple80,
@@ -59,13 +65,12 @@ fun NegarTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-
             val window = (view.context as Activity).window
 
             WindowCompat.setDecorFitsSystemWindows(window,false)
 
-            window.statusBarColor = colorScheme.primary.toArgb()
-            window.navigationBarColor = colorScheme.background.copy(0.85f).toArgb()
+            window.statusBarColor = Color.Transparent.toArgb()
+            window.navigationBarColor = Color.Transparent.toArgb()
 
             @RequiresApi(Build.VERSION_CODES.Q)
             window.isNavigationBarContrastEnforced = false
@@ -73,7 +78,7 @@ fun NegarTheme(
             window.isStatusBarContrastEnforced = false
 
             val insets = WindowCompat.getInsetsController(window, view)
-            insets.isAppearanceLightStatusBars = !darkTheme
+            insets.isAppearanceLightStatusBars = true
             insets.isAppearanceLightNavigationBars = !darkTheme
         }
     }

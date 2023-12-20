@@ -46,6 +46,52 @@ fun Navigation(navController: NavHostController) {
         }
 
         composable(
+            ScreenEntity.Notes.route,
+            enterTransition = {
+                if (initialState.destination.route == ScreenEntity.Calendar.route) {
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(navigationSpeed)
+                    )
+                } else {
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(navigationSpeed)
+                    )
+                }
+            },
+            exitTransition = {
+                if (targetState.destination.route?.contains("modify") == true) {
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Up,
+                        animationSpec = tween(pageSpeed)
+                    )
+                } else if (targetState.destination.route == ScreenEntity.Calendar.route) {
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(pageSpeed)
+                    )
+                }
+                else {
+                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
+                }
+            },
+            popEnterTransition = {
+                if (initialState.destination.route?.contains("modify") == true) {
+                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(pageSpeed))
+                } else {
+                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
+                }
+            },
+            popExitTransition = {
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
+            }) {
+            NotesScreen {
+                navController.navigate(it)
+            }
+        }
+
+        composable(
             ScreenEntity.Todos.route,
             enterTransition = {
                 if (initialState.destination.route == ScreenEntity.Calendar.route) {
@@ -59,7 +105,7 @@ fun Navigation(navController: NavHostController) {
                     slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
                 }
                 else {
-                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(navigationSpeed))
+                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
                 }
 
             },
@@ -85,32 +131,7 @@ fun Navigation(navController: NavHostController) {
             }
 
         }
-        composable(
-            ScreenEntity.Notes.route,
-            enterTransition = {
-                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(navigationSpeed))
-            },
-            exitTransition = {
-                if (targetState.destination.route?.contains("modify") == true) {
-                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Up, animationSpec = tween(pageSpeed))
-                } else {
-                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(navigationSpeed))
-                }
-            },
-            popEnterTransition = {
-                if (initialState.destination.route?.contains("modify") == true) {
-                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(pageSpeed))
-                } else {
-                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
-                }
-            },
-            popExitTransition = {
-                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
-            }) {
-            NotesScreen {
-                navController.navigate(it)
-            }
-        }
+
         composable(
             route = ScreenEntity.EditNotes.route +
                     "?id={id}&color={color}",

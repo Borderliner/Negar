@@ -2,6 +2,7 @@ package meshki.studio.negar.ui.element
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
@@ -17,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import meshki.studio.negar.R
-import meshki.studio.negar.RightToLeftLayout
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,27 +28,41 @@ fun TopBar() {
 
     AboutDialog(aboutDialogState)
 
-    RightToLeftLayout {
-        TopAppBar(
-            modifier = Modifier.fillMaxWidth(),
-            navigationIcon = {
-                IconButton(
-                    enabled = !appMenuState.value,
-                    modifier = Modifier.padding(top = 10.dp, start = 10.dp),
-                    onClick = {
-                        if (!appMenuState.value) {
-                            appMenuState.value = !appMenuState.value
-                        }
-                    }) {
-                    Icon(
-                        Icons.Filled.MoreVert,
-                        "Menu",
-                        tint = Color.Black.copy(alpha = .85f)
+    TopAppBar(
+        modifier = Modifier.fillMaxWidth(),
+        navigationIcon = {
+            IconButton(
+                enabled = !appMenuState.value,
+                modifier = Modifier.padding(top = 10.dp, start = 10.dp),
+                onClick = {
+                    if (!appMenuState.value) {
+                        appMenuState.value = !appMenuState.value
+                    }
+                }) {
+                Icon(
+                    Icons.Filled.MoreVert,
+                    "Menu",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = .85f)
+                )
+            }
+        },
+        title = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (isSystemInDarkTheme()) {
+                    Image(
+                        modifier = Modifier
+                            .size(logoSize, logoSize)
+                            .offset(x = 0.dp, y = 5.dp),
+                        alpha = 1f,
+                        painter = painterResource(R.drawable.img_logo_white),
+                        colorFilter = ColorFilter.tint(Color.White.copy(alpha = 0.9f)),
+                        contentDescription = stringResource(R.string.app_name)
                     )
-                }
-            },
-            title = {
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                } else {
                     Image(
                         modifier = Modifier
                             .size(logoSize, logoSize)
@@ -56,30 +70,30 @@ fun TopBar() {
                         alpha = 1f,
                         painter = painterResource(R.drawable.img_logo),
                         colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.85f)),
-                        contentDescription = stringResource(R.string.app_name))
-
-                }
-            },
-            actions = {
-                //ToggleThemeButton()
-                IconButton(
-                    enabled = !aboutDialogState.value,
-                    modifier = Modifier.padding(top = 10.dp, end = 10.dp),
-                    onClick = {
-                        if (!aboutDialogState.value) {
-                            aboutDialogState.value = !aboutDialogState.value
-                        }
-                    }) {
-                    Icon(
-                        Icons.Outlined.Info,
-                        "درباره‌ی نگارنامه",
-                        tint = Color.Black.copy(alpha = .85f)
+                        contentDescription = stringResource(R.string.app_name)
                     )
                 }
-            },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(MaterialTheme.colorScheme.primary),
-        )
-    }
+            }
+        },
+        actions = {
+            //ToggleThemeButton()
+            IconButton(
+                enabled = !aboutDialogState.value,
+                modifier = Modifier.padding(top = 10.dp, end = 10.dp),
+                onClick = {
+                    if (!aboutDialogState.value) {
+                        aboutDialogState.value = !aboutDialogState.value
+                    }
+                }) {
+                Icon(
+                    Icons.Outlined.Info,
+                    "درباره‌ی نگارنامه",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = .85f)
+                )
+            }
+        },
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(Color.Black.copy(0.1f)),
+    )
 }
 
 @Composable
@@ -156,7 +170,7 @@ fun AboutDialog(state: MutableState<Boolean>) {
                     modifier = Modifier
                         .padding(start = 30.dp, bottom = 10.dp)
                         .width(100.dp),
-                    colors = ButtonDefaults.buttonColors(Color.Green),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.secondary),
                     onClick = {
                         _moreInfo.value = !moreInfo.value
                     }) {
