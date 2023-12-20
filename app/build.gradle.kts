@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "meshki.studio.negar"
+    namespace = "meshki.studio.negarname"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "meshki.studio.negar"
+        applicationId = "meshki.studio.negarname"
         minSdk = 21
         targetSdk = 34
         versionCode = 1
@@ -27,7 +27,7 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         getByName("debug") {
-            applicationIdSuffix = "debug"
+            applicationIdSuffix = ".debug"
         }
     }
     compileOptions {
