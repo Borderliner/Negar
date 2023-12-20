@@ -8,6 +8,8 @@ import kotlinx.coroutines.launch
 class MainViewModel : ViewModel() {
     private val _isReady = mutableStateOf(false)
     val isReady get() = _isReady
+    private val _isRtl = mutableStateOf(false)
+    val isRtl get() = _isRtl
 
     init {
         viewModelScope.launch {

@@ -83,6 +83,7 @@ fun TopBar() {
                 onClick = {
                     if (!aboutDialogState.value) {
                         aboutDialogState.value = !aboutDialogState.value
+                        // localeSelection(context = ctx, localeTag = Locale("fa").toLanguageTag())
                     }
                 }) {
                 Icon(
