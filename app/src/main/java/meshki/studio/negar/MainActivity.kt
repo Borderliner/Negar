@@ -16,6 +16,8 @@ import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.rememberNavController
+import meshki.studio.negar.ui.element.TopBar
 import meshki.studio.negar.ui.theme.NegarTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -27,6 +29,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val mainViewModel: MainViewModel by viewModel()
+            val navController = rememberNavController()
             NegarTheme {
                 Surface(
                     modifier = Modifier
@@ -34,7 +37,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.primary
                 ) {
                     Scaffold(
-                        topBar = {  },
+                        topBar = { TopBar() },
                         bottomBar = {  },
                         containerColor = Color.Transparent
                     ) { padding ->
@@ -43,7 +46,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(
-                                        top = padding.calculateTopPadding() + 40.dp,
+                                        top = padding.calculateTopPadding() + 10.dp,
                                         bottom = padding.calculateBottomPadding(),
                                         start = 0.dp,
                                         end = 0.dp
@@ -53,7 +56,7 @@ class MainActivity : ComponentActivity() {
 
                             ) {
 
-                                Navigation()
+                                Navigation(navController)
                             }
                         }
                     }

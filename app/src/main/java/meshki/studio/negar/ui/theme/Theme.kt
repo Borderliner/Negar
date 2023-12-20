@@ -73,7 +73,7 @@ fun NegarTheme(
             window.isStatusBarContrastEnforced = false
 
             val insets = WindowCompat.getInsetsController(window, view)
-            insets.isAppearanceLightStatusBars = false
+            insets.isAppearanceLightStatusBars = !darkTheme
             insets.isAppearanceLightNavigationBars = !darkTheme
         }
     }

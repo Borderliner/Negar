@@ -7,7 +7,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavType
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 
 import meshki.studio.negar.entity.ScreenEntity
@@ -19,11 +18,9 @@ import meshki.studio.negar.ui.screen.SettingsScreen
 import meshki.studio.negar.ui.screen.TodosScreen
 
 @Composable
-fun Navigation() {
+fun Navigation(navController: NavHostController) {
     val navigationSpeed = 450
     val pageSpeed = 300
-
-    val navController = rememberNavController()
 
     NavHost(navController, startDestination = ScreenEntity.Notes.route) {
         composable(
