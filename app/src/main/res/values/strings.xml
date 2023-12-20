@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Negar</string>
+    <string name="calendar">Calendar</string>
+    <string name="todos">Todos</string>
+    <string name="notes">Notes</string>
+    <string name="settings">Settings</string>
+    <string name="edit_notes">Edit Notes</string>
+    <string name="edit_todos">Edit Todos</string>
 </resources>

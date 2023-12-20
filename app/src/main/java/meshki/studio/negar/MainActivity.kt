@@ -42,12 +42,18 @@ class MainActivity : ComponentActivity() {
                                 colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.background),
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(top = padding.calculateTopPadding() + 40.dp, bottom = padding.calculateBottomPadding(), start = 0.dp, end = 0.dp),
+                                    .padding(
+                                        top = padding.calculateTopPadding() + 40.dp,
+                                        bottom = padding.calculateBottomPadding(),
+                                        start = 0.dp,
+                                        end = 0.dp
+                                    ),
                                 elevation = CardDefaults.elevatedCardElevation(20.dp),
                                 shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp, bottomEnd = 0.dp, bottomStart = 0.dp),
 
                             ) {
-                                Text(text = mainViewModel.isReady.value.toString())
+
+                                Navigation()
                             }
                         }
                     }

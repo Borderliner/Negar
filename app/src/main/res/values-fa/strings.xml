@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">نگار</string>
+    <string name="calendar">گاه شمار</string>
+    <string name="todos">کارها</string>
+    <string name="notes">یادداشت‌ها</string>
+    <string name="settings">تنظیمات</string>
+    <string name="edit_notes">ویرایش یادداشت</string>
+    <string name="edit_todos">ویرایش کار</string>
+</resources>
