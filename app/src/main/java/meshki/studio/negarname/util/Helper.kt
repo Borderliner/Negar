@@ -1,4 +1,4 @@
-package meshki.studio.negarname
+package meshki.studio.negarname.util
 
 import android.app.LocaleManager
 import android.content.Context

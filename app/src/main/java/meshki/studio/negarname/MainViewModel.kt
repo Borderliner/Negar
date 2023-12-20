@@ -1,12 +1,11 @@
 package meshki.studio.negarname
 
 import android.content.Context
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import meshki.studio.negarname.util.getCurrentLocale
 
 class MainViewModel(ctx: Context) : ViewModel() {
     private val _isReady = mutableStateOf(false)
@@ -28,7 +27,7 @@ class MainViewModel(ctx: Context) : ViewModel() {
 
     fun setLocale(ctx: Context, tag: String) {
         _locale.value = tag
-        meshki.studio.negarname.setLocale(ctx, tag)
+        meshki.studio.negarname.util.setLocale(ctx, tag)
         println(locale.value)
     }
 }

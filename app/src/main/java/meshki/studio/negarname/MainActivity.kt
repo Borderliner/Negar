@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -19,11 +18,11 @@ import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.core.os.LocaleListCompat
 import androidx.navigation.compose.rememberNavController
 import meshki.studio.negarname.ui.element.BottomBar
 import meshki.studio.negarname.ui.element.TopBar
 import meshki.studio.negarname.ui.theme.NegarTheme
+import meshki.studio.negarname.util.RightToLeftLayout
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
