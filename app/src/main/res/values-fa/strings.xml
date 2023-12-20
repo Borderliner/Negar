@@ -7,4 +7,6 @@
     <string name="settings">تنظیمات</string>
     <string name="edit_notes">ویرایش یادداشت</string>
     <string name="edit_todos">ویرایش کار</string>
+    <string name="no_notes">یادداشتی وجود نداره، یکی بساز!</string>
+    <string name="write">بنویس</string>
 </resources>

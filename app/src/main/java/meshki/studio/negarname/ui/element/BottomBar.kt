@@ -31,7 +31,7 @@ fun BottomBar(navController: NavHostController) {
             .height(82.dp)
             .padding(horizontal = 16.dp)
             .padding(bottom = 6.dp),
-        contentColor = MaterialTheme.colorScheme.onSecondary,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         containerColor = Color.Transparent,
     ) {
         OutlinedCard(

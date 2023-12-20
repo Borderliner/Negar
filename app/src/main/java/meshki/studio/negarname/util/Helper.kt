@@ -18,6 +18,13 @@ fun RightToLeftLayout(content: @Composable () -> Unit) {
     }
 }
 
+@Composable
+fun LeftToRightLayout(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        content()
+    }
+}
+
 fun setLocale(context: Context, localeTag: String) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         context.getSystemService(LocaleManager::class.java).applicationLocales =

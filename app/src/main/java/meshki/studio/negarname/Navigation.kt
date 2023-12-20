@@ -61,7 +61,7 @@ fun Navigation(navController: NavHostController) {
                 }
             },
             exitTransition = {
-                if (targetState.destination.route?.contains("modify") == true) {
+                if (targetState.destination.route?.contains("edit") == true) {
                     slideOutOfContainer(
                         AnimatedContentTransitionScope.SlideDirection.Up,
                         animationSpec = tween(pageSpeed)
@@ -77,7 +77,7 @@ fun Navigation(navController: NavHostController) {
                 }
             },
             popEnterTransition = {
-                if (initialState.destination.route?.contains("modify") == true) {
+                if (initialState.destination.route?.contains("edit") == true) {
                     slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(pageSpeed))
                 } else {
                     slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
