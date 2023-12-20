@@ -61,7 +61,23 @@ class MainActivity : ComponentActivity() {
                         ),
 
                         ) {
-                        RightToLeftLayout {
+                        if (mainViewModel.isRtl.value) {
+                            RightToLeftLayout {
+                                Scaffold(
+                                    topBar = { TopBar() },
+                                    bottomBar = { BottomBar(navController) },
+                                    containerColor = Color.Transparent,
+                                    modifier = Modifier.navigationBarsPadding()
+                                ) {
+                                    Box(
+                                        Modifier.padding(it)
+                                    ) {
+                                        Divider(color = Color.Gray.copy(0.4f), thickness = 1.dp)
+                                        Navigation(navController)
+                                    }
+                                }
+                            }
+                        } else {
                             Scaffold(
                                 topBar = { TopBar() },
                                 bottomBar = { BottomBar(navController) },

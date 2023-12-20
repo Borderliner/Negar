@@ -13,11 +13,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import meshki.studio.negarname.MainViewModel
 import meshki.studio.negarname.R
+import meshki.studio.negarname.getCurrentLocale
+import meshki.studio.negarname.setLocale
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,6 +32,7 @@ fun TopBar() {
     val appMenuState = remember { mutableStateOf(false) }
     val aboutDialogState = remember { mutableStateOf(false) }
     val logoSize = 125.dp
+    val mainViewModel = koinViewModel<MainViewModel>()
 
     AboutDialog(aboutDialogState)
 
@@ -76,14 +84,19 @@ fun TopBar() {
             }
         },
         actions = {
+            val ctx = LocalContext.current
             //ToggleThemeButton()
             IconButton(
                 enabled = !aboutDialogState.value,
                 modifier = Modifier.padding(top = 10.dp, end = 10.dp),
                 onClick = {
-                    if (!aboutDialogState.value) {
-                        aboutDialogState.value = !aboutDialogState.value
-                        // localeSelection(context = ctx, localeTag = Locale("fa").toLanguageTag())
+//                    if (!aboutDialogState.value) {
+//                        aboutDialogState.value = !aboutDialogState.value
+//                    }
+                    if (mainViewModel.locale.value == "fa") {
+                        mainViewModel.setLocale(ctx, Locale("en").toLanguageTag())
+                    } else {
+                        mainViewModel.setLocale(ctx, Locale("fa").toLanguageTag())
                     }
                 }) {
                 Icon(
