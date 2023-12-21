@@ -87,9 +87,7 @@ fun Navigation(navController: NavHostController, mainViewModel: MainViewModel) {
             popExitTransition = {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
             }) {
-            NotesScreen(mainViewModel) {
-                navController.navigate(it)
-            }
+            NotesScreen(mainViewModel, navController)
         }
 
         composable(
@@ -163,9 +161,7 @@ fun Navigation(navController: NavHostController, mainViewModel: MainViewModel) {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(pageSpeed))
             }
         ) { nav ->
-            EditNotesScreen(color = nav.arguments?.getInt("color") ?: -1) {
-                navController.navigate(it)
-            }
+            EditNotesScreen(color = nav.arguments?.getInt("color") ?: -1, mainViewModel, navController)
         }
 
         composable(

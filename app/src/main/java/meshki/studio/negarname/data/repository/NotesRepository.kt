@@ -2,6 +2,10 @@ package meshki.studio.negarname.data.repository
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import meshki.studio.negarname.data.local.dao.NotesDao
 import meshki.studio.negarname.entity.Note
@@ -13,15 +17,15 @@ import meshki.studio.negarname.util.handleTryCatch
 interface NotesRepository {
     suspend fun addNote(note: Note): UiStates<Boolean>
     suspend fun updateNote(note: Note): UiStates<Boolean>
-    suspend fun getNotes(): UiStates<List<Note>>
-    suspend fun getNotesOrdered(orderBy: OrderBy = OrderBy.Date(OrderType.Descending)): UiStates<List<Note>>
-    suspend fun getNoteById(id: Long): UiStates<Note>
+    suspend fun getNotes(): UiStates<Flow<List<Note>>>
+    suspend fun getNotesOrdered(orderBy: OrderBy = OrderBy.Date(OrderType.Descending)): UiStates<Flow<List<Note>>>
+    suspend fun getNoteById(id: Long): UiStates<Flow<Note>>
     suspend fun deleteNote(note: Note): UiStates<Boolean>
-    suspend fun findNotes(query: String): UiStates<List<Note>>
+    suspend fun findNotes(query: String): UiStates<Flow<List<Note>>>
     suspend fun findNotesOrdered(
         query: String,
         orderBy: OrderBy = OrderBy.Date(OrderType.Descending)
-    ): UiStates<List<Note>>
+    ): UiStates<Flow<List<Note>>>
 
     suspend fun pinNote(note: Note): UiStates<Boolean>
     suspend fun unpinNote(note: Note): UiStates<Boolean>
@@ -47,7 +51,7 @@ class NotesRepoImpl(
         }
     }
 
-    override suspend fun getNotes(): UiStates<List<Note>> {
+    override suspend fun getNotes(): UiStates<Flow<List<Note>>> {
         return withContext(Dispatchers.IO) {
             handleTryCatch {
                 UiStates.Success(data = notesDao.getAll())
@@ -55,7 +59,7 @@ class NotesRepoImpl(
         }
     }
 
-    override suspend fun getNoteById(id: Long): UiStates<Note> {
+    override suspend fun getNoteById(id: Long): UiStates<Flow<Note>> {
         return withContext(Dispatchers.IO) {
             handleTryCatch {
                 UiStates.Success(data = notesDao.getById(id))
@@ -63,7 +67,7 @@ class NotesRepoImpl(
         }
     }
 
-    override suspend fun findNotes(query: String): UiStates<List<Note>> {
+    override suspend fun findNotes(query: String): UiStates<Flow<List<Note>>> {
         return withContext(Dispatchers.IO) {
             handleTryCatch {
                 UiStates.Success(data = notesDao.find(query))
@@ -116,24 +120,25 @@ class NotesRepoImpl(
         }
     }
 
-    override suspend fun getNotesOrdered(orderBy: OrderBy): UiStates<List<Note>> {
+    override suspend fun getNotesOrdered(orderBy: OrderBy): UiStates<Flow<List<Note>>> {
         return withContext(Dispatchers.IO) {
             handleTryCatch {
-                val notes: List<Note> = notesDao.getAll()
-                if (orderBy.orderType == OrderType.Ascending) {
-                    when (orderBy.getType()) {
-                        is OrderBy.Title -> notes.sortedBy { it.title.lowercase() }
-                        is OrderBy.Date -> notes.sortedBy { it.dateModified }
-                        is OrderBy.Color -> notes.sortedBy { it.color }
-                        // Fallback to date
-                        is OrderBy.Completed -> notes.sortedBy { it.dateModified }
-                    }
-                } else {
-                    when (orderBy.getType()) {
-                        is OrderBy.Title -> notes.sortedByDescending { it.title.lowercase() }
-                        is OrderBy.Date -> notes.sortedByDescending { it.dateModified }
-                        is OrderBy.Color -> notes.sortedByDescending { it.color }
-                        is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                val notes = notesDao.getAll().map { notes ->
+                    if (orderBy.orderType == OrderType.Ascending) {
+                        when (orderBy.getType()) {
+                            is OrderBy.Title -> notes.sortedBy { it.title.lowercase() }
+                            is OrderBy.Date -> notes.sortedBy { it.dateModified }
+                            is OrderBy.Color -> notes.sortedBy { it.color }
+                            // Fallback to date
+                            is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                        }
+                    } else {
+                        when (orderBy.getType()) {
+                            is OrderBy.Title -> notes.sortedByDescending { it.title.lowercase() }
+                            is OrderBy.Date -> notes.sortedByDescending { it.dateModified }
+                            is OrderBy.Color -> notes.sortedByDescending { it.color }
+                            is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                        }
                     }
                 }
                 UiStates.Success(notes)
@@ -144,27 +149,30 @@ class NotesRepoImpl(
     override suspend fun findNotesOrdered(
         query: String,
         orderBy: OrderBy,
-    ): UiStates<List<Note>> {
+    ): UiStates<Flow<List<Note>>> {
         return withContext(Dispatchers.IO) {
             handleTryCatch {
-                val notes: List<Note> = notesDao.find(query)
-                if (orderBy.orderType == OrderType.Ascending) {
-                    when (orderBy.getType()) {
-                        is OrderBy.Title -> notes.sortedBy { it.title.lowercase() }
-                        is OrderBy.Date -> notes.sortedBy { it.dateModified }
-                        is OrderBy.Color -> notes.sortedBy { it.color }
-                        is OrderBy.Completed -> notes.sortedBy { it.dateModified }
-                    }
-                } else {
-                    when (orderBy.getType()) {
-                        is OrderBy.Title -> notes.sortedByDescending { it.title.lowercase() }
-                        is OrderBy.Date -> notes.sortedByDescending { it.dateModified }
-                        is OrderBy.Color -> notes.sortedByDescending { it.color }
-                        is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                val notes = notesDao.find(query).map { notes ->
+                    if (orderBy.orderType == OrderType.Ascending) {
+                        when (orderBy.getType()) {
+                            is OrderBy.Title -> notes.sortedBy { it.title.lowercase() }
+                            is OrderBy.Date -> notes.sortedBy { it.dateModified }
+                            is OrderBy.Color -> notes.sortedBy { it.color }
+                            is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                        }
+                    } else {
+                        when (orderBy.getType()) {
+                            is OrderBy.Title -> notes.sortedByDescending { it.title.lowercase() }
+                            is OrderBy.Date -> notes.sortedByDescending { it.dateModified }
+                            is OrderBy.Color -> notes.sortedByDescending { it.color }
+                            is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                        }
                     }
                 }
+
                 UiStates.Success(notes)
             }
         }
     }
 }
+

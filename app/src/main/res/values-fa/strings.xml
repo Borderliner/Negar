@@ -9,4 +9,8 @@
     <string name="edit_todos">ویرایش کار</string>
     <string name="no_notes">یادداشتی وجود نداره، یکی بساز!</string>
     <string name="write">بنویس</string>
+    <string name="save">ذخیره</string>
+    <string name="title">عنوان</string>
+    <string name="delete">حذف</string>
+    <string name="note_text_hint">نوشته‌ی شما...</string>
 </resources>

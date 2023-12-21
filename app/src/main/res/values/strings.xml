@@ -8,4 +8,8 @@
     <string name="edit_todos">Edit Todos</string>
     <string name="no_notes">No notes, start creating one!</string>
     <string name="write">Write</string>
+    <string name="save">Save</string>
+    <string name="title">Title</string>
+    <string name="delete">Delete</string>
+    <string name="note_text_hint">Your text...</string>
 </resources>
