@@ -3,15 +3,12 @@ package meshki.studio.negarname.ui.screen
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -36,91 +33,116 @@ import meshki.studio.negarname.entity.ScreenEntity
 import meshki.studio.negarname.ui.element.ActionButton
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
+import meshki.studio.negarname.vm.MainViewModel
+
+
+@Composable
+fun NotesScreen(mainViewModel: MainViewModel, navigateTo: (route: String) -> Unit) {
+    if(mainViewModel.isRtl) {
+        LeftToRightLayout {
+            NotesScreenScaffold(navigateTo) {
+                RightToLeftLayout {
+                    NotesScreenMain()
+                }
+            }
+        }
+    } else {
+        RightToLeftLayout {
+            NotesScreenScaffold(navigateTo) {
+                LeftToRightLayout {
+                    NotesScreenMain()
+                }
+            }
+        }
+    }
+}
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun NotesScreen(navigateTo: (route: String) -> Unit) {
-    LeftToRightLayout {
-        Scaffold(
-            floatingActionButton = {
-                ActionButton(
-                    text = stringResource(R.string.write),
-                    icon = {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.vec_ink_pen),
-                            contentDescription = "Add Note"
-                        )
-                    },
-                    modifier = Modifier
-                        .imePadding()
-                        .offset((-10).dp, (40).dp),
-                    onClick = {
-                        navigateTo(ScreenEntity.EditNotes.route)
-                    },
-                )
-            },
-            floatingActionButtonPosition = FabPosition.End,
+fun NotesScreenScaffold(navigateTo: (route: String) -> Unit, content: @Composable () -> Unit) {
+    Scaffold(
+        floatingActionButton = {
+            ActionButton(
+                text = stringResource(R.string.write),
+                icon = {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.vec_ink_pen),
+                        contentDescription = "Add Note"
+                    )
+                },
+                modifier = Modifier,
+                onClick = {
+                    navigateTo(ScreenEntity.EditNotes.route)
+                },
+            )
+        },
+        floatingActionButtonPosition = FabPosition.End,
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun NotesScreenMain() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Transparent)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 12.dp, end = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            RightToLeftLayout {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Transparent)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 12.dp, end = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.notes),
-                                style = MaterialTheme.typography.headlineLarge
-                            )
-                        }
+            Column {
+                Text(
+                    text = stringResource(R.string.notes),
+                    style = MaterialTheme.typography.headlineLarge
+                )
+            }
 
-                        Column {
-                            Row(horizontalArrangement = Arrangement.SpaceEvenly) {
-                                IconButton(
-                                    onClick = {
-                                        //onClickSearchButton()
-                                    },
-                                ) {
-                                    Icon(
-                                        modifier = Modifier.scale(scaleX = 1f, scaleY = 1f),
-                                        imageVector = ImageVector.vectorResource(R.drawable.vec_search),
-                                        contentDescription = "Search"
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        //onClickSortButton()
-                                    },
-                                ) {
-                                    Icon(
-                                        modifier = Modifier.scale(scaleX = -1f, scaleY = 1f),
-                                        imageVector = ImageVector.vectorResource(R.drawable.vec_sort),
-                                        contentDescription = "Sort"
-                                    )
-                                }
-                            }
-                        }
+            Column {
+                Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                    IconButton(
+                        onClick = {
+                            //onClickSearchButton()
+                        },
+                    ) {
+                        Icon(
+                            modifier = Modifier.scale(scaleX = 1f, scaleY = 1f),
+                            imageVector = ImageVector.vectorResource(R.drawable.vec_search),
+                            contentDescription = "Search"
+                        )
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Card(
-                        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background),
-                        shape = RoundedCornerShape(
-                            topStart = 10.dp,
-                            topEnd = 10.dp,
-                            bottomEnd = 0.dp,
-                            bottomStart = 0.dp
-                        ),
-                        elevation = CardDefaults.cardElevation(0.dp)
+                    IconButton(
+                        onClick = {
+                            //onClickSortButton()
+                        },
                     ) {
+                        Icon(
+                            modifier = Modifier.scale(scaleX = -1f, scaleY = 1f),
+                            imageVector = ImageVector.vectorResource(R.drawable.vec_sort),
+                            contentDescription = "Sort"
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(Color.Transparent),
+            shape = RoundedCornerShape(
+                topStart = 10.dp,
+                topEnd = 10.dp,
+                bottomEnd = 0.dp,
+                bottomStart = 0.dp
+            ),
+            elevation = CardDefaults.cardElevation(0.dp)
+        ) {
 //                if (uiState.notes.isNotEmpty()) {
 //                    LazyColumn(
 //                        modifier = Modifier
@@ -173,17 +195,14 @@ fun NotesScreen(navigateTo: (route: String) -> Unit) {
 //                        }
 //                    }
 //                } else {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(text = stringResource(R.string.no_notes))
-                        }
-                        //}
-                    }
-                }
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = stringResource(R.string.no_notes))
             }
+            //}
         }
     }
 }

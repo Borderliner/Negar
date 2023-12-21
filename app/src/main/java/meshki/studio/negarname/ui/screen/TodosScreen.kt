@@ -13,6 +13,6 @@ fun TodosScreen(navigateTo: (route: String) -> Unit) {
     Column(modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = "Calendar Screen")
+        Text(text = "Todos Screen")
     }
 }

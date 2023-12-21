@@ -1,4 +1,4 @@
-package meshki.studio.negarname
+package meshki.studio.negarname.vm
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateOf
@@ -9,25 +9,21 @@ import meshki.studio.negarname.util.getCurrentLocale
 
 class MainViewModel(ctx: Context) : ViewModel() {
     private val _isReady = mutableStateOf(false)
-    val isReady get() = _isReady
-
-    private val _isRtl = mutableStateOf(false)
-    val isRtl get() = _isRtl
-
     private val _locale = mutableStateOf("en")
-    val locale get() = _locale
+    val isReady get() = _isReady.value
+    val isRtl get() = _locale.value == "fa"
+    val locale get() = _locale.value
 
     init {
         viewModelScope.launch {
             _isReady.value = true
             _locale.value = getCurrentLocale(ctx)
-            _isRtl.value = locale.value == "fa"
         }
     }
 
     fun setLocale(ctx: Context, tag: String) {
         _locale.value = tag
         meshki.studio.negarname.util.setLocale(ctx, tag)
-        println(locale.value)
+        println("Is RTL: $isRtl")
     }
 }

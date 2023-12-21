@@ -19,17 +19,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import meshki.studio.negarname.MainViewModel
+import meshki.studio.negarname.vm.MainViewModel
 import meshki.studio.negarname.R
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar() {
+fun TopBar(mainViewModel: MainViewModel) {
     val appMenuState = remember { mutableStateOf(false) }
     val aboutDialogState = remember { mutableStateOf(false) }
     val logoSize = 125.dp
-    val mainViewModel = koinViewModel<MainViewModel>()
 
     AboutDialog(aboutDialogState)
 
@@ -90,7 +88,7 @@ fun TopBar() {
 //                    if (!aboutDialogState.value) {
 //                        aboutDialogState.value = !aboutDialogState.value
 //                    }
-                    if (mainViewModel.locale.value == "fa") {
+                    if (mainViewModel.locale == "fa") {
                         mainViewModel.setLocale(ctx, Locale("en").toLanguageTag())
                     } else {
                         mainViewModel.setLocale(ctx, Locale("fa").toLanguageTag())

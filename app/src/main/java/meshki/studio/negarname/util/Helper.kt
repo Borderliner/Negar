@@ -1,7 +1,9 @@
 package meshki.studio.negarname.util
 
+import android.annotation.SuppressLint
 import android.app.LocaleManager
 import android.content.Context
+import android.content.res.Resources
 import android.os.Build
 import android.os.LocaleList
 import androidx.appcompat.app.AppCompatDelegate
@@ -43,4 +45,11 @@ fun getCurrentLocale(context: Context): String {
         //noinspection deprecation
         context.resources.configuration.locale.language
     }
+}
+
+@SuppressLint("DiscouragedApi", "InternalInsetResource")
+fun getNavigationBarHeight(): Int {
+    val resources = Resources.getSystem()
+    val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+    return resources.getDimensionPixelSize(resourceId)
 }
