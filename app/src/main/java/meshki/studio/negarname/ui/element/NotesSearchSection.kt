@@ -8,35 +8,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import meshki.studio.negarname.R
 
 @Composable
 fun NotesSearchSection(
     modifier: Modifier = Modifier,
+    topPadding: Dp,
+    offsetPercent: Float,
+    color: Color,
     onTextChange: (String) -> Unit
-){
+) {
     val searchQuery = remember { mutableStateOf("") }
     val visibleHint = remember { mutableStateOf(true) }
-    Box {
-        Column(
-            modifier = modifier
-        ) {
+    SectionPopup(modifier = modifier, topPadding = topPadding, offsetPercent = offsetPercent, color = color) {
+        Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 20.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
 
                 HintedTextField(
                     modifier = Modifier
                         .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(15.dp))
-                        .padding(10.dp)
-                        .padding(bottom = 4.dp),
+                        .padding(10.dp),
                     text = searchQuery.value,
                     icon = R.drawable.vec_navigate_next,
-                    hint = "جستجو",
+                    hint = stringResource(R.string.search),
                     onValueChange = {
                         searchQuery.value = it
                         onTextChange(it)

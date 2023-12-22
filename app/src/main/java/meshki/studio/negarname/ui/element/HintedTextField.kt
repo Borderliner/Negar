@@ -62,7 +62,7 @@ fun HintedTextField(
             Icon(
                 painterResource(icon),
                 text,
-                modifier = Modifier.padding(top = 5.dp, start = 5.dp)
+                modifier = Modifier.padding(start = 5.dp)
             )
     }
 }

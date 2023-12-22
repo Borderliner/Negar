@@ -16,11 +16,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -330,9 +328,9 @@ fun NotesScreenMain(
         NotesOrderSection(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
+                .padding(top = 8.dp),
             topPadding = 50.dp,
-            offsetPercent = if (mainViewModel.isRtl) 0.08f else 0.92f,
+            offsetPercent = 0.91f,
             color = MaterialTheme.colorScheme.secondaryContainer,
             orderBy = uiState.orderBy,
             onOrderChange = {
@@ -355,7 +353,10 @@ fun NotesScreenMain(
         NotesSearchSection(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 80.dp),
+                .padding(top = 8.dp),
+            topPadding = 50.dp,
+            offsetPercent = 0.78f,
+            color = MaterialTheme.colorScheme.secondaryContainer,
             onTextChange = {
                 viewModel.viewModelScope.launch {
                     viewModel.onEvent(
