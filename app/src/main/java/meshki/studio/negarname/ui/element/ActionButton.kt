@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import meshki.studio.negarname.ui.theme.RoundedShapes
 import meshki.studio.negarname.util.bounceClick
 import meshki.studio.negarname.util.getNavigationBarHeight
 import meshki.studio.negarname.util.keyboardAsState
@@ -73,13 +74,13 @@ fun ActionButton(
             modifier
                 .offset(y = fabPadding.floatValue.toDp())
                 .bounceClick()
-                .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+                .border(1.dp, Color.Gray, RoundedShapes.large)
         },
         onClick = onClick,
         interactionSource = interactionSource,
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSurface,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedShapes.large,
         elevation = FloatingActionButtonDefaults.elevation(1.dp)
     ) {
         Row(
