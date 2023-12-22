@@ -38,9 +38,10 @@ fun TopBar(mainViewModel: MainViewModel) {
                 enabled = !appMenuState.value,
                 modifier = Modifier.padding(top = 10.dp, start = 10.dp),
                 onClick = {
-                    if (!appMenuState.value) {
-                        appMenuState.value = !appMenuState.value
-                    }
+//                    if (!appMenuState.value) {
+//                        appMenuState.value = !appMenuState.value
+//                    }
+                    // popup.value = !popup.value
                 }) {
                 Icon(
                     Icons.Filled.MoreVert,

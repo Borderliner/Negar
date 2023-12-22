@@ -1,6 +1,14 @@
 package meshki.studio.negarname.ui.screen
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,9 +16,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -46,6 +55,8 @@ import meshki.studio.negarname.R
 import meshki.studio.negarname.entity.ScreenEntity
 import meshki.studio.negarname.ui.element.ActionButton
 import meshki.studio.negarname.ui.element.SingleNote
+import meshki.studio.negarname.ui.element.NotesOrderSection
+import meshki.studio.negarname.ui.element.NotesSearchSection
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
 import meshki.studio.negarname.vm.MainViewModel
@@ -116,6 +127,74 @@ fun NotesScreenMain(
 ) {
     val uiState = viewModel.uiState.collectAsState().value
     val scope = rememberCoroutineScope()
+    val filterAnimation = remember { Animatable(0f) }
+    val searchAnimation = remember { Animatable(0f) }
+    filterAnimation.updateBounds(0f, 220f)
+    searchAnimation.updateBounds(0f, 220f)
+
+    suspend fun onClickSortButton() {
+        val wasSearchOpen = uiState.isSearchVisible
+        viewModel.onEvent(NotesEvent.ToggleOrderSection)
+
+        scope.launch {
+            if (uiState.isOrderSectionVisible) {
+                searchAnimation.animateTo(
+                    searchAnimation.lowerBound ?: 0f,
+                    tween(0, 20, easing = FastOutSlowInEasing)
+                )
+                filterAnimation.animateTo(
+                    filterAnimation.lowerBound ?: 0f,
+                    tween(400, 20, easing = FastOutSlowInEasing)
+                )
+            } else {
+                if (wasSearchOpen) {
+                    filterAnimation.animateTo(
+                        filterAnimation.upperBound ?: Float.MAX_VALUE,
+                        tween(400, 0, easing = FastOutSlowInEasing)
+                    )
+                    searchAnimation.animateTo(
+                        searchAnimation.upperBound ?: Float.MAX_VALUE,
+                        tween(400, 0, easing = FastOutSlowInEasing)
+                    )
+                } else {
+                    searchAnimation.animateTo(
+                        searchAnimation.lowerBound ?: 0f,
+                        tween(0, 20, easing = FastOutSlowInEasing)
+                    )
+                    filterAnimation.animateTo(
+                        filterAnimation.upperBound ?: Float.MAX_VALUE,
+                        tween(400, 0, easing = FastOutSlowInEasing)
+                    )
+                }
+            }
+        }
+    }
+
+    suspend fun onClickSearchButton() {
+        viewModel.onEvent(NotesEvent.ToggleSearchSection)
+
+        scope.launch {
+            if (uiState.isSearchVisible) {
+                filterAnimation.animateTo(
+                    filterAnimation.lowerBound ?: 0f,
+                    tween(0, 20, easing = FastOutSlowInEasing)
+                )
+                searchAnimation.animateTo(
+                    searchAnimation.lowerBound ?: 0f,
+                    tween(400, 20, easing = FastOutSlowInEasing)
+                )
+            } else {
+                searchAnimation.animateTo(
+                    searchAnimation.upperBound ?: Float.MAX_VALUE,
+                    tween(400, 0, easing = FastOutSlowInEasing)
+                )
+                filterAnimation.snapTo(
+                    searchAnimation.upperBound ?: Float.MAX_VALUE
+                )
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -139,7 +218,9 @@ fun NotesScreenMain(
                 Row(horizontalArrangement = Arrangement.SpaceEvenly) {
                     IconButton(
                         onClick = {
-                            //onClickSearchButton()
+                            viewModel.viewModelScope.launch {
+                                onClickSearchButton()
+                            }
                         },
                     ) {
                         Icon(
@@ -150,7 +231,9 @@ fun NotesScreenMain(
                     }
                     IconButton(
                         onClick = {
-                            //onClickSortButton()
+                            viewModel.viewModelScope.launch {
+                                onClickSortButton()
+                            }
                         },
                     ) {
                         Icon(
@@ -233,5 +316,56 @@ fun NotesScreenMain(
                 }
             }
         }
+    }
+    AnimatedVisibility(
+        visible = uiState.isOrderSectionVisible && filterAnimation.value > (filterAnimation.upperBound
+            ?: Float.MAX_VALUE) * 0.1,
+        enter = fadeIn() + slideInVertically(initialOffsetY = {
+            -it / 2 + 150
+        }),
+        exit = fadeOut() + slideOutVertically(targetOffsetY = {
+            -it / 2 + 150
+        }),
+    ) {
+        NotesOrderSection(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp),
+            topPadding = 50.dp,
+            offsetPercent = if (mainViewModel.isRtl) 0.08f else 0.92f,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            orderBy = uiState.orderBy,
+            onOrderChange = {
+                viewModel.viewModelScope.launch {
+                    viewModel.onEvent(NotesEvent.Order(it))
+                }
+            }
+        )
+    }
+    AnimatedVisibility(
+        visible = uiState.isSearchVisible && searchAnimation.value > (searchAnimation.upperBound
+            ?: Float.MAX_VALUE) * 0.6,
+        enter = fadeIn() + slideInVertically(initialOffsetY = {
+            -it / 2 + 150
+        }),
+        exit = fadeOut() + slideOutVertically(targetOffsetY = {
+            -it / 2 + 150
+        }),
+    ) {
+        NotesSearchSection(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 80.dp),
+            onTextChange = {
+                viewModel.viewModelScope.launch {
+                    viewModel.onEvent(
+                        NotesEvent.Query(
+                            it,
+                            viewModel.uiState.value.orderBy
+                        )
+                    )
+                }
+            }
+        )
     }
 }

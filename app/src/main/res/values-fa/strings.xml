@@ -13,4 +13,8 @@
     <string name="title">عنوان</string>
     <string name="delete">حذف</string>
     <string name="note_text_hint">نوشته‌ی شما...</string>
+    <string name="date">تاریخ</string>
+    <string name="color">رنگ</string>
+    <string name="ascending">صعودی</string>
+    <string name="descending">نزولی</string>
 </resources>

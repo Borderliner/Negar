@@ -81,7 +81,7 @@ fun SingleNote(
                 modifier = Modifier.padding(start = 24.dp),
                 text = note.title,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -89,7 +89,7 @@ fun SingleNote(
             Text(
                 text = note.text,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 10,
                 overflow = TextOverflow.Ellipsis
             )
@@ -101,7 +101,7 @@ fun SingleNote(
             Icon(
                 painter = painterResource(R.drawable.vec_favorite),
                 contentDescription = "",
-                tint = if (note.pinned) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.4f)
+                tint = if (note.pinned) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
             )
         }
         IconButton(
@@ -111,7 +111,7 @@ fun SingleNote(
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = stringResource(R.string.delete),
-                tint = MaterialTheme.colorScheme.onPrimary
+                tint = MaterialTheme.colorScheme.onBackground
             )
         }
     }
