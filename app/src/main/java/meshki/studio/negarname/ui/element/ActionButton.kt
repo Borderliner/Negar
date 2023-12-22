@@ -1,5 +1,6 @@
 package meshki.studio.negarname.ui.element
 
+import android.app.Activity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -16,16 +17,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import meshki.studio.negarname.util.bounceClick
 import meshki.studio.negarname.util.getNavigationBarHeight
+import meshki.studio.negarname.util.keyboardAsState
 
 @Composable
 fun ActionButton(
@@ -45,10 +51,27 @@ fun ActionButton(
         }
     }
 
+    val isKeyboardOpen by keyboardAsState()
+    val fabPadding = remember {
+        mutableFloatStateOf(getNavigationBarHeight() / 2.2f)
+    }
+
+    val insets: WindowInsetsCompat? = ViewCompat.getRootWindowInsets((LocalContext.current as Activity).window.decorView)
+    val keyboardHeight = insets!!.getInsets(WindowInsetsCompat.Type.ime()).bottom
+    println("Kbd height: $keyboardHeight")
+
+    LaunchedEffect(isKeyboardOpen) {
+        if (isKeyboardOpen) {
+            fabPadding.floatValue = keyboardHeight.toFloat() / -2.1f
+        } else {
+            fabPadding.floatValue = getNavigationBarHeight() / 2.2f
+        }
+    }
+
     ExtendedFloatingActionButton(
         modifier = with(LocalDensity.current) {
             modifier
-                .offset(y = (getNavigationBarHeight()).toDp())
+                .offset(y = fabPadding.floatValue.toDp())
                 .bounceClick()
                 .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
         },
@@ -57,7 +80,7 @@ fun ActionButton(
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSurface,
         shape = RoundedCornerShape(8.dp),
-        elevation = FloatingActionButtonDefaults.elevation(2.dp)
+        elevation = FloatingActionButtonDefaults.elevation(1.dp)
     ) {
         Row(
             modifier = Modifier.padding(
