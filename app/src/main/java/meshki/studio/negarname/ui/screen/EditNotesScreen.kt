@@ -18,12 +18,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,11 +39,16 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorColors
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.R
@@ -120,6 +127,7 @@ fun EditNotesScreenScaffold(viewModel: EditNotesViewModel, snackbar: SnackbarHos
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditNotesScreenMain(viewModel: EditNotesViewModel, navController: NavHostController, snackbar: SnackbarHostState) {
     LaunchedEffect(viewModel.eventFlow){
@@ -144,7 +152,7 @@ fun EditNotesScreenMain(viewModel: EditNotesViewModel, navController: NavHostCon
     var workInProgressAlertVisible by remember { mutableStateOf(false) }
 
     BackPressHandler {
-        if ((titleState.text.isNotEmpty() || contentState.text.isNotEmpty()) && viewModel.noteModified.value) {
+        if ((titleState.text.isNotEmpty() || contentState.toMarkdown().isNotEmpty()) && viewModel.noteModified.value) {
             workInProgressAlertVisible = true
         } else {
             navController.navigateUp()
@@ -215,24 +223,42 @@ fun EditNotesScreenMain(viewModel: EditNotesViewModel, navController: NavHostCon
                 textStyle = MaterialTheme.typography.titleSmall.copy(Color.Black)
             )
             Spacer(modifier = Modifier.height(12.dp))
-            HintedTextField(
+
+            RichTextEditor(
+                state = contentState,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .defaultMinSize(minHeight = 50.dp),
-                text = contentState.text,
-                hint = stringResource(R.string.note_text_hint),
-                hintColor = Color.Gray,
-                onValueChange = {
-                    viewModel.onEvent(EditNotesEvent.EnteredContent(it))
-                    viewModel.noteModified.value = true
-                },
-                onFocusChange = {
-                    viewModel.onEvent(EditNotesEvent.ChangeContentFocus(it))
-                },
-                expanded = true,
-                isHintVisible = contentState.isHintVisible,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(Color.Black),
+                    .fillMaxSize(),
+                singleLine = false,
+                colors = RichTextEditorDefaults.outlinedRichTextEditorColors(
+                    containerColor = Color.Transparent,
+                    textColor = MaterialTheme.colorScheme.onBackground,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
+                    errorBorderColor = Color.Transparent,
+                    disabledBorderColor = Color.Transparent
+                ),
+                placeholder = { Text(stringResource(R.string.note_text_hint)) },
+
             )
+//            HintedTextField(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .defaultMinSize(minHeight = 50.dp),
+//                text = contentState.text,
+//                hint = stringResource(R.string.note_text_hint),
+//                hintColor = Color.Gray,
+//                onValueChange = {
+//                    viewModel.onEvent(EditNotesEvent.EnteredContent(it))
+//                    viewModel.noteModified.value = true
+//                },
+//                onFocusChange = {
+//                    viewModel.onEvent(EditNotesEvent.ChangeContentFocus(it))
+//                },
+//                expanded = true,
+//                isHintVisible = contentState.isHintVisible,
+//                textStyle = MaterialTheme.typography.bodyMedium.copy(Color.Black),
+//            )
         }
     }
 }

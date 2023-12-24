@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -38,12 +39,9 @@ class EditNotesViewModel (
     val noteTitle: State<NoteTextFieldState> = _noteTitle
 
     private val _noteContent = mutableStateOf(
-        NoteTextFieldState(
-        "",
-        ""
+        RichTextState()
     )
-    )
-    val noteContent: State<NoteTextFieldState> = _noteContent
+    val noteContent: State<RichTextState> = _noteContent
 
     private val _noteColor = mutableIntStateOf(Note.colors.random().toArgb())
     val noteColor: State<Int> = _noteColor
@@ -66,10 +64,7 @@ class EditNotesViewModel (
                                 text = note.title,
                                 isHintVisible = false
                             )
-                            _noteContent.value = noteContent.value.copy(
-                                text = note.text,
-                                isHintVisible = false
-                            )
+                            _noteContent.value.setMarkdown(note.text)
                             _noteColor.intValue = note.color
                         }
                     }
@@ -91,14 +86,10 @@ class EditNotesViewModel (
                 )
             }
             is EditNotesEvent.EnteredContent -> {
-                _noteContent.value = noteContent.value.copy(
-                    text = event.value
-                )
+                //
             }
             is EditNotesEvent.ChangeContentFocus -> {
-                _noteContent.value = noteContent.value.copy(
-                    isHintVisible = !event.focusState.isFocused && noteContent.value.text.isBlank()
-                )
+                //
             }
             is EditNotesEvent.ChangeColor -> {
                 _noteColor.intValue = event.color
@@ -111,7 +102,7 @@ class EditNotesViewModel (
                             Note(
                                 id = if (currentNoteId >= 0) currentNoteId else 0,
                                 title = noteTitle.value.text,
-                                text = noteContent.value.text,
+                                text = noteContent.value.toMarkdown(),
                                 dateCreated = Date(),
                                 dateModified = Date(),
                                 color = noteColor.value
