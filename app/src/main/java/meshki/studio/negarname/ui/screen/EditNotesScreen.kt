@@ -7,7 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,8 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -153,22 +154,22 @@ fun EditNotesScreenMain(viewModel: EditNotesViewModel, navController: NavHostCon
             .fillMaxSize()
             .background(Color.Transparent)
     ) {
-        Row(
+        LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp)
                 .padding(top = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Note.colors.forEach { color ->
-                val colorInt = color.toArgb()
+            items(Note.colors) {
+                val colorInt = it.toArgb()
                 Box(
                     modifier = Modifier
                         .size(50.dp)
                         .shadow(15.dp, CircleShape)
                         .clip(CircleShape)
-                        .background(color)
+                        .background(it)
                         .border(
                             width = 2.dp,
                             color = if (viewModel.noteColor.value == colorInt) {

@@ -39,8 +39,17 @@ data class Note(
     val dateModified: Date
 ) {
     companion object {
-        val colors = listOf(PastelGreen, PastelBlue, PastelPink, PastelYellow, PastelOrange)
+        val colors = listOf(
+            PastelGreen,
+            PastelBlue,
+            PastelPink,
+            PastelYellow,
+            PastelOrange,
+            PastelLavender,
+            PastelLime,
+            PastelPurple
+        )
     }
 }
 
-class InvalidNoteException(message: String): Exception(message)
+class InvalidNoteException(message: String) : Exception(message)
