@@ -24,7 +24,7 @@ fun NotesSearchSection(
 ) {
     val searchQuery = remember { mutableStateOf("") }
     val visibleHint = remember { mutableStateOf(true) }
-    SectionPopup(modifier = modifier, topPadding = topPadding, offsetPercent = offsetPercent, color = color) {
+    PopupSection(modifier = modifier, topPadding = topPadding, offsetPercent = offsetPercent, color = color) {
         Column {
             Row(
                 modifier = Modifier

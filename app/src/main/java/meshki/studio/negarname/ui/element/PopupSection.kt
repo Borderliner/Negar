@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 
 @Composable
-fun SectionPopup(
+fun PopupSection(
     modifier: Modifier = Modifier,
     topPadding: Dp,
     offsetPercent: Float,

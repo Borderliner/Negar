@@ -10,7 +10,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -257,23 +257,27 @@ fun NotesScreenMain(
             ),
             elevation = CardDefaults.cardElevation(0.dp)
         ) {
+            val cRad = with(LocalDensity.current) {
+                30.dp.toPx()
+            }
             if (uiState.notes.isNotEmpty()) {
                 LazyColumn(
                     contentPadding = PaddingValues(bottom = 65.dp)
                 ) {
                     items(uiState.notes) { note ->
                         SingleNote(
-                            isRtl = mainViewModel.isRtl,
                             note = note,
                             modifier = Modifier
                                 .padding(horizontal = 8.dp)
-                                .fillMaxWidth()
-                                .clickable {
-                                    navController.navigate(
-                                        ScreenEntity.EditNotes.route +
-                                                "?id=${note.id}&color=${note.color}"
-                                    )
-                                },
+                                .fillMaxWidth(),
+                            isRtl = mainViewModel.isRtl,
+                            onTap = {
+                                println("Note ID: $note.id, Color: $note.color")
+                                navController.navigate(
+                                    ScreenEntity.EditNotes.route +
+                                            "?id=${note.id}&color=${note.color}"
+                                )
+                            },
                             onDelete = {
                                 scope.launch {
                                     viewModel.onEvent(NotesEvent.DeleteNote(note))
@@ -301,6 +305,7 @@ fun NotesScreenMain(
                                 }
                             }
                         )
+
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
@@ -330,15 +335,14 @@ fun NotesScreenMain(
                 .fillMaxWidth()
                 .padding(top = 8.dp),
             topPadding = 50.dp,
-            offsetPercent = 0.91f,
+            caretOffset = 0.91f,
             color = MaterialTheme.colorScheme.secondaryContainer,
-            orderBy = uiState.orderBy,
-            onOrderChange = {
-                viewModel.viewModelScope.launch {
-                    viewModel.onEvent(NotesEvent.Order(it))
-                }
+            orderBy = uiState.orderBy
+        ) {
+            viewModel.viewModelScope.launch {
+                viewModel.onEvent(NotesEvent.Order(it))
             }
-        )
+        }
     }
     AnimatedVisibility(
         visible = uiState.isSearchVisible && searchAnimation.value > (searchAnimation.upperBound

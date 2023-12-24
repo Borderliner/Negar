@@ -15,12 +15,17 @@ import meshki.studio.negarname.R
 fun NotesOrderSection(
     modifier: Modifier = Modifier,
     topPadding: Dp,
-    offsetPercent: Float,
+    caretOffset: Float,
     color: Color,
     orderBy: OrderBy = OrderBy.Date(OrderType.Descending),
     onOrderChange: (OrderBy) -> Unit
 ) {
-    SectionPopup(modifier = modifier, topPadding = topPadding, offsetPercent = offsetPercent, color = color) {
+    PopupSection(
+        modifier = modifier,
+        topPadding = topPadding,
+        offsetPercent = caretOffset,
+        color = color
+    ) {
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
