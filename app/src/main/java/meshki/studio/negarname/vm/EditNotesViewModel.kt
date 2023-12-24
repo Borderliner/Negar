@@ -1,6 +1,7 @@
 package meshki.studio.negarname.vm
 
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.graphics.toArgb
@@ -44,7 +45,7 @@ class EditNotesViewModel (
     )
     val noteContent: State<NoteTextFieldState> = _noteContent
 
-    private val _noteColor = mutableStateOf(Note.colors.random().toArgb())
+    private val _noteColor = mutableIntStateOf(Note.colors.random().toArgb())
     val noteColor: State<Int> = _noteColor
 
     var noteModified = mutableStateOf(false)
@@ -55,7 +56,7 @@ class EditNotesViewModel (
     private var currentNoteId: Long = -1
 
     init {
-        savedStateHandle.get<Long>("noteId")?.let{ noteId ->
+        savedStateHandle.get<Long>("id")?.let{ noteId ->
             if(noteId > 0) {
                 viewModelScope.launch {
                     notesRepository.getNoteById(noteId).data?.also { noteFlow ->
@@ -69,7 +70,7 @@ class EditNotesViewModel (
                                 text = note.text,
                                 isHintVisible = false
                             )
-                            _noteColor.value = note.color
+                            _noteColor.intValue = note.color
                         }
                     }
                 }
@@ -100,7 +101,7 @@ class EditNotesViewModel (
                 )
             }
             is EditNotesEvent.ChangeColor -> {
-                _noteColor.value = event.color
+                _noteColor.intValue = event.color
             }
             is EditNotesEvent.SavedNote -> {
                 viewModelScope.launch {
