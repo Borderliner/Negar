@@ -57,10 +57,12 @@ import meshki.studio.negarname.vm.EditNotesEvent
 import meshki.studio.negarname.vm.EditNotesViewModel
 import meshki.studio.negarname.vm.MainViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 
 @Composable
-fun EditNotesScreen(color: Int, mainViewModel: MainViewModel, navController: NavHostController) {
+fun EditNotesScreen(color: Int, navController: NavHostController) {
+    val mainViewModel = koinInject<MainViewModel>()
     val viewModel = koinViewModel<EditNotesViewModel>()
     val snackbar = remember { SnackbarHostState()}
     LaunchedEffect(color) {

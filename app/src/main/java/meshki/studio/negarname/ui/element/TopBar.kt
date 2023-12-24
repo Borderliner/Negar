@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale
@@ -21,10 +20,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import meshki.studio.negarname.vm.MainViewModel
 import meshki.studio.negarname.R
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(mainViewModel: MainViewModel) {
+fun TopBar() {
+    val mainViewModel = koinInject<MainViewModel>()
     val appMenuState = remember { mutableStateOf(false) }
     val aboutDialogState = remember { mutableStateOf(false) }
     val logoSize = 125.dp
@@ -80,7 +81,6 @@ fun TopBar(mainViewModel: MainViewModel) {
             }
         },
         actions = {
-            val ctx = LocalContext.current
             //ToggleThemeButton()
             IconButton(
                 enabled = !aboutDialogState.value,
@@ -90,9 +90,9 @@ fun TopBar(mainViewModel: MainViewModel) {
 //                        aboutDialogState.value = !aboutDialogState.value
 //                    }
                     if (mainViewModel.locale == "fa") {
-                        mainViewModel.setLocale(ctx, Locale("en").toLanguageTag())
+                        mainViewModel.setLocale(Locale("en").toLanguageTag())
                     } else {
-                        mainViewModel.setLocale(ctx, Locale("fa").toLanguageTag())
+                        mainViewModel.setLocale(Locale("fa").toLanguageTag())
                     }
                 }) {
                 Icon(

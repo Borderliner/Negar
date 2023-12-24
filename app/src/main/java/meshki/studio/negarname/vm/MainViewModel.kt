@@ -1,13 +1,16 @@
 package meshki.studio.negarname.vm
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.util.getCurrentLocale
+import java.lang.ref.WeakReference
 
 class MainViewModel(ctx: Context) : ViewModel() {
+    private val _ctx = WeakReference(ctx)
     private val _isReady = mutableStateOf(false)
     private val _locale = mutableStateOf("en")
     val isReady get() = _isReady.value
@@ -21,9 +24,9 @@ class MainViewModel(ctx: Context) : ViewModel() {
         }
     }
 
-    fun setLocale(ctx: Context, tag: String) {
+    fun setLocale(tag: String) {
         _locale.value = tag
-        meshki.studio.negarname.util.setLocale(ctx, tag)
+        meshki.studio.negarname.util.setLocale(_ctx.get()!!, tag)
         println("Is RTL: $isRtl")
     }
 }

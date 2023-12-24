@@ -16,10 +16,9 @@ import meshki.studio.negarname.ui.screen.EditTodosScreen
 import meshki.studio.negarname.ui.screen.NotesScreen
 import meshki.studio.negarname.ui.screen.SettingsScreen
 import meshki.studio.negarname.ui.screen.TodosScreen
-import meshki.studio.negarname.vm.MainViewModel
 
 @Composable
-fun Navigation(navController: NavHostController, mainViewModel: MainViewModel) {
+fun Navigation(navController: NavHostController) {
     val navigationSpeed = 450
     val pageSpeed = 300
 
@@ -87,7 +86,7 @@ fun Navigation(navController: NavHostController, mainViewModel: MainViewModel) {
             popExitTransition = {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(navigationSpeed))
             }) {
-            NotesScreen(mainViewModel, navController)
+            NotesScreen(navController)
         }
 
         composable(
@@ -161,7 +160,7 @@ fun Navigation(navController: NavHostController, mainViewModel: MainViewModel) {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(pageSpeed))
             }
         ) { nav ->
-            EditNotesScreen(color = nav.arguments?.getInt("color") ?: -1, mainViewModel, navController)
+            EditNotesScreen(color = nav.arguments?.getInt("color") ?: -1, navController)
         }
 
         composable(

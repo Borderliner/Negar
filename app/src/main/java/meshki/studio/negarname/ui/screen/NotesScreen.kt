@@ -62,17 +62,19 @@ import meshki.studio.negarname.vm.MainViewModel
 import meshki.studio.negarname.vm.NotesEvent
 import meshki.studio.negarname.vm.NotesViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 
 @Composable
-fun NotesScreen(mainViewModel: MainViewModel, navController: NavHostController) {
+fun NotesScreen(navController: NavHostController) {
+    val mainViewModel = koinInject<MainViewModel>()
     val viewModel = koinViewModel<NotesViewModel>()
     val snackbar = remember { SnackbarHostState() }
     if (mainViewModel.isRtl) {
         LeftToRightLayout {
             NotesScreenScaffold(navController, snackbar) {
                 RightToLeftLayout {
-                    NotesScreenMain(viewModel, navController, snackbar, mainViewModel)
+                    NotesScreenMain(viewModel, navController, snackbar)
                 }
             }
         }
@@ -80,7 +82,7 @@ fun NotesScreen(mainViewModel: MainViewModel, navController: NavHostController) 
         RightToLeftLayout {
             NotesScreenScaffold(navController, snackbar) {
                 LeftToRightLayout {
-                    NotesScreenMain(viewModel, navController, snackbar, mainViewModel)
+                    NotesScreenMain(viewModel, navController, snackbar)
                 }
             }
         }
@@ -122,8 +124,8 @@ fun NotesScreenMain(
     viewModel: NotesViewModel,
     navController: NavHostController,
     snackbar: SnackbarHostState,
-    mainViewModel: MainViewModel
 ) {
+    val mainViewModel = koinInject<MainViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val filterAnimation = remember { Animatable(0f) }
@@ -258,9 +260,6 @@ fun NotesScreenMain(
             ),
             elevation = CardDefaults.cardElevation(0.dp)
         ) {
-            val cRad = with(LocalDensity.current) {
-                30.dp.toPx()
-            }
             if (uiState.notes.isNotEmpty()) {
                 LazyColumn(
                     contentPadding = PaddingValues(bottom = 65.dp)

@@ -30,15 +30,15 @@ import meshki.studio.negarname.ui.theme.NegarTheme
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
 import meshki.studio.negarname.vm.MainViewModel
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val mainViewModel: MainViewModel by viewModel()
         enableEdgeToEdge()
 
         setContent {
+            val mainViewModel = koinInject<MainViewModel>()
             val navController = rememberNavController()
 
             NegarTheme {
@@ -69,11 +69,11 @@ class MainActivity : ComponentActivity() {
                         ) {
                         if (mainViewModel.isRtl) {
                             RightToLeftLayout {
-                                MainScreenScaffold(navController, mainViewModel)
+                                MainScreenScaffold(navController)
                             }
                         } else {
                             LeftToRightLayout {
-                                MainScreenScaffold(navController, mainViewModel)
+                                MainScreenScaffold(navController)
                             }
                         }
                     }
@@ -86,9 +86,10 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun MainScreenScaffold(navController: NavHostController, mainViewModel: MainViewModel) {
+fun MainScreenScaffold(navController: NavHostController) {
+    val mainViewModel = koinInject<MainViewModel>()
     Scaffold(
-        topBar = { TopBar(mainViewModel) },
+        topBar = { TopBar() },
         bottomBar = { BottomBar(navController) },
         containerColor = Color.Transparent,
         modifier = Modifier.navigationBarsPadding()
@@ -98,7 +99,7 @@ fun MainScreenScaffold(navController: NavHostController, mainViewModel: MainView
         ) {
             Divider(color = Color.Gray.copy(0.4f), thickness = 1.dp)
             if (mainViewModel.isReady) {
-                Navigation(navController, mainViewModel)
+                Navigation(navController)
             } else {
                 Column(
                     modifier = Modifier.fillMaxSize(),
