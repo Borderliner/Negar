@@ -10,87 +10,19 @@ import kotlinx.coroutines.launch
 import meshki.studio.negarname.data.repository.NotesRepository
 import meshki.studio.negarname.entity.ErrorMessage
 import meshki.studio.negarname.entity.Note
+import meshki.studio.negarname.entity.NotesState
 import meshki.studio.negarname.entity.OrderBy
 import meshki.studio.negarname.entity.OrderType
 
-sealed interface NotesStateInterface {
-    val isLoading: Boolean
-    val errorMessages: List<ErrorMessage>
-    val notes: List<Note>
-    val orderBy: OrderBy
-    val isSearchVisible: Boolean
-    val isOrderSectionVisible: Boolean
-    val searchInput: String
-
-    data class NoNotes(
-        override val isLoading: Boolean,
-        override val errorMessages: List<ErrorMessage>,
-        override val notes: List<Note>,
-        override val orderBy: OrderBy,
-        override val isSearchVisible: Boolean,
-        override val isOrderSectionVisible: Boolean,
-        override val searchInput: String
-    ) : NotesStateInterface
-
-    data class HasNotes(
-        override val isLoading: Boolean,
-        override val errorMessages: List<ErrorMessage>,
-        override val notes: List<Note>,
-        override val orderBy: OrderBy,
-        override val isSearchVisible: Boolean,
-        override val isOrderSectionVisible: Boolean,
-        override val searchInput: String
-    ) : NotesStateInterface
-}
-
-data class NotesState(
-    val notes: List<Note> = emptyList(),
-    val orderBy: OrderBy = OrderBy.Date(OrderType.Descending),
-    val isOrderSectionVisible: Boolean = false,
-    val isSearchVisible: Boolean = false,
-    val isLoading: Boolean = false,
-    val errorMessages: List<ErrorMessage> = emptyList(),
-    val searchInput: String = ""
-) {
-    fun toUiState(): NotesStateInterface =
-        if (notes.isEmpty()) {
-            NotesStateInterface.NoNotes(
-                isLoading,
-                errorMessages,
-                notes,
-                orderBy,
-                isSearchVisible,
-                isOrderSectionVisible,
-                searchInput
-            )
-        } else {
-            NotesStateInterface.HasNotes(
-                isLoading,
-                errorMessages,
-                notes,
-                orderBy,
-                isSearchVisible,
-                isOrderSectionVisible,
-                searchInput
-            )
-        }
-}
-
 sealed class NotesEvent {
-    data class Order(val orderBy: OrderBy) : NotesEvent()
-    data class DeleteNote(val note: Note) : NotesEvent()
-    data class TogglePinNote(val note: Note) : NotesEvent()
-    data class Query(val string: String, val orderBy: OrderBy) : NotesEvent()
-    data object RestoreNote : NotesEvent()
-    data object ToggleOrderSection : NotesEvent()
-    data object ToggleSearchSection : NotesEvent()
+    data class NotesOrdered(val orderBy: OrderBy) : NotesEvent()
+    data class NoteDeleted(val note: Note) : NotesEvent()
+    data class NotePinToggled(val note: Note) : NotesEvent()
+    data class NoteQueried(val query: String, val orderBy: OrderBy) : NotesEvent()
+    data object NoteRestored : NotesEvent()
+    data object OrderToggled : NotesEvent()
+    data object SearchToggled : NotesEvent()
 }
-
-data class NoteTextFieldState(
-    val text: String = "",
-    val hint: String = "",
-    val isHintVisible: Boolean = true
-)
 
 class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel() {
     private val state = MutableStateFlow(NotesState(isLoading = true))
@@ -101,17 +33,17 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
     val notesState: State<NotesState> = _notesState
 
     private var deletedNote: Note? = null
-    private var getNoteJob: Job? = null
+    private var noteJob: Job? = null
 
     init {
         viewModelScope.launch {
-            getNotes(OrderBy.Date(OrderType.Descending))
+            getNotesOrdered(OrderBy.Date(OrderType.Descending))
         }
     }
 
     suspend fun onEvent(event: NotesEvent) {
         when (event) {
-            is NotesEvent.Order -> {
+            is NotesEvent.NotesOrdered -> {
                 if (state.value.orderBy::class == event.orderBy::class &&
                     state.value.orderBy.orderType == event.orderBy.orderType
                 ) {
@@ -119,22 +51,22 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
                     // we don't need to change anything
                     return
                 }
-                getNotes(event.orderBy)
+                getNotesOrdered(event.orderBy)
             }
-            is NotesEvent.DeleteNote -> {
+            is NotesEvent.NoteDeleted -> {
                 viewModelScope.launch {
                     // save deleted note reference
                     notesRepository.deleteNote(event.note)
                     deletedNote = event.note
                 }
             }
-            is NotesEvent.RestoreNote -> {
+            is NotesEvent.NoteRestored -> {
                 viewModelScope.launch {
                     notesRepository.addNote(deletedNote ?: return@launch)
                     deletedNote = null
                 }
             }
-            is NotesEvent.ToggleOrderSection -> {
+            is NotesEvent.OrderToggled -> {
                 state.update {
                     it.copy(
                         isOrderSectionVisible = !state.value.isOrderSectionVisible,
@@ -143,7 +75,7 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
                 }
             }
 
-            is NotesEvent.ToggleSearchSection -> {
+            is NotesEvent.SearchToggled -> {
                 state.update {
                     it.copy(
                         isSearchVisible = !state.value.isSearchVisible,
@@ -152,11 +84,11 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
                 }
             }
 
-            is NotesEvent.Query -> {
-                getNotes(event.orderBy, event.string)
+            is NotesEvent.NoteQueried -> {
+                findNotesOrdered(event.query, event.orderBy)
             }
 
-            is NotesEvent.TogglePinNote -> {
+            is NotesEvent.NotePinToggled -> {
                 viewModelScope.launch {
                     if (event.note.pinned) {
                         notesRepository.unpinNote(event.note)
@@ -168,43 +100,24 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
         }
     }
 
-    private suspend fun findNotesUnordered(query: String) {
-        getNoteJob?.cancel()
-        getNoteJob = notesRepository.findNotes(query).data?.onEach { foundNotes ->
-            if (query.trim().isNotBlank()) {
-                state.update {
-                    it.copy(notes = foundNotes)
-                }
-            }
-        }?.launchIn(viewModelScope)
-    }
-
-    private suspend fun findNotesOrdered(orderBy: OrderBy, query: String) {
-        getNoteJob?.cancel()
-        getNoteJob = notesRepository.findNotesOrdered(
+    private suspend fun findNotesOrdered(query: String, orderBy: OrderBy) {
+        noteJob?.cancel()
+        noteJob = notesRepository.findNotesOrdered(
             query,
             orderBy as OrderBy.Date
-        ).data?.onEach { foundNotes ->
+        ).data?.onEach { notes ->
             state.update {
-                it.copy(notes = foundNotes, orderBy = orderBy)
+                it.copy(notes = notes, orderBy = orderBy)
             }
         }?.launchIn(viewModelScope)
     }
 
     private suspend fun getNotesOrdered(orderBy: OrderBy) {
-        getNoteJob?.cancel()
-        getNoteJob = notesRepository.getNotesOrdered(orderBy).data?.onEach { allNotes ->
+        noteJob?.cancel()
+        noteJob = notesRepository.getNotesOrdered(orderBy).data?.onEach { allNotes ->
             state.update { it ->
                 it.copy(notes = allNotes.sortedBy { !it.pinned })
             }
         }?.launchIn(viewModelScope)
-    }
-
-    private suspend fun getNotes(orderBy: OrderBy, query: String = String()) {
-        if (query.isNotBlank()) {
-            findNotesOrdered(orderBy, query)
-        } else {
-            getNotesOrdered(orderBy)
-        }
     }
 }

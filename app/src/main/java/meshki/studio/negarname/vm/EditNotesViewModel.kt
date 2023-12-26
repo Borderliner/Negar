@@ -1,14 +1,12 @@
 package meshki.studio.negarname.vm
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.focus.FocusState
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -18,54 +16,57 @@ import meshki.studio.negarname.entity.Note
 import meshki.studio.negarname.entity.UiEvent
 import java.util.Date
 
-sealed class EditNotesEvent{
-    data class EnteredTitle(val value: String) : EditNotesEvent()
-    data class EnteredContent(val value: String): EditNotesEvent()
-    data class ChangeTitleFocus(val focusState: FocusState): EditNotesEvent()
-    data class ChangeContentFocus(val focusState: FocusState): EditNotesEvent()
-    data class ChangeColor(val color: Int): EditNotesEvent()
-    data object SavedNote: EditNotesEvent()
+sealed class EditNotesEvent {
+    data class TitleEntered(val value: String) : EditNotesEvent()
+    data class TextEntered(val value: String) : EditNotesEvent()
+    data class TitleFocusChanged(val focusState: FocusState) : EditNotesEvent()
+    data class TextFocusChanged(val focusState: FocusState) : EditNotesEvent()
+    data class ColorChanged(val color: Int) : EditNotesEvent()
+    data object NoteSaved : EditNotesEvent()
 }
-class EditNotesViewModel (
+
+class EditNotesViewModel(
     private val notesRepository: NotesRepository,
     savedStateHandle: SavedStateHandle
-): ViewModel() {
-    private val _noteTitle = mutableStateOf(
-        NoteTextFieldState(
-            "",
-            ""
-        )
+) : ViewModel() {
+    private val _noteState = mutableStateOf(
+        Note(color = 0, title = "", text = "")
     )
-    val noteTitle: State<NoteTextFieldState> = _noteTitle
+    val noteState: State<Note> = _noteState
 
-    private val _noteContent = mutableStateOf(
-        RichTextState()
-    )
-    val noteContent: State<RichTextState> = _noteContent
+    private val _isNoteModified = mutableStateOf(false)
+    var isNoteModified
+        get() = _isNoteModified.value
+        set(value) {
+            _isNoteModified.value = value
+        }
 
-    private val _noteColor = mutableIntStateOf(Note.colors.random().toArgb())
-    val noteColor: State<Int> = _noteColor
+    private val _isTextHintVisible = mutableStateOf(false)
+    var isTextHintVisible
+        get() = _isTextHintVisible.value
+        set(value) {
+            _isTextHintVisible.value = value
+        }
 
-    var noteModified = mutableStateOf(false)
+    private val _isTitleHintVisible = mutableStateOf(false)
+    var isTitleHintVisible
+        get() = _isTitleHintVisible.value
+        set(value) {
+            _isTitleHintVisible.value = value
+        }
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
-    private var currentNoteId: Long = -1
-
     init {
-        savedStateHandle.get<Long>("id")?.let{ noteId ->
-            if(noteId > 0) {
+        savedStateHandle.get<Long>("id")?.let { noteId ->
+            if (noteId > 0) {
                 viewModelScope.launch {
                     notesRepository.getNoteById(noteId).data?.also { noteFlow ->
                         noteFlow.collectLatest { note ->
-                            currentNoteId = note.id
-                            _noteTitle.value = noteTitle.value.copy(
-                                text = note.title,
-                                isHintVisible = false
-                            )
-                            _noteContent.value.setMarkdown(note.text)
-                            _noteColor.intValue = note.color
+                            _noteState.value = note
+                            isTitleHintVisible = note.title.isEmpty()
+                            isTextHintVisible = note.title.isEmpty()
                         }
                     }
                 }
@@ -73,47 +74,56 @@ class EditNotesViewModel (
         }
     }
 
-    fun onEvent(event: EditNotesEvent){
-        when(event){
-            is EditNotesEvent.EnteredTitle -> {
-                _noteTitle.value = noteTitle.value.copy(
+    fun onEvent(event: EditNotesEvent) {
+        when (event) {
+            is EditNotesEvent.TitleEntered -> {
+                _noteState.value = _noteState.value.copy(
+                    title = event.value
+                )
+            }
+
+            is EditNotesEvent.TitleFocusChanged -> {
+//                _noteTitle.value = noteTitle.value.copy(
+//                    isHintVisible = !event.focusState.isFocused && noteTitle.value.text.isBlank()
+//                )
+            }
+
+            is EditNotesEvent.TextEntered -> {
+                _noteState.value = _noteState.value.copy(
                     text = event.value
                 )
             }
-            is EditNotesEvent.ChangeTitleFocus -> {
-                _noteTitle.value = noteTitle.value.copy(
-                    isHintVisible = !event.focusState.isFocused && noteTitle.value.text.isBlank()
+
+            is EditNotesEvent.TextFocusChanged -> {
+                //
+            }
+
+            is EditNotesEvent.ColorChanged -> {
+                _noteState.value = _noteState.value.copy(
+                    color = event.color
                 )
             }
-            is EditNotesEvent.EnteredContent -> {
-                //
-            }
-            is EditNotesEvent.ChangeContentFocus -> {
-                //
-            }
-            is EditNotesEvent.ChangeColor -> {
-                _noteColor.intValue = event.color
-            }
-            is EditNotesEvent.SavedNote -> {
+
+            is EditNotesEvent.NoteSaved -> {
                 viewModelScope.launch {
                     try {
-                        println("Adding note")
                         notesRepository.addNote(
                             Note(
-                                id = if (currentNoteId >= 0) currentNoteId else 0,
-                                title = noteTitle.value.text,
-                                text = noteContent.value.toMarkdown(),
+                                id = if (noteState.value.id >= 0) noteState.value.id else 0,
+                                color = noteState.value.color,
+                                title = noteState.value.title,
+                                text = noteState.value.text,
                                 dateCreated = Date(),
                                 dateModified = Date(),
-                                color = noteColor.value
                             )
                         )
-                        _eventFlow.emit(UiEvent.SavedNote)
-                    } catch (e: Exception){
+                        _eventFlow.emit(UiEvent.NoteSaved)
+                    } catch (e: Exception) {
                         _eventFlow.emit(
-                            UiEvent.showSnackBar(
-                            message = e.message ?: "Couldn't save note"
-                        ))
+                            UiEvent.ShowSnackBar(
+                                message = e.message ?: "Couldn't save note"
+                            )
+                        )
                     }
                 }
             }

@@ -39,20 +39,17 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
-import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorColors
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.R
-import meshki.studio.negarname.entity.BackPressHandler
+import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
 import meshki.studio.negarname.entity.UiEvent
 import meshki.studio.negarname.ui.element.ActionButton
@@ -71,15 +68,15 @@ import org.koin.compose.koinInject
 fun EditNotesScreen(color: Int, navController: NavHostController) {
     val mainViewModel = koinInject<MainViewModel>()
     val viewModel = koinViewModel<EditNotesViewModel>()
-    val snackbar = remember { SnackbarHostState()}
+    val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(color) {
         if (color > 0) {
             viewModel.viewModelScope.launch {
-                viewModel.onEvent(EditNotesEvent.ChangeColor(color))
+                viewModel.onEvent(EditNotesEvent.ColorChanged(color))
             }
         }
     }
-    if(mainViewModel.isRtl) {
+    if (mainViewModel.isRtl) {
         LeftToRightLayout {
             EditNotesScreenScaffold(viewModel, snackbar) {
                 RightToLeftLayout {
@@ -100,11 +97,13 @@ fun EditNotesScreen(color: Int, navController: NavHostController) {
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun EditNotesScreenScaffold(viewModel: EditNotesViewModel, snackbar: SnackbarHostState, content: @Composable () -> Unit) {
+fun EditNotesScreenScaffold(
+    viewModel: EditNotesViewModel,
+    snackbar: SnackbarHostState,
+    content: @Composable () -> Unit
+) {
     Scaffold(
-        snackbarHost = {
-            SnackbarHost(snackbar)
-        },
+        snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             ActionButton(
                 text = stringResource(R.string.save),
@@ -116,8 +115,8 @@ fun EditNotesScreenScaffold(viewModel: EditNotesViewModel, snackbar: SnackbarHos
                 },
                 modifier = Modifier,
                 onClick = {
-                    viewModel.onEvent(EditNotesEvent.SavedNote)
-                    viewModel.noteModified.value = false
+                    viewModel.onEvent(EditNotesEvent.NoteSaved)
+                    viewModel.isNoteModified = false
                 },
             )
         },
@@ -127,18 +126,22 @@ fun EditNotesScreenScaffold(viewModel: EditNotesViewModel, snackbar: SnackbarHos
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditNotesScreenMain(viewModel: EditNotesViewModel, navController: NavHostController, snackbar: SnackbarHostState) {
-    LaunchedEffect(viewModel.eventFlow){
+fun EditNotesScreenMain(
+    viewModel: EditNotesViewModel,
+    navController: NavHostController,
+    snackbar: SnackbarHostState
+) {
+    LaunchedEffect(viewModel.eventFlow) {
         viewModel.eventFlow.collectLatest { event ->
-            when(event){
-                is UiEvent.showSnackBar -> {
+            when (event) {
+                is UiEvent.ShowSnackBar -> {
                     snackbar.showSnackbar(
                         message = event.message
                     )
                 }
-                is UiEvent.SavedNote -> {
+
+                is UiEvent.NoteSaved -> {
                     navController.navigateUp()
                 }
 
@@ -146,13 +149,12 @@ fun EditNotesScreenMain(viewModel: EditNotesViewModel, navController: NavHostCon
             }
         }
     }
-    val titleState = viewModel.noteTitle.value
-    val contentState = viewModel.noteContent.value
+    val noteState = viewModel.noteState
 
     var workInProgressAlertVisible by remember { mutableStateOf(false) }
 
     BackPressHandler {
-        if ((titleState.text.isNotEmpty() || contentState.toMarkdown().isNotEmpty()) && viewModel.noteModified.value) {
+        if ((noteState.value.title.isNotEmpty() || noteState.value.text.isNotEmpty()) && viewModel.isNoteModified) {
             workInProgressAlertVisible = true
         } else {
             navController.navigateUp()
@@ -182,16 +184,14 @@ fun EditNotesScreenMain(viewModel: EditNotesViewModel, navController: NavHostCon
                         .background(it)
                         .border(
                             width = 2.dp,
-                            color = if (viewModel.noteColor.value == colorInt) {
+                            color = if (noteState.value.color == colorInt) {
                                 Color.Gray
                             } else Color.Transparent,
                             shape = CircleShape
                         )
                         .clickable {
                             viewModel.onEvent(
-                                EditNotesEvent.ChangeColor(
-                                    colorInt
-                                )
+                                EditNotesEvent.ColorChanged(colorInt)
                             )
                         }
                 )
@@ -205,60 +205,61 @@ fun EditNotesScreenMain(viewModel: EditNotesViewModel, navController: NavHostCon
         ) {
             HintedTextField(
                 modifier = Modifier
-                    .border(1.dp, Color.DarkGray, RoundedShapes.large)
+                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(0.6f), RoundedShapes.large)
                     .padding(8.dp)
                     .padding(bottom = 4.dp),
-                text = titleState.text,
+                text = noteState.value.title,
                 hint = stringResource(R.string.title),
-                hintColor = Color.Gray,
+                hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
                 onValueChange = {
-                    viewModel.onEvent(EditNotesEvent.EnteredTitle(it))
-                    viewModel.noteModified.value = true
+                    viewModel.onEvent(EditNotesEvent.TitleEntered(it))
+                    viewModel.isNoteModified = true
                 },
                 onFocusChange = {
-                    viewModel.onEvent(EditNotesEvent.ChangeTitleFocus(it))
+                    viewModel.isTitleHintVisible = !it.isFocused && noteState.value.title.isBlank()
                 },
-                isHintVisible = titleState.isHintVisible,
+                isHintVisible = viewModel.isTitleHintVisible,
                 singleLine = true,
-                textStyle = MaterialTheme.typography.titleSmall.copy(Color.Black)
+                textStyle = MaterialTheme.typography.titleSmall.copy(MaterialTheme.colorScheme.onBackground)
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            RichTextEditor(
-                state = contentState,
-                modifier = Modifier
-                    .fillMaxSize(),
-                singleLine = false,
-                colors = RichTextEditorDefaults.outlinedRichTextEditorColors(
-                    containerColor = Color.Transparent,
-                    textColor = MaterialTheme.colorScheme.onBackground,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    errorBorderColor = Color.Transparent,
-                    disabledBorderColor = Color.Transparent
-                ),
-                placeholder = { Text(stringResource(R.string.note_text_hint)) },
-
-            )
-//            HintedTextField(
+//            RichTextEditor(
+//                state = contentState,
 //                modifier = Modifier
-//                    .fillMaxSize()
-//                    .defaultMinSize(minHeight = 50.dp),
-//                text = contentState.text,
-//                hint = stringResource(R.string.note_text_hint),
-//                hintColor = Color.Gray,
-//                onValueChange = {
-//                    viewModel.onEvent(EditNotesEvent.EnteredContent(it))
-//                    viewModel.noteModified.value = true
-//                },
-//                onFocusChange = {
-//                    viewModel.onEvent(EditNotesEvent.ChangeContentFocus(it))
-//                },
-//                expanded = true,
-//                isHintVisible = contentState.isHintVisible,
-//                textStyle = MaterialTheme.typography.bodyMedium.copy(Color.Black),
-//            )
+//                    .fillMaxSize(),
+//                singleLine = false,
+//                colors = RichTextEditorDefaults.outlinedRichTextEditorColors(
+//                    containerColor = Color.Transparent,
+//                    textColor = MaterialTheme.colorScheme.onBackground,
+//                    cursorColor = MaterialTheme.colorScheme.primary,
+//                    focusedBorderColor = Color.Transparent,
+//                    unfocusedBorderColor = Color.Transparent,
+//                    errorBorderColor = Color.Transparent,
+//                    disabledBorderColor = Color.Transparent
+//                ),
+//                placeholder = { Text(stringResource(R.string.note_text_hint)) },
+//
+//                )
+            HintedTextField(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .defaultMinSize(minHeight = 100.dp)
+                    .padding(horizontal = 8.dp),
+                text = noteState.value.text,
+                hint = stringResource(R.string.note_text_hint),
+                hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
+                onValueChange = {
+                    viewModel.onEvent(EditNotesEvent.TextEntered(it))
+                    viewModel.isNoteModified = true
+                },
+                onFocusChange = {
+                    viewModel.isTextHintVisible = !it.isFocused && noteState.value.text.isBlank()
+                },
+                expanded = true,
+                isHintVisible = viewModel.isTextHintVisible,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(MaterialTheme.colorScheme.onBackground),
+            )
         }
     }
 }

@@ -135,7 +135,7 @@ fun NotesScreenMain(
 
     suspend fun onClickSortButton() {
         val wasSearchOpen = uiState.isSearchVisible
-        viewModel.onEvent(NotesEvent.ToggleOrderSection)
+        viewModel.onEvent(NotesEvent.OrderToggled)
 
         scope.launch {
             if (uiState.isOrderSectionVisible) {
@@ -172,7 +172,7 @@ fun NotesScreenMain(
     }
 
     suspend fun onClickSearchButton() {
-        viewModel.onEvent(NotesEvent.ToggleSearchSection)
+        viewModel.onEvent(NotesEvent.SearchToggled)
 
         scope.launch {
             if (uiState.isSearchVisible) {
@@ -280,14 +280,14 @@ fun NotesScreenMain(
                             },
                             onDelete = {
                                 scope.launch {
-                                    viewModel.onEvent(NotesEvent.DeleteNote(note))
+                                    viewModel.onEvent(NotesEvent.NoteDeleted(note))
                                     val result =
                                         snackbar.showSnackbar(
                                             message = "یادداشت پاک شد",
                                             actionLabel = "بازیابی"
                                         )
                                     if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel.onEvent(NotesEvent.RestoreNote)
+                                        viewModel.onEvent(NotesEvent.NoteRestored)
                                     }
                                 }
                             },
@@ -301,7 +301,7 @@ fun NotesScreenMain(
                                 }
 
                                 scope.launch {
-                                    viewModel.onEvent(NotesEvent.TogglePinNote(note))
+                                    viewModel.onEvent(NotesEvent.NotePinToggled(note))
                                 }
                             }
                         )
@@ -340,7 +340,7 @@ fun NotesScreenMain(
             orderBy = uiState.orderBy
         ) {
             viewModel.viewModelScope.launch {
-                viewModel.onEvent(NotesEvent.Order(it))
+                viewModel.onEvent(NotesEvent.NotesOrdered(it))
             }
         }
     }
@@ -364,7 +364,7 @@ fun NotesScreenMain(
             onTextChange = {
                 viewModel.viewModelScope.launch {
                     viewModel.onEvent(
-                        NotesEvent.Query(
+                        NotesEvent.NoteQueried(
                             it,
                             viewModel.uiState.value.orderBy
                         )

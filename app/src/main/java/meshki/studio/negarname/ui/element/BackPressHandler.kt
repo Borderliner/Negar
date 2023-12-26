@@ -1,4 +1,4 @@
-package meshki.studio.negarname.entity
+package meshki.studio.negarname.ui.element
 
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.OnBackPressedDispatcher

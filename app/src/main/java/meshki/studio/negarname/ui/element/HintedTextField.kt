@@ -21,7 +21,7 @@ fun HintedTextField(
     hint: String,
     icon: Int = 0,
     hintColor: Color = MaterialTheme.colorScheme.onBackground.copy(0.85f),
-    isHintVisible: Boolean = true,
+    isHintVisible: Boolean,
     textStyle: TextStyle = TextStyle(),
     singleLine: Boolean = false,
     expanded: Boolean = false,
@@ -35,24 +35,24 @@ fun HintedTextField(
             true -> { Modifier.fillMaxSize() }
             false -> { Modifier.fillMaxWidth() }
         }
-
         BasicTextField(
             value = text,
             onValueChange = onValueChange,
             singleLine = singleLine,
             textStyle = textStyle.copy(MaterialTheme.colorScheme.onBackground),
             modifier = if (icon > 0) {
-                mod.padding(top = 5.dp, start = 30.dp)
+                mod.padding(top = 4.dp, start = 30.dp)
             } else {
-                mod.padding(top = 5.dp)
+                mod.padding(top = 4.dp)
             }
             .onFocusChanged {
                 onFocusChange(it)
             },
         )
         if(isHintVisible) {
+            val mod2 = if (icon > 0) Modifier.padding(start = 32.dp) else Modifier
             Text(
-                modifier = if (icon > 0) Modifier.padding(start = 32.dp, top = 3.dp) else Modifier,
+                modifier = mod2.offset(0.dp, 4.dp),
                 text = hint,
                 style = textStyle,
                 color = hintColor

@@ -30,6 +30,7 @@ import meshki.studio.negarname.ui.theme.NegarTheme
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
 import meshki.studio.negarname.vm.MainViewModel
+import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -38,48 +39,49 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val mainViewModel = koinInject<MainViewModel>()
-            val navController = rememberNavController()
+            KoinContext {
+                val mainViewModel = koinInject<MainViewModel>()
+                val navController = rememberNavController()
 
-            NegarTheme {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    color = MaterialTheme.colorScheme.primary,
-                ) {
-                    Card(
-                        colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.background),
+                NegarTheme {
+                    Surface(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .statusBarsPadding()
-                            .padding(
-                                top = 15.dp,
-                                bottom = 0.dp,
-                                start = 0.dp,
-                                end = 0.dp
+                            .fillMaxSize(),
+                        color = MaterialTheme.colorScheme.primary,
+                    ) {
+                        Card(
+                            colors = CardDefaults.elevatedCardColors(MaterialTheme.colorScheme.background),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .statusBarsPadding()
+                                .padding(
+                                    top = 15.dp,
+                                    bottom = 0.dp,
+                                    start = 0.dp,
+                                    end = 0.dp
+                                ),
+                            elevation = CardDefaults.elevatedCardElevation(20.dp),
+                            shape = RoundedCornerShape(
+                                topStart = 30.dp,
+                                topEnd = 30.dp,
+                                bottomEnd = 0.dp,
+                                bottomStart = 0.dp
                             ),
-                        elevation = CardDefaults.elevatedCardElevation(20.dp),
-                        shape = RoundedCornerShape(
-                            topStart = 30.dp,
-                            topEnd = 30.dp,
-                            bottomEnd = 0.dp,
-                            bottomStart = 0.dp
-                        ),
 
-                        ) {
-                        if (mainViewModel.isRtl) {
-                            RightToLeftLayout {
-                                MainScreenScaffold(navController)
-                            }
-                        } else {
-                            LeftToRightLayout {
-                                MainScreenScaffold(navController)
+                            ) {
+                            if (mainViewModel.isRtl) {
+                                RightToLeftLayout {
+                                    MainScreenScaffold(navController)
+                                }
+                            } else {
+                                LeftToRightLayout {
+                                    MainScreenScaffold(navController)
+                                }
                             }
                         }
                     }
                 }
             }
-
         }
     }
 }
