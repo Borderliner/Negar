@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -28,9 +29,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +42,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -46,6 +50,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.R
@@ -132,6 +137,14 @@ fun EditNotesScreenMain(
     navController: NavHostController,
     snackbar: SnackbarHostState
 ) {
+    val scope = rememberCoroutineScope()
+    val noteState = viewModel.noteState
+    val noteColorsArgb = Note.colors.map {
+        it.toArgb()
+    }
+    val colorPaletteState = rememberLazyListState()
+    var workInProgressAlertVisible by remember { mutableStateOf(false) }
+
     LaunchedEffect(viewModel.eventFlow) {
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
@@ -149,9 +162,6 @@ fun EditNotesScreenMain(
             }
         }
     }
-    val noteState = viewModel.noteState
-
-    var workInProgressAlertVisible by remember { mutableStateOf(false) }
 
     BackPressHandler {
         if ((noteState.value.title.isNotEmpty() || noteState.value.text.isNotEmpty()) && viewModel.isNoteModified) {
@@ -166,7 +176,17 @@ fun EditNotesScreenMain(
             .fillMaxSize()
             .background(Color.Transparent)
     ) {
+        LaunchedEffect(noteState.value.color) {
+            scope.launch {
+                delay(250)
+                if (noteState.value.color != 0) {
+                    colorPaletteState.animateScrollToItem(noteColorsArgb.indexOf(noteState.value.color))
+                    println(noteState.value.color)
+                }
+            }
+        }
         LazyRow(
+            state = colorPaletteState,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp),
@@ -182,19 +202,31 @@ fun EditNotesScreenMain(
                         .shadow(15.dp, CircleShape)
                         .clip(CircleShape)
                         .background(it)
-                        .border(
-                            width = 2.dp,
-                            color = if (noteState.value.color == colorInt) {
-                                Color.Gray
-                            } else Color.Transparent,
-                            shape = CircleShape
-                        )
                         .clickable {
                             viewModel.onEvent(
                                 EditNotesEvent.ColorChanged(colorInt)
                             )
                         }
-                )
+                ) {
+                    if (noteState.value.color == colorInt) {
+                        Column(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(0.75f)),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.vec_done),
+                                //modifier = Modifier.background(Color.Black),
+                                contentDescription = "",
+                                tint = Color.Black.copy(0.9f)
+                            )
+                        }
+                    }
+                }
+
             }
         }
 
@@ -205,7 +237,11 @@ fun EditNotesScreenMain(
         ) {
             HintedTextField(
                 modifier = Modifier
-                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(0.6f), RoundedShapes.large)
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.onBackground.copy(0.6f),
+                        RoundedShapes.large
+                    )
                     .padding(8.dp)
                     .padding(bottom = 4.dp),
                 text = noteState.value.title,
