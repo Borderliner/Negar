@@ -69,7 +69,7 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
             is NotesEvent.OrderToggled -> {
                 state.update {
                     it.copy(
-                        isOrderSectionVisible = !state.value.isOrderSectionVisible,
+                        isOrderVisible = !state.value.isOrderVisible,
                         isSearchVisible = false
                     )
                 }
@@ -79,7 +79,7 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
                 state.update {
                     it.copy(
                         isSearchVisible = !state.value.isSearchVisible,
-                        isOrderSectionVisible = false
+                        isOrderVisible = false
                     )
                 }
             }

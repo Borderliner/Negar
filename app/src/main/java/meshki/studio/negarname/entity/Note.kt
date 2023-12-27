@@ -85,7 +85,7 @@ sealed interface NotesStateInterface {
 data class NotesState(
     val notes: List<Note> = emptyList(),
     val orderBy: OrderBy = OrderBy.Date(OrderType.Descending),
-    val isOrderSectionVisible: Boolean = false,
+    val isOrderVisible: Boolean = false,
     val isSearchVisible: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessages: List<ErrorMessage> = emptyList(),
@@ -101,7 +101,7 @@ data class NotesState(
                 notes,
                 orderBy,
                 isSearchVisible,
-                isOrderSectionVisible,
+                isOrderVisible,
                 searchInput
             )
         }
