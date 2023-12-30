@@ -12,9 +12,9 @@ import androidx.compose.runtime.MutableState
 import meshki.studio.negarname.entity.Tool
 
 @Composable
-fun Toolbox(tool: Tool, content: @Composable () -> Unit) {
+fun Toolbox(visibility: Boolean, animation: Animatable<Float, AnimationVector1D>, content: @Composable () -> Unit) {
     AnimatedVisibility(
-        visible = tool.visibility.value && tool.animation.value.value > (tool.animation.value.upperBound
+        visible = visibility && animation.value > (animation.upperBound
             ?: Float.MAX_VALUE) * 0.3,
         enter = fadeIn() + slideInVertically(initialOffsetY = {
             -it / 2 + 150

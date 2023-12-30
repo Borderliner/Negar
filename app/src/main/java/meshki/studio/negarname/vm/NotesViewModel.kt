@@ -36,11 +36,6 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
     private val _notesState = mutableStateOf(NotesState())
     val notesState: State<NotesState> = _notesState
 
-    val orderTool = mutableStateOf(Tool("order"))
-    val searchTool =  mutableStateOf(Tool("search"))
-
-    val toolbox = mutableStateListOf(orderTool, searchTool)
-
     private var deletedNote: Note? = null
     private var noteJob: Job? = null
 
@@ -133,46 +128,5 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
                 it.copy(notes = notes, orderBy = orderBy)
             }
         }?.launchIn(viewModelScope)
-    }
-
-    suspend fun onToolClicked(tool: MutableState<Tool>) {
-        val index = toolbox.indexOf(tool)
-        try {
-            if (tool.value.visibility.value) {
-                // Instantly close other tools
-                toolbox.forEach {
-                    if (it.value.id != tool.value.id) {
-                        it.value.animation.value.snapTo(
-                            it.value.animation.value.lowerBound ?: 0f
-                        )
-                        it.value.visibility.value = false
-                    }
-                }
-
-                // Animated hide current Tool
-                toolbox[index].value.animation.value.animateTo(
-                    tool.value.animation.value.lowerBound ?: 0f,
-                    tween(320, 0, easing = FastOutSlowInEasing)
-                )
-                toolbox[index].value.visibility.value = false
-            } else {
-                // Instantly hide other tools
-                toolbox.forEach {
-                    if (it.value.id != tool.value.id) {
-                        it.value.animation.value.snapTo(
-                            it.value.animation.value.lowerBound ?: 0f
-                        )
-                        it.value.visibility.value = false
-                    }
-                }
-                toolbox[index].value.animation.value.animateTo(
-                    tool.value.animation.value.upperBound ?: Float.MAX_VALUE,
-                    tween(320, 0, easing = FastOutSlowInEasing)
-                )
-                toolbox[index].value.visibility.value = true
-            }
-        } catch (err: Error) {
-            error(err)
-        }
     }
 }

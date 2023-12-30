@@ -59,6 +59,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateListOf
+import meshki.studio.negarname.entity.Tool
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -126,22 +129,42 @@ fun NotesScreenMain(
     val mainViewModel = koinInject<MainViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+
+    val orderTool = remember { mutableStateOf(Tool("order")) }
+    val searchTool =  remember { mutableStateOf(Tool("search")) }
+
     val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
 
-    LaunchedEffect(viewModel.searchTool.value.visibility.value, viewModel.orderTool.value.visibility.value) {
-        if (viewModel.searchTool.value.visibility.value) {
+    LaunchedEffect(searchTool.value.visibility.value, orderTool.value.visibility.value) {
+        if (searchTool.value.visibility.value) {
             offsetAnimation.value.animateTo(100f,
-                tween(320, 0, easing = FastOutSlowInEasing)
+                tween(280, 0, easing = FastOutSlowInEasing)
             )
-        } else if (viewModel.orderTool.value.visibility.value) {
+        } else if (orderTool.value.visibility.value) {
             offsetAnimation.value.animateTo(110f,
-                tween(320, 0, easing = FastOutSlowInEasing)
+                tween(280, 0, easing = FastOutSlowInEasing)
             )
         } else {
             offsetAnimation.value.animateTo(offsetAnimation.value.lowerBound ?: 0f,
-                tween(320, 20, easing = FastOutSlowInEasing)
+                tween(320, 0, easing = FastOutSlowInEasing)
             )
         }
+    }
+
+    suspend fun openTool(tool: MutableState<Tool>, delay: Int = 0) {
+        tool.value.visibility.value = true
+        tool.value.animation.value.animateTo(
+            tool.value.animation.value.upperBound ?: Float.MAX_VALUE,
+            tween(320, delay, easing = FastOutSlowInEasing)
+        )
+    }
+
+    suspend fun closeTool(tool: MutableState<Tool>) {
+        tool.value.visibility.value = false
+        // Animated hide current Tool
+        tool.value.animation.value.snapTo(
+            tool.value.animation.value.lowerBound ?: 0f,
+        )
     }
 
     Column(
@@ -168,7 +191,14 @@ fun NotesScreenMain(
                     IconButton(
                         onClick = {
                             scope.launch {
-                                viewModel.onToolClicked(viewModel.searchTool)
+                                //onToolClicked(searchTool)
+                                if (!searchTool.value.visibility.value) {
+                                    closeTool(orderTool)
+                                    openTool(searchTool)
+                                } else {
+                                    closeTool(searchTool)
+                                    closeTool(orderTool)
+                                }
                             }
                         },
                     ) {
@@ -181,14 +211,21 @@ fun NotesScreenMain(
                     IconButton(
                         onClick = {
                             scope.launch {
-                                viewModel.onToolClicked(viewModel.orderTool)
+                                //onToolClicked(orderTool)
+                                if (!orderTool.value.visibility.value) {
+                                    closeTool(searchTool)
+                                    openTool(orderTool)
+                                } else {
+                                    closeTool(orderTool)
+                                    closeTool(searchTool)
+                                }
                             }
                         },
                     ) {
                         Icon(
                             modifier = Modifier.scale(scaleX = -1f, scaleY = 1f),
                             imageVector = ImageVector.vectorResource(R.drawable.vec_sort),
-                            contentDescription = "Sort"
+                            contentDescription = "Order"
                         )
                     }
                 }
@@ -273,7 +310,8 @@ fun NotesScreenMain(
     }
 
     Toolbox(
-        viewModel.orderTool.value
+        orderTool.value.visibility.value,
+        orderTool.value.animation.value
     ) {
         NotesOrderSection(
             modifier = Modifier
@@ -291,7 +329,8 @@ fun NotesScreenMain(
     }
 
     Toolbox(
-        viewModel.searchTool.value
+        searchTool.value.visibility.value,
+        searchTool.value.animation.value
     ) {
         NotesSearchSection(
             modifier = Modifier
