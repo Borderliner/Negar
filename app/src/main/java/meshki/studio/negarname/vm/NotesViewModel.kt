@@ -2,6 +2,7 @@ package meshki.studio.negarname.vm
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -134,43 +135,41 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
         }?.launchIn(viewModelScope)
     }
 
-    suspend fun onToolClicked(id: String) {
+    suspend fun onToolClicked(tool: MutableState<Tool>) {
+        val index = toolbox.indexOf(tool)
         try {
-            val currentTool = toolbox.find { it.value.id == id }!!
-            if (currentTool.value.visibility.value) {
+            if (tool.value.visibility.value) {
                 // Instantly close other tools
                 toolbox.forEach {
-                    if (it.value.id != id) {
+                    if (it.value.id != tool.value.id) {
                         it.value.animation.value.snapTo(
                             it.value.animation.value.lowerBound ?: 0f
                         )
                         it.value.visibility.value = false
-                    } else {
-                        // Animated hide current Tool
-                        currentTool.value.animation.value.animateTo(
-                            currentTool.value.animation.value.lowerBound ?: 0f,
-                            tween(320, 20, easing = FastOutSlowInEasing)
-                        )
-                        currentTool.value.visibility.value = false
                     }
                 }
+
+                // Animated hide current Tool
+                toolbox[index].value.animation.value.animateTo(
+                    tool.value.animation.value.lowerBound ?: 0f,
+                    tween(320, 0, easing = FastOutSlowInEasing)
+                )
+                toolbox[index].value.visibility.value = false
             } else {
                 // Instantly hide other tools
                 toolbox.forEach {
-                    if (it.value.id != id) {
+                    if (it.value.id != tool.value.id) {
                         it.value.animation.value.snapTo(
                             it.value.animation.value.lowerBound ?: 0f
                         )
                         it.value.visibility.value = false
-                    } else {
-                        // Animated show current Tool
-                        currentTool.value.animation.value.animateTo(
-                            currentTool.value.animation.value.upperBound ?: Float.MAX_VALUE,
-                            tween(400, 0, easing = FastOutSlowInEasing)
-                        )
-                        currentTool.value.visibility.value = true
                     }
                 }
+                toolbox[index].value.animation.value.animateTo(
+                    tool.value.animation.value.upperBound ?: Float.MAX_VALUE,
+                    tween(320, 0, easing = FastOutSlowInEasing)
+                )
+                toolbox[index].value.visibility.value = true
             }
         } catch (err: Error) {
             error(err)

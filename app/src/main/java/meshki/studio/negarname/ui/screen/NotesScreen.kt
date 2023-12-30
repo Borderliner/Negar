@@ -131,15 +131,15 @@ fun NotesScreenMain(
     LaunchedEffect(viewModel.searchTool.value.visibility.value, viewModel.orderTool.value.visibility.value) {
         if (viewModel.searchTool.value.visibility.value) {
             offsetAnimation.value.animateTo(100f,
-                tween(400, 20, easing = FastOutSlowInEasing)
+                tween(320, 0, easing = FastOutSlowInEasing)
             )
         } else if (viewModel.orderTool.value.visibility.value) {
             offsetAnimation.value.animateTo(110f,
-                tween(400, 20, easing = FastOutSlowInEasing)
+                tween(320, 0, easing = FastOutSlowInEasing)
             )
         } else {
             offsetAnimation.value.animateTo(offsetAnimation.value.lowerBound ?: 0f,
-                tween(320, 0, easing = FastOutSlowInEasing)
+                tween(320, 20, easing = FastOutSlowInEasing)
             )
         }
     }
@@ -168,7 +168,7 @@ fun NotesScreenMain(
                     IconButton(
                         onClick = {
                             scope.launch {
-                                viewModel.onToolClicked("search")
+                                viewModel.onToolClicked(viewModel.searchTool)
                             }
                         },
                     ) {
@@ -181,7 +181,7 @@ fun NotesScreenMain(
                     IconButton(
                         onClick = {
                             scope.launch {
-                                viewModel.onToolClicked("order")
+                                viewModel.onToolClicked(viewModel.orderTool)
                             }
                         },
                     ) {

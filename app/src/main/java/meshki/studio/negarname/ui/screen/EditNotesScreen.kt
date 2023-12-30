@@ -178,10 +178,9 @@ fun EditNotesScreenMain(
     ) {
         LaunchedEffect(noteState.value.color) {
             scope.launch {
-                delay(250)
+                delay(500)
                 if (noteState.value.color != 0) {
                     colorPaletteState.animateScrollToItem(noteColorsArgb.indexOf(noteState.value.color))
-                    println(noteState.value.color)
                 }
             }
         }
