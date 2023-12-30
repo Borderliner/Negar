@@ -1,14 +1,6 @@
 package meshki.studio.negarname.ui.screen
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +27,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -42,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -56,11 +48,17 @@ import meshki.studio.negarname.ui.element.ActionButton
 import meshki.studio.negarname.ui.element.SingleNote
 import meshki.studio.negarname.ui.element.NotesOrderSection
 import meshki.studio.negarname.ui.element.NotesSearchSection
+import meshki.studio.negarname.ui.element.Toolbox
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
 import meshki.studio.negarname.vm.MainViewModel
 import meshki.studio.negarname.vm.NotesEvent
 import meshki.studio.negarname.vm.NotesViewModel
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.LaunchedEffect
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -128,71 +126,21 @@ fun NotesScreenMain(
     val mainViewModel = koinInject<MainViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    val filterAnimation = remember { Animatable(0f) }
-    val searchAnimation = remember { Animatable(0f) }
-    filterAnimation.updateBounds(0f, 220f)
-    searchAnimation.updateBounds(0f, 220f)
+    val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
 
-    suspend fun onClickSortButton() {
-        val wasSearchOpen = uiState.isSearchVisible
-        viewModel.onEvent(NotesEvent.OrderToggled)
-
-        scope.launch {
-            if (uiState.isOrderSectionVisible) {
-                searchAnimation.animateTo(
-                    searchAnimation.lowerBound ?: 0f,
-                    tween(0, 20, easing = FastOutSlowInEasing)
-                )
-                filterAnimation.animateTo(
-                    filterAnimation.lowerBound ?: 0f,
-                    tween(400, 20, easing = FastOutSlowInEasing)
-                )
-            } else {
-                if (wasSearchOpen) {
-                    filterAnimation.animateTo(
-                        filterAnimation.upperBound ?: Float.MAX_VALUE,
-                        tween(400, 0, easing = FastOutSlowInEasing)
-                    )
-                    searchAnimation.animateTo(
-                        searchAnimation.upperBound ?: Float.MAX_VALUE,
-                        tween(400, 0, easing = FastOutSlowInEasing)
-                    )
-                } else {
-                    searchAnimation.animateTo(
-                        searchAnimation.lowerBound ?: 0f,
-                        tween(0, 20, easing = FastOutSlowInEasing)
-                    )
-                    filterAnimation.animateTo(
-                        filterAnimation.upperBound ?: Float.MAX_VALUE,
-                        tween(400, 0, easing = FastOutSlowInEasing)
-                    )
-                }
-            }
-        }
-    }
-
-    suspend fun onClickSearchButton() {
-        viewModel.onEvent(NotesEvent.SearchToggled)
-
-        scope.launch {
-            if (uiState.isSearchVisible) {
-                filterAnimation.animateTo(
-                    filterAnimation.lowerBound ?: 0f,
-                    tween(0, 20, easing = FastOutSlowInEasing)
-                )
-                searchAnimation.animateTo(
-                    searchAnimation.lowerBound ?: 0f,
-                    tween(400, 20, easing = FastOutSlowInEasing)
-                )
-            } else {
-                searchAnimation.animateTo(
-                    searchAnimation.upperBound ?: Float.MAX_VALUE,
-                    tween(400, 0, easing = FastOutSlowInEasing)
-                )
-                filterAnimation.snapTo(
-                    searchAnimation.upperBound ?: Float.MAX_VALUE
-                )
-            }
+    LaunchedEffect(viewModel.searchTool.value.visibility.value, viewModel.orderTool.value.visibility.value) {
+        if (viewModel.searchTool.value.visibility.value) {
+            offsetAnimation.value.animateTo(100f,
+                tween(400, 20, easing = FastOutSlowInEasing)
+            )
+        } else if (viewModel.orderTool.value.visibility.value) {
+            offsetAnimation.value.animateTo(110f,
+                tween(400, 20, easing = FastOutSlowInEasing)
+            )
+        } else {
+            offsetAnimation.value.animateTo(offsetAnimation.value.lowerBound ?: 0f,
+                tween(320, 0, easing = FastOutSlowInEasing)
+            )
         }
     }
 
@@ -219,8 +167,8 @@ fun NotesScreenMain(
                 Row(horizontalArrangement = Arrangement.SpaceEvenly) {
                     IconButton(
                         onClick = {
-                            viewModel.viewModelScope.launch {
-                                onClickSearchButton()
+                            scope.launch {
+                                viewModel.onToolClicked("search")
                             }
                         },
                     ) {
@@ -232,8 +180,8 @@ fun NotesScreenMain(
                     }
                     IconButton(
                         onClick = {
-                            viewModel.viewModelScope.launch {
-                                onClickSortButton()
+                            scope.launch {
+                                viewModel.onToolClicked("order")
                             }
                         },
                     ) {
@@ -262,7 +210,10 @@ fun NotesScreenMain(
         ) {
             if (uiState.notes.isNotEmpty()) {
                 LazyColumn(
-                    contentPadding = PaddingValues(bottom = 65.dp)
+                    contentPadding = PaddingValues(bottom = 65.dp),
+                    modifier = Modifier.offset(
+                        0.dp, offsetAnimation.value.value.dp
+                    )
                 ) {
                     items(uiState.notes) { note ->
                         SingleNote(
@@ -320,15 +271,9 @@ fun NotesScreenMain(
             }
         }
     }
-    AnimatedVisibility(
-        visible = uiState.isOrderSectionVisible && filterAnimation.value > (filterAnimation.upperBound
-            ?: Float.MAX_VALUE) * 0.1,
-        enter = fadeIn() + slideInVertically(initialOffsetY = {
-            -it / 2 + 150
-        }),
-        exit = fadeOut() + slideOutVertically(targetOffsetY = {
-            -it / 2 + 150
-        }),
+
+    Toolbox(
+        viewModel.orderTool.value
     ) {
         NotesOrderSection(
             modifier = Modifier
@@ -344,15 +289,9 @@ fun NotesScreenMain(
             }
         }
     }
-    AnimatedVisibility(
-        visible = uiState.isSearchVisible && searchAnimation.value > (searchAnimation.upperBound
-            ?: Float.MAX_VALUE) * 0.6,
-        enter = fadeIn() + slideInVertically(initialOffsetY = {
-            -it / 2 + 150
-        }),
-        exit = fadeOut() + slideOutVertically(targetOffsetY = {
-            -it / 2 + 150
-        }),
+
+    Toolbox(
+        viewModel.searchTool.value
     ) {
         NotesSearchSection(
             modifier = Modifier
@@ -366,7 +305,7 @@ fun NotesScreenMain(
                     viewModel.onEvent(
                         NotesEvent.NoteQueried(
                             it,
-                            viewModel.uiState.value.orderBy
+                            uiState.orderBy
                         )
                     )
                 }

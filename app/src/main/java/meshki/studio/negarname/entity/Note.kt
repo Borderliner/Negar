@@ -58,7 +58,7 @@ sealed interface NotesStateInterface {
     val notes: List<Note>
     val orderBy: OrderBy
     val isSearchVisible: Boolean
-    val isOrderSectionVisible: Boolean
+    val isOrderVisible: Boolean
     val searchInput: String
 
     data class NoNotes(
@@ -67,7 +67,7 @@ sealed interface NotesStateInterface {
         override val notes: List<Note> = emptyList(),
         override val orderBy: OrderBy = OrderBy.Date(OrderType.Descending),
         override val isSearchVisible: Boolean = false,
-        override val isOrderSectionVisible: Boolean = false,
+        override val isOrderVisible: Boolean = false,
         override val searchInput: String = ""
     ) : NotesStateInterface
 
@@ -77,7 +77,7 @@ sealed interface NotesStateInterface {
         override val notes: List<Note>,
         override val orderBy: OrderBy,
         override val isSearchVisible: Boolean,
-        override val isOrderSectionVisible: Boolean,
+        override val isOrderVisible: Boolean,
         override val searchInput: String
     ) : NotesStateInterface
 }
