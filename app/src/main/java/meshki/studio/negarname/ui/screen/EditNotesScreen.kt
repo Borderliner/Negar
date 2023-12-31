@@ -1,6 +1,9 @@
 package meshki.studio.negarname.ui.screen
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,27 +11,34 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -56,9 +67,12 @@ import kotlinx.coroutines.launch
 import meshki.studio.negarname.R
 import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
+import meshki.studio.negarname.entity.Tool
 import meshki.studio.negarname.entity.UiEvent
 import meshki.studio.negarname.ui.element.ActionButton
 import meshki.studio.negarname.ui.element.HintedTextField
+import meshki.studio.negarname.ui.element.PopupSection
+import meshki.studio.negarname.ui.element.Toolbox
 import meshki.studio.negarname.ui.theme.RoundedShapes
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
@@ -145,6 +159,39 @@ fun EditNotesScreenMain(
     val colorPaletteState = rememberLazyListState()
     var workInProgressAlertVisible by remember { mutableStateOf(false) }
 
+    val colorTool = remember { mutableStateOf(Tool("color")) }
+    val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
+
+    suspend fun openTool(tool: MutableState<Tool>, delay: Int = 0) {
+        tool.value.visibility.value = true
+        tool.value.animation.value.animateTo(
+            tool.value.animation.value.upperBound ?: Float.MAX_VALUE,
+            tween(320, delay, easing = FastOutSlowInEasing)
+        )
+    }
+
+    suspend fun closeTool(tool: MutableState<Tool>) {
+        tool.value.visibility.value = false
+        // Animated hide current Tool
+        tool.value.animation.value.snapTo(
+            tool.value.animation.value.lowerBound ?: 0f,
+        )
+    }
+
+    LaunchedEffect(colorTool.value.visibility.value) {
+        if (colorTool.value.visibility.value) {
+            offsetAnimation.value.animateTo(
+                80f,
+                tween(280, 0, easing = FastOutSlowInEasing)
+            )
+        } else {
+            offsetAnimation.value.animateTo(
+                offsetAnimation.value.lowerBound ?: 0f,
+                tween(300, 200, easing = FastOutSlowInEasing)
+            )
+        }
+    }
+
     LaunchedEffect(viewModel.eventFlow) {
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
@@ -176,63 +223,48 @@ fun EditNotesScreenMain(
             .fillMaxSize()
             .background(Color.Transparent)
     ) {
-        LaunchedEffect(noteState.value.color) {
-            scope.launch {
-                delay(500)
-                if (noteState.value.color != 0) {
-                    colorPaletteState.animateScrollToItem(noteColorsArgb.indexOf(noteState.value.color))
-                }
-            }
-        }
-        LazyRow(
-            state = colorPaletteState,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp),
-            contentPadding = PaddingValues(horizontal = 20.dp),
+                .padding(vertical = 12.dp, horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            items(Note.colors) {
-                val colorInt = it.toArgb()
-                Box(
-                    modifier = Modifier
-                        .size(50.dp)
-                        .shadow(15.dp, CircleShape)
-                        .clip(CircleShape)
-                        .background(it)
-                        .clickable {
-                            viewModel.onEvent(
-                                EditNotesEvent.ColorChanged(colorInt)
-                            )
+            Box(
+                modifier = Modifier
+                    .size(45.dp)
+                    .shadow(6.dp, CircleShape)
+                    .clip(CircleShape)
+                    .background(Color(noteState.value.color))
+                    .clickable {
+                        scope.launch {
+                            if (colorTool.value.visibility.value) {
+                                closeTool(colorTool)
+                            } else {
+                                openTool(colorTool)
+                            }
                         }
+                    },
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    if (noteState.value.color == colorInt) {
-                        Column(
-                            modifier = Modifier
-                                .size(50.dp)
-                                .clip(CircleShape)
-                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(0.75f)),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.vec_done),
-                                //modifier = Modifier.background(Color.Black),
-                                contentDescription = "",
-                                tint = Color.Black.copy(0.9f)
-                            )
-                        }
-                    }
+                    Icon(
+                        painterResource(R.drawable.water_drop),
+                        //modifier = Modifier.background(Color.Black),
+                        contentDescription = "",
+                        tint = Color.Black.copy(0.9f)
+                    )
                 }
-
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
         Column(
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier
+                .padding(8.dp)
+                .offset(0.dp, offsetAnimation.value.value.dp)
         ) {
             HintedTextField(
                 modifier = Modifier
@@ -295,6 +327,78 @@ fun EditNotesScreenMain(
                 isHintVisible = viewModel.isTextHintVisible,
                 textStyle = MaterialTheme.typography.bodyMedium.copy(MaterialTheme.colorScheme.onBackground),
             )
+        }
+    }
+
+    Toolbox(
+        colorTool.value.visibility.value,
+        colorTool.value.animation.value
+    ) {
+        PopupSection(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            topPadding = 60.dp,
+            offsetPercent = 0.07f,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+        ) {
+            LaunchedEffect(noteState.value.color) {
+                scope.launch {
+                    delay(500)
+                    if (noteState.value.color != 0) {
+                        colorPaletteState.animateScrollToItem(noteColorsArgb.indexOf(noteState.value.color))
+                    }
+                }
+            }
+            LazyRow(
+                state = colorPaletteState,
+                modifier = Modifier
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items(Note.colors) {
+                    val colorInt = it.toArgb()
+                    Box(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .shadow(15.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(it)
+                            .clickable {
+                                viewModel.onEvent(
+                                    EditNotesEvent.ColorChanged(colorInt)
+                                )
+                            }
+                    ) {
+                        if (noteState.value.color == colorInt) {
+                            Column(
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .clip(CircleShape)
+                                    .background(it)
+                                    .border(
+                                        2.dp,
+                                        MaterialTheme.colorScheme.onBackground.copy(0.75f),
+                                        shape = CircleShape
+                                    ),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    painterResource(R.drawable.vec_done),
+                                    //modifier = Modifier.background(Color.Black),
+                                    contentDescription = "",
+                                    modifier = Modifier.scale(1.2f, 1.2f),
+                                    tint = Color.Black.copy(0.75f)
+                                )
+                            }
+                        }
+                    }
+
+                }
+            }
         }
     }
 }

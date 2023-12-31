@@ -146,7 +146,7 @@ fun NotesScreenMain(
             )
         } else {
             offsetAnimation.value.animateTo(offsetAnimation.value.lowerBound ?: 0f,
-                tween(320, 0, easing = FastOutSlowInEasing)
+                tween(300, 200, easing = FastOutSlowInEasing)
             )
         }
     }
