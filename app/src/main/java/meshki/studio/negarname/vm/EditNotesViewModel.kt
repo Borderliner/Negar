@@ -1,8 +1,10 @@
 package meshki.studio.negarname.vm
 
+import android.app.AlarmManager
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,10 +28,11 @@ sealed class EditNotesEvent {
 
 class EditNotesViewModel(
     private val notesRepository: NotesRepository,
+    val alarmService: AlarmManager?,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val _noteState = mutableStateOf(
-        Note(color = 0, title = "", text = "")
+        Note(color = Note.colors.random().toArgb(), title = "", text = "")
     )
     val noteState: State<Note> = _noteState
 

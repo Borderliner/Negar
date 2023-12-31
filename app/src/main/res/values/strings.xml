@@ -23,4 +23,6 @@
     <string name="crash_report_cancel">Cancel</string>
     <string name="crash_report_comment">Your reports will help us become better.</string>
     <string name="crash_report_email">Your Email</string>
+    <string name="permission_required_title">Permission Required</string>
+    <string name="permission_required_text">You need to grant the requested permissions is order for the app to work properly.</string>
 </resources>

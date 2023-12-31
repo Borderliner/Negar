@@ -5,6 +5,7 @@ import android.content.Context
 import meshki.studio.negarname.di.appModule
 import meshki.studio.negarname.di.dbModule
 import meshki.studio.negarname.di.repositoryModule
+import meshki.studio.negarname.di.systemModule
 import meshki.studio.negarname.di.viewModelModule
 import org.acra.config.dialog
 import org.acra.data.StringFormat
@@ -14,6 +15,7 @@ import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import timber.log.Timber
+import meshki.studio.negarname.BuildConfig
 
 class MainApplication : Application() {
     override fun onCreate() {
@@ -31,6 +33,7 @@ class MainApplication : Application() {
                     dbModule,
                     viewModelModule,
                     repositoryModule,
+                    systemModule,
                     appModule,
                 )
             )

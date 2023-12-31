@@ -1,6 +1,8 @@
 package meshki.studio.negarname.ui.screen
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -24,22 +26,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,22 +48,25 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
-import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import android.Manifest
+import android.os.Build
 import meshki.studio.negarname.R
 import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
 import meshki.studio.negarname.entity.Tool
 import meshki.studio.negarname.entity.UiEvent
+import meshki.studio.negarname.service.NotificationService
+import meshki.studio.negarname.service.setAlarm
 import meshki.studio.negarname.ui.element.ActionButton
 import meshki.studio.negarname.ui.element.HintedTextField
 import meshki.studio.negarname.ui.element.PopupSection
@@ -76,6 +74,7 @@ import meshki.studio.negarname.ui.element.Toolbox
 import meshki.studio.negarname.ui.theme.RoundedShapes
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
+import meshki.studio.negarname.util.checkPermissions
 import meshki.studio.negarname.vm.EditNotesEvent
 import meshki.studio.negarname.vm.EditNotesViewModel
 import meshki.studio.negarname.vm.MainViewModel
@@ -259,6 +258,77 @@ fun EditNotesScreenMain(
                     )
                 }
             }
+
+            val ctx = LocalContext.current
+            val permissions = mutableListOf(
+                Manifest.permission.SET_ALARM
+            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                permissions.add(Manifest.permission.USE_EXACT_ALARM)
+            }
+
+            val permissionTitle = stringResource(R.string.permission_required_title)
+            val permissionText = stringResource(R.string.permission_required_text)
+            val launcher  =
+                rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissionMap ->
+                    val areGranted = permissionMap.values.reduce { acc, next -> acc && next }
+                    if (!areGranted) {
+                        NotificationService.showWarning(ctx, permissionTitle, permissionText)
+                    }
+                }
+            Box(
+                modifier = Modifier
+                    .size(45.dp)
+                    .shadow(6.dp, CircleShape)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.onBackground)
+                    .clickable {
+                        scope.launch {
+                            checkPermissions(ctx, permissions.toTypedArray(), launcher) {
+                                setAlarm(ctx)
+                            }
+
+//                            try {
+//                                val intent = Intent(ctx, AlarmReceiver::class.java)
+//                                val calendar: Calendar = Calendar
+//                                    .getInstance()
+//                                    .apply {
+//                                        timeInMillis = System.currentTimeMillis()
+//                                        set(Calendar.SECOND, Calendar.SECOND + 5)
+//                                    }
+//                                @SuppressLint("UnspecifiedImmutableFlag")
+//                                val pendingIntent =
+//                                    PendingIntent.getBroadcast(
+//                                        ctx, 0, intent,
+//                                        0
+//                                    )
+//                                Timber.i(intent.toString())
+//                                Timber.i(pendingIntent.toString())
+//                                alarm?.setExact(
+//                                    AlarmManager.ELAPSED_REALTIME,
+//                                    calendar.timeInMillis,
+//                                    pendingIntent
+//                                )
+//                            } catch (err: SecurityException) {
+//                                error(err)
+//                            }
+                        }
+                    },
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painterResource(R.drawable.alarm),
+                        //modifier = Modifier.background(Color.Black),
+                        contentDescription = "",
+                        tint = MaterialTheme.colorScheme.background.copy(0.9f)
+                    )
+                }
+            }
         }
 
         Column(
@@ -403,3 +473,4 @@ fun EditNotesScreenMain(
         }
     }
 }
+

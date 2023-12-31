@@ -1,5 +1,10 @@
 package meshki.studio.negarname
 
+import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import meshki.studio.negarname.service.AlarmReceiver
 import meshki.studio.negarname.ui.element.BottomBar
 import meshki.studio.negarname.ui.element.TopBar
 import meshki.studio.negarname.ui.theme.NegarTheme
@@ -32,6 +38,7 @@ import meshki.studio.negarname.util.RightToLeftLayout
 import meshki.studio.negarname.vm.MainViewModel
 import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
+import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,7 +92,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 
 @Composable
 fun MainScreenScaffold(navController: NavHostController) {

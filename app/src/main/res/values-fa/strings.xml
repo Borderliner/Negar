@@ -24,4 +24,6 @@
     <string name="crash_report_cancel">Cancel</string>
     <string name="crash_report_comment">Your reports will help us become better.</string>
     <string name="crash_report_email">Your Email</string>
+    <string name="permission_required_title">نیازمند دسترسی بیشتر</string>
+    <string name="permission_required_text">برای اینکه نگارنامه به درستی کار کند، نیازمند دسترسی‌های بیشتر است.</string>
 </resources>
