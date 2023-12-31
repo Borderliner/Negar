@@ -18,4 +18,10 @@
     <string name="ascending">صعودی</string>
     <string name="descending">نزولی</string>
     <string name="search">جستجو</string>
+    <string name="crash_report_text">Unfortunately, Negarname has fatally crashed. Please allow it to send a report to the developer via email.</string>
+    <string name="crash_report_title">Report Crash?</string>
+    <string name="crash_report_ok">OK</string>
+    <string name="crash_report_cancel">Cancel</string>
+    <string name="crash_report_comment">Your reports will help us become better.</string>
+    <string name="crash_report_email">Your Email</string>
 </resources>

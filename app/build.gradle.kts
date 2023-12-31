@@ -41,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -77,6 +78,10 @@ dependencies {
     implementation(libs.room.ktx)
     implementation(libs.gson)
     implementation(libs.richtext)
+    implementation(libs.timber)
+    implementation(libs.acra)
+    implementation(libs.acra.mail)
+    implementation(libs.acra.dialog)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
