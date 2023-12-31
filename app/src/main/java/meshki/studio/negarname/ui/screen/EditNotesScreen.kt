@@ -331,14 +331,14 @@ fun EditNotesScreenMain(
     }
 
     Toolbox(
-        colorTool.value.visibility.value,
-        colorTool.value.animation.value
+        colorTool.value.visibility,
+        colorTool.value.animation
     ) {
         PopupSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
-            topPadding = 60.dp,
+            topPadding = 63.dp,
             offsetPercent = 0.07f,
             color = MaterialTheme.colorScheme.secondaryContainer,
         ) {
@@ -370,17 +370,18 @@ fun EditNotesScreenMain(
                                 viewModel.onEvent(
                                     EditNotesEvent.ColorChanged(colorInt)
                                 )
-                            }
+                            },
+                        contentAlignment = Alignment.Center
                     ) {
                         if (noteState.value.color == colorInt) {
                             Column(
                                 modifier = Modifier
-                                    .size(50.dp)
+                                    .size(45.dp)
                                     .clip(CircleShape)
                                     .background(it)
                                     .border(
                                         2.dp,
-                                        MaterialTheme.colorScheme.onBackground.copy(0.75f),
+                                        Color.Black.copy(0.75f),
                                         shape = CircleShape
                                     ),
                                 horizontalAlignment = Alignment.CenterHorizontally,

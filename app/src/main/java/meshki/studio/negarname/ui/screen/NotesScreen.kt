@@ -61,6 +61,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.zIndex
 import meshki.studio.negarname.entity.Tool
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -189,6 +190,7 @@ fun NotesScreenMain(
             Column {
                 Row(horizontalArrangement = Arrangement.SpaceEvenly) {
                     IconButton(
+                        modifier = Modifier.zIndex(16f),
                         onClick = {
                             scope.launch {
                                 //onToolClicked(searchTool)
@@ -209,6 +211,7 @@ fun NotesScreenMain(
                         )
                     }
                     IconButton(
+                        modifier = Modifier.zIndex(6f),
                         onClick = {
                             scope.launch {
                                 //onToolClicked(orderTool)
@@ -310,8 +313,8 @@ fun NotesScreenMain(
     }
 
     Toolbox(
-        orderTool.value.visibility.value,
-        orderTool.value.animation.value
+        orderTool.value.visibility,
+        orderTool.value.animation
     ) {
         NotesOrderSection(
             modifier = Modifier
@@ -329,8 +332,8 @@ fun NotesScreenMain(
     }
 
     Toolbox(
-        searchTool.value.visibility.value,
-        searchTool.value.animation.value
+        searchTool.value.visibility,
+        searchTool.value.animation
     ) {
         NotesSearchSection(
             modifier = Modifier
