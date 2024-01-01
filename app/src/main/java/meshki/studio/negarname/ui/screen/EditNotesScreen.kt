@@ -65,12 +65,14 @@ import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
 import meshki.studio.negarname.entity.Tool
 import meshki.studio.negarname.entity.UiEvent
+import meshki.studio.negarname.service.AlarmData
 import meshki.studio.negarname.service.NotificationService
 import meshki.studio.negarname.service.setAlarm
 import meshki.studio.negarname.ui.element.ActionButton
 import meshki.studio.negarname.ui.element.HintedTextField
 import meshki.studio.negarname.ui.element.PopupSection
 import meshki.studio.negarname.ui.element.Toolbox
+import meshki.studio.negarname.ui.theme.PastelOrange
 import meshki.studio.negarname.ui.theme.RoundedShapes
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
@@ -80,6 +82,7 @@ import meshki.studio.negarname.vm.EditNotesViewModel
 import meshki.studio.negarname.vm.MainViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import timber.log.Timber
 
 
 @Composable
@@ -260,13 +263,15 @@ fun EditNotesScreenMain(
             }
 
             val ctx = LocalContext.current
-            val permissions = mutableListOf(
-                Manifest.permission.SET_ALARM
-            )
+            val permissions = mutableListOf<String>()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-                permissions.add(Manifest.permission.USE_EXACT_ALARM)
+                // permissions.add(Manifest.permission.USE_EXACT_ALARM)
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                permissions.add(Manifest.permission.FOREGROUND_SERVICE)
+            }
+            permissions.add(Manifest.permission.WAKE_LOCK)
 
             val permissionTitle = stringResource(R.string.permission_required_title)
             val permissionText = stringResource(R.string.permission_required_text)
@@ -282,11 +287,17 @@ fun EditNotesScreenMain(
                     .size(45.dp)
                     .shadow(6.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onBackground)
+                    .background(PastelOrange)
                     .clickable {
                         scope.launch {
+                            Timber.d(permissions.toString())
                             checkPermissions(ctx, permissions.toTypedArray(), launcher) {
-                                setAlarm(ctx)
+                                setAlarm(ctx, AlarmData(
+                                    System.currentTimeMillis() + 5000,
+                                    noteState.value.title,
+                                    noteState.value.text,
+                                    true
+                                ))
                             }
 
 //                            try {
