@@ -279,7 +279,7 @@ fun EditNotesScreenMain(
                 rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissionMap ->
                     val areGranted = permissionMap.values.reduce { acc, next -> acc && next }
                     if (!areGranted) {
-                        NotificationService.showWarning(ctx, permissionTitle, permissionText)
+                        NotificationService.showWarning(ctx, permissionTitle, permissionText, true)
                     }
                 }
             Box(

@@ -26,4 +26,5 @@
     <string name="crash_report_email">Your Email</string>
     <string name="permission_required_title">نیازمند دسترسی بیشتر</string>
     <string name="permission_required_text">برای اینکه نگارنامه به درستی کار کند، نیازمند دسترسی‌های بیشتر است.</string>
+    <string name="snooze">خاموش</string>
 </resources>
