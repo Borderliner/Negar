@@ -15,6 +15,7 @@ val PastelLime = Color(0xFFe0ee99)
 val PastelYellow = Color(0xFFfbf39f)
 val PastelOrange = Color(0xFFf6c7a7)
 val PastelPink = Color(0xFFfbb4c7)
+val PastelRed = Color(0xFFDF567B)
 val PastelBlue = Color(0xFFacd5ea)
 val PastelPurple = Color(0xFFcdb7f0)
 val PastelLavender = Color(0xFFb0bce7

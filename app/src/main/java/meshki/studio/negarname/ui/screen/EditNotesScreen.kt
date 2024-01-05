@@ -61,6 +61,15 @@ import kotlinx.coroutines.launch
 import android.Manifest
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import meshki.studio.negarname.R
 import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
@@ -77,6 +86,7 @@ import meshki.studio.negarname.ui.element.Toolbox
 import meshki.studio.negarname.ui.theme.PastelGreen
 import meshki.studio.negarname.ui.theme.PastelLime
 import meshki.studio.negarname.ui.theme.PastelOrange
+import meshki.studio.negarname.ui.theme.PastelRed
 import meshki.studio.negarname.ui.theme.RoundedShapes
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
@@ -168,6 +178,7 @@ fun EditNotesScreenMain(
     var workInProgressAlertVisible by remember { mutableStateOf(false) }
 
     val colorTool = remember { mutableStateOf(Tool("color")) }
+    val recorderTool = remember { mutableStateOf(Tool("recorder")) }
     val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
     val ctx = LocalContext.current
 
@@ -191,6 +202,11 @@ fun EditNotesScreenMain(
         if (colorTool.value.visibility.value) {
             offsetAnimation.value.animateTo(
                 80f,
+                tween(280, 0, easing = FastOutSlowInEasing)
+            )
+        } else if (recorderTool.value.visibility.value) {
+            offsetAnimation.value.animateTo(
+                110f,
                 tween(280, 0, easing = FastOutSlowInEasing)
             )
         } else {
@@ -354,67 +370,35 @@ fun EditNotesScreenMain(
                 }
             }
 
-            val voicePermissionTitle = stringResource(R.string.permission_required_title)
-            val voicePermissionText = stringResource(R.string.permission_required_text)
-            val voicePermissionLauncher =
-                rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                    if (!granted) {
-                        Toast.makeText(ctx, voicePermissionText, Toast.LENGTH_LONG).show()
-                    }
-                }
-            var isRecording by remember { mutableStateOf(false) }
             Box(
                 modifier = Modifier
                     .size(45.dp)
                     .shadow(6.dp, CircleShape)
                     .clip(CircleShape)
                     .background(PastelLime)
+//                    .clickable {
+//                        scope.launch {
+//                            Timber.d(notificationPermissions.toString())
+//                            checkPermission(
+//                                ctx,
+//                                Manifest.permission.RECORD_AUDIO,
+//                                voicePermissionLauncher
+//                            ) {
+//                                val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
+//                                if (!isRecording) {
+//                                    isRecording = recorder.startRecording()
+//                                } else {
+//                                    isRecording = !recorder.stopRecording()
+//                                }
+//                            }
+//                        }
+//                    },
                     .clickable {
                         scope.launch {
-                            Timber.d(notificationPermissions.toString())
-                            checkPermission(
-                                ctx,
-                                Manifest.permission.RECORD_AUDIO,
-                                voicePermissionLauncher
-                            ) {
-                                val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
-                                if (!isRecording) {
-                                    isRecording = recorder.startRecording()
-                                } else {
-                                    isRecording = !recorder.stopRecording()
-                                }
-                            }
-                        }
-                    },
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painterResource(if (isRecording) R.drawable.stop else R.drawable.mic),
-                        //modifier = Modifier.background(Color.Black),
-                        contentDescription = "",
-                        tint = Color.Black.copy(0.9f)
-                    )
-                }
-            }
-
-            var isPlaying by remember { mutableStateOf(false) }
-            Box(
-                modifier = Modifier
-                    .size(45.dp)
-                    .shadow(6.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(PastelGreen)
-                    .clickable {
-                        scope.launch {
-                            val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
-                            if (!isPlaying) {
-                                isPlaying = recorder.startPlaying()
+                            if (recorderTool.value.visibility.value) {
+                                closeTool(recorderTool)
                             } else {
-                                isPlaying = !recorder.stopPlaying()
+                                openTool(recorderTool)
                             }
                         }
                     },
@@ -425,7 +409,7 @@ fun EditNotesScreenMain(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        painterResource(if (isPlaying) R.drawable.stop else R.drawable.play_arrow),
+                        painterResource(R.drawable.mic),
                         //modifier = Modifier.background(Color.Black),
                         contentDescription = "",
                         tint = Color.Black.copy(0.9f)
@@ -571,6 +555,107 @@ fun EditNotesScreenMain(
                         }
                     }
 
+                }
+            }
+        }
+    }
+
+    Toolbox(
+        recorderTool.value.visibility,
+        recorderTool.value.animation
+    ) {
+        PopupSection(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, start = 40.dp),
+            topPadding = 63.dp,
+            offsetPercent = 0.23f,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+        ) {
+            Box(modifier = Modifier.padding(all = 12.dp)) {
+                Column(
+                    modifier = Modifier.padding(4.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Time: 00:00")
+                    Row(
+                        modifier = Modifier.padding(top = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        val voicePermissionTitle =
+                            stringResource(R.string.permission_required_title)
+                        val voicePermissionText = stringResource(R.string.permission_required_text)
+                        val voicePermissionLauncher =
+                            rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                                if (!granted) {
+                                    Toast.makeText(ctx, voicePermissionText, Toast.LENGTH_LONG)
+                                        .show()
+                                }
+                            }
+                        var isRecording by remember { mutableStateOf(false) }
+                        ElevatedButton(
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                PastelRed,
+                                MaterialTheme.colorScheme.onBackground
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(4.dp),
+                            onClick = {
+                                scope.launch {
+                                    checkPermission(
+                                        ctx,
+                                        Manifest.permission.RECORD_AUDIO,
+                                        voicePermissionLauncher
+                                    ) {
+                                        val recorder =
+                                            VoiceRecorder(ctx, noteState.value.id.toString())
+                                        if (!isRecording) {
+                                            isRecording = recorder.startRecording()
+                                        } else {
+                                            isRecording = !recorder.stopRecording()
+                                        }
+                                    }
+                                }
+                            }) {
+                            Icon(
+                                painterResource(if (isRecording) R.drawable.stop else R.drawable.mic),
+                                //modifier = Modifier.background(Color.Black),
+                                contentDescription = "",
+                                tint = Color.Black.copy(0.9f)
+                            )
+                            Text(text = if (isRecording) stringResource(R.string.stop) else stringResource(
+                                R.string.record
+                            ))
+                        }
+
+                        var isPlaying by remember { mutableStateOf(false) }
+                        ElevatedButton(
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                PastelGreen,
+                                MaterialTheme.colorScheme.onBackground
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(4.dp),
+                            onClick = {
+                                scope.launch {
+                                    val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
+                                    if (!isPlaying) {
+                                        isPlaying = recorder.startPlaying()
+                                    } else {
+                                        isPlaying = !recorder.stopPlaying()
+                                    }
+                                }
+                            }) {
+                            Icon(
+                                painterResource(if (isPlaying) R.drawable.stop else R.drawable.play_arrow),
+                                //modifier = Modifier.background(Color.Black),
+                                contentDescription = "",
+                                tint = Color.Black.copy(0.9f)
+                            )
+                            Text(text = if (isPlaying) stringResource(R.string.stop) else stringResource(
+                                R.string.play
+                            ))
+                        }
+                    }
                 }
             }
         }

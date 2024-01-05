@@ -27,4 +27,7 @@
     <string name="permission_required_title">نیازمند دسترسی بیشتر</string>
     <string name="permission_required_text">برای اینکه نگارنامه به درستی کار کند، نیازمند دسترسی‌های بیشتر است.</string>
     <string name="snooze">خاموش</string>
+    <string name="record">ضبط</string>
+    <string name="stop">ایست</string>
+    <string name="play">پخش</string>
 </resources>

@@ -26,4 +26,7 @@
     <string name="permission_required_title">Permission Required</string>
     <string name="permission_required_text">You need to grant the requested permissions is order for the app to work properly.</string>
     <string name="snooze">Snooze</string>
+    <string name="record">Record</string>
+    <string name="stop">Stop</string>
+    <string name="play">Play</string>
 </resources>
