@@ -9,6 +9,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Kalendar" />
+            <option value="$PROJECT_DIR$/Kalendar/kalendar" />
+            <option value="$PROJECT_DIR$/Kalendar/kalendar-endlos" />
             <option value="$PROJECT_DIR$/app" />
           </set>
         </option>
