@@ -68,15 +68,20 @@ import meshki.studio.negarname.entity.Tool
 import meshki.studio.negarname.entity.UiEvent
 import meshki.studio.negarname.service.AlarmData
 import meshki.studio.negarname.service.NotificationService
+import meshki.studio.negarname.service.VoiceRecorder
 import meshki.studio.negarname.service.setAlarm
 import meshki.studio.negarname.ui.element.ActionButton
 import meshki.studio.negarname.ui.element.HintedTextField
 import meshki.studio.negarname.ui.element.PopupSection
 import meshki.studio.negarname.ui.element.Toolbox
+import meshki.studio.negarname.ui.theme.PastelGreen
+import meshki.studio.negarname.ui.theme.PastelLime
 import meshki.studio.negarname.ui.theme.PastelOrange
 import meshki.studio.negarname.ui.theme.RoundedShapes
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
+import meshki.studio.negarname.util.checkAlarmsPermission
+import meshki.studio.negarname.util.checkPermission
 import meshki.studio.negarname.util.checkPermissions
 import meshki.studio.negarname.vm.EditNotesEvent
 import meshki.studio.negarname.vm.EditNotesViewModel
@@ -164,6 +169,7 @@ fun EditNotesScreenMain(
 
     val colorTool = remember { mutableStateOf(Tool("color")) }
     val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
+    val ctx = LocalContext.current
 
     suspend fun openTool(tool: MutableState<Tool>, delay: Int = 0) {
         tool.value.visibility.value = true
@@ -263,24 +269,22 @@ fun EditNotesScreenMain(
                 }
             }
 
-            val ctx = LocalContext.current
-            val permissions = mutableListOf<String>()
+            val notificationPermissions = mutableListOf<String>()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-                // permissions.add(Manifest.permission.USE_EXACT_ALARM)
+                notificationPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                permissions.add(Manifest.permission.FOREGROUND_SERVICE)
+                notificationPermissions.add(Manifest.permission.FOREGROUND_SERVICE)
             }
-            permissions.add(Manifest.permission.WAKE_LOCK)
+            notificationPermissions.add(Manifest.permission.WAKE_LOCK)
 
-            val permissionTitle = stringResource(R.string.permission_required_title)
-            val permissionText = stringResource(R.string.permission_required_text)
-            val launcher  =
+            val notificationPermissionTitle = stringResource(R.string.permission_required_title)
+            val notificationPermissionText = stringResource(R.string.permission_required_text)
+            val notificationPermissionLauncher =
                 rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissionMap ->
                     val areGranted = permissionMap.values.reduce { acc, next -> acc && next }
                     if (!areGranted) {
-                       Toast.makeText(ctx, permissionText, Toast.LENGTH_LONG).show()
+                        Toast.makeText(ctx, notificationPermissionText, Toast.LENGTH_LONG).show()
                     }
                 }
             Box(
@@ -291,15 +295,22 @@ fun EditNotesScreenMain(
                     .background(PastelOrange)
                     .clickable {
                         scope.launch {
-                            Timber.d(permissions.toString())
-                            checkPermissions(ctx, permissions.toTypedArray(), launcher) {
-                                setAlarm(ctx, AlarmData(
-                                    id = 0,
-                                    time = System.currentTimeMillis() + 2000,
-                                    title = noteState.value.title,
-                                    text = noteState.value.text,
-                                    critical = true
-                                ))
+                            Timber.d(notificationPermissions.toString())
+                            checkAlarmsPermission(ctx)
+                            checkPermissions(
+                                ctx,
+                                notificationPermissions.toTypedArray(),
+                                notificationPermissionLauncher
+                            ) {
+                                setAlarm(
+                                    ctx, AlarmData(
+                                        id = 0,
+                                        time = System.currentTimeMillis() + 2000,
+                                        title = noteState.value.title,
+                                        text = noteState.value.text,
+                                        critical = true
+                                    )
+                                )
                             }
 
 //                            try {
@@ -336,6 +347,85 @@ fun EditNotesScreenMain(
                 ) {
                     Icon(
                         painterResource(R.drawable.alarm),
+                        //modifier = Modifier.background(Color.Black),
+                        contentDescription = "",
+                        tint = Color.Black.copy(0.9f)
+                    )
+                }
+            }
+
+            val voicePermissionTitle = stringResource(R.string.permission_required_title)
+            val voicePermissionText = stringResource(R.string.permission_required_text)
+            val voicePermissionLauncher =
+                rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                    if (!granted) {
+                        Toast.makeText(ctx, voicePermissionText, Toast.LENGTH_LONG).show()
+                    }
+                }
+            var isRecording by remember { mutableStateOf(false) }
+            Box(
+                modifier = Modifier
+                    .size(45.dp)
+                    .shadow(6.dp, CircleShape)
+                    .clip(CircleShape)
+                    .background(PastelLime)
+                    .clickable {
+                        scope.launch {
+                            Timber.d(notificationPermissions.toString())
+                            checkPermission(
+                                ctx,
+                                Manifest.permission.RECORD_AUDIO,
+                                voicePermissionLauncher
+                            ) {
+                                val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
+                                if (!isRecording) {
+                                    isRecording = recorder.startRecording()
+                                } else {
+                                    isRecording = !recorder.stopRecording()
+                                }
+                            }
+                        }
+                    },
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painterResource(if (isRecording) R.drawable.stop else R.drawable.mic),
+                        //modifier = Modifier.background(Color.Black),
+                        contentDescription = "",
+                        tint = Color.Black.copy(0.9f)
+                    )
+                }
+            }
+
+            var isPlaying by remember { mutableStateOf(false) }
+            Box(
+                modifier = Modifier
+                    .size(45.dp)
+                    .shadow(6.dp, CircleShape)
+                    .clip(CircleShape)
+                    .background(PastelGreen)
+                    .clickable {
+                        scope.launch {
+                            val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
+                            if (!isPlaying) {
+                                isPlaying = recorder.startPlaying()
+                            } else {
+                                isPlaying = !recorder.stopPlaying()
+                            }
+                        }
+                    },
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painterResource(if (isPlaying) R.drawable.stop else R.drawable.play_arrow),
                         //modifier = Modifier.background(Color.Black),
                         contentDescription = "",
                         tint = Color.Black.copy(0.9f)
