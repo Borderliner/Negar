@@ -58,6 +58,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":Kalendar:kalendar"))
+    implementation(project(":Kalendar:kalendar-endlos"))
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
 
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
