@@ -18,5 +18,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Negarname"
+include(":Kalendar")
 include(":app")
  
