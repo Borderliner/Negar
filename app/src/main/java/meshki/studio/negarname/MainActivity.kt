@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import meshki.studio.negarname.service.AlarmReceiver
 import meshki.studio.negarname.ui.element.BottomBar
 import meshki.studio.negarname.ui.element.TopBar
 import meshki.studio.negarname.ui.theme.NegarTheme

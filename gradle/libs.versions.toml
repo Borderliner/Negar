@@ -55,3 +55,4 @@ acra-dialog = { group = "ch.acra", name = "acra-dialog", version.ref = "acra" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+kotlin-extensions = { id = "org.jetbrains.kotlin.android.extensions" }

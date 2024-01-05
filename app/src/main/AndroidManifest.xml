@@ -6,8 +6,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
@@ -40,11 +40,16 @@
                 android:name="autoStoreLocales"
                 android:value="true" />
         </service>
-        <receiver
-            android:name="meshki.studio.negarname.service.AlarmReceiver"
-            android:enabled="true"
-            android:exported="false"
-            android:process=":remote" />
+        <service
+            android:name="meshki.studio.negarname.service.NotificationService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false">
+        </service>
+<!--        <receiver-->
+<!--            android:name="meshki.studio.negarname.service.AlarmReceiver"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="false"-->
+<!--            android:process=":remote" />-->
     </application>
 
 </manifest>

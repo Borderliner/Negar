@@ -60,6 +60,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import android.Manifest
 import android.os.Build
+import android.widget.Toast
 import meshki.studio.negarname.R
 import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
@@ -279,7 +280,7 @@ fun EditNotesScreenMain(
                 rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissionMap ->
                     val areGranted = permissionMap.values.reduce { acc, next -> acc && next }
                     if (!areGranted) {
-                        NotificationService.showWarning(ctx, permissionTitle, permissionText, true)
+                       Toast.makeText(ctx, permissionText, Toast.LENGTH_LONG).show()
                     }
                 }
             Box(
@@ -293,10 +294,11 @@ fun EditNotesScreenMain(
                             Timber.d(permissions.toString())
                             checkPermissions(ctx, permissions.toTypedArray(), launcher) {
                                 setAlarm(ctx, AlarmData(
-                                    System.currentTimeMillis() + 5000,
-                                    noteState.value.title,
-                                    noteState.value.text,
-                                    true
+                                    id = 0,
+                                    time = System.currentTimeMillis() + 2000,
+                                    title = noteState.value.title,
+                                    text = noteState.value.text,
+                                    critical = true
                                 ))
                             }
 
@@ -336,7 +338,7 @@ fun EditNotesScreenMain(
                         painterResource(R.drawable.alarm),
                         //modifier = Modifier.background(Color.Black),
                         contentDescription = "",
-                        tint = MaterialTheme.colorScheme.background.copy(0.9f)
+                        tint = Color.Black.copy(0.9f)
                     )
                 }
             }
