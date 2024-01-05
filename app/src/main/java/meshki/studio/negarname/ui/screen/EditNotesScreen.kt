@@ -61,22 +61,18 @@ import kotlinx.coroutines.launch
 import android.Manifest
 import android.os.Build
 import android.widget.Toast
-import androidx.compose.material3.Button
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonColors
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import meshki.studio.negarname.R
 import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
 import meshki.studio.negarname.entity.Tool
 import meshki.studio.negarname.entity.UiEvent
 import meshki.studio.negarname.service.AlarmData
-import meshki.studio.negarname.service.NotificationService
 import meshki.studio.negarname.service.VoiceRecorder
 import meshki.studio.negarname.service.setAlarm
 import meshki.studio.negarname.ui.element.ActionButton
@@ -84,8 +80,8 @@ import meshki.studio.negarname.ui.element.HintedTextField
 import meshki.studio.negarname.ui.element.PopupSection
 import meshki.studio.negarname.ui.element.Toolbox
 import meshki.studio.negarname.ui.theme.PastelGreen
-import meshki.studio.negarname.ui.theme.PastelLime
-import meshki.studio.negarname.ui.theme.PastelOrange
+import meshki.studio.negarname.ui.theme.PastelLavender
+import meshki.studio.negarname.ui.theme.PastelPink
 import meshki.studio.negarname.ui.theme.PastelRed
 import meshki.studio.negarname.ui.theme.RoundedShapes
 import meshki.studio.negarname.util.LeftToRightLayout
@@ -308,7 +304,7 @@ fun EditNotesScreenMain(
                     .size(45.dp)
                     .shadow(6.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(PastelOrange)
+                    .background(PastelLavender)
                     .clickable {
                         scope.launch {
                             Timber.d(notificationPermissions.toString())
@@ -375,24 +371,7 @@ fun EditNotesScreenMain(
                     .size(45.dp)
                     .shadow(6.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(PastelLime)
-//                    .clickable {
-//                        scope.launch {
-//                            Timber.d(notificationPermissions.toString())
-//                            checkPermission(
-//                                ctx,
-//                                Manifest.permission.RECORD_AUDIO,
-//                                voicePermissionLauncher
-//                            ) {
-//                                val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
-//                                if (!isRecording) {
-//                                    isRecording = recorder.startRecording()
-//                                } else {
-//                                    isRecording = !recorder.stopRecording()
-//                                }
-//                            }
-//                        }
-//                    },
+                    .background(PastelPink)
                     .clickable {
                         scope.launch {
                             if (recorderTool.value.visibility.value) {
@@ -434,6 +413,7 @@ fun EditNotesScreenMain(
                     .padding(bottom = 4.dp),
                 text = noteState.value.title,
                 hint = stringResource(R.string.title),
+                color = Color(noteState.value.color),
                 hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
                 onValueChange = {
                     viewModel.onEvent(EditNotesEvent.TitleEntered(it))
@@ -444,6 +424,7 @@ fun EditNotesScreenMain(
                 },
                 isHintVisible = viewModel.isTitleHintVisible,
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done),
                 textStyle = MaterialTheme.typography.titleSmall.copy(MaterialTheme.colorScheme.onBackground)
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -472,6 +453,7 @@ fun EditNotesScreenMain(
                     .padding(horizontal = 8.dp),
                 text = noteState.value.text,
                 hint = stringResource(R.string.note_text_hint),
+                color = Color(noteState.value.color),
                 hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
                 onValueChange = {
                     viewModel.onEvent(EditNotesEvent.TextEntered(it))
@@ -482,6 +464,7 @@ fun EditNotesScreenMain(
                 },
                 expanded = true,
                 isHintVisible = viewModel.isTextHintVisible,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(MaterialTheme.colorScheme.onBackground),
             )
         }
