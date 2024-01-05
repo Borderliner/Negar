@@ -37,6 +37,7 @@ fun PopupSection(
     Box(
         modifier = modifier
             .background(Color.Transparent)
+            .padding(bottom = 3.dp)
             .onGloballyPositioned {
                 //here u can access the parent layout coordinate size
                 boxSize = it.parentLayoutCoordinates?.size?.toSize() ?: Size.Zero
