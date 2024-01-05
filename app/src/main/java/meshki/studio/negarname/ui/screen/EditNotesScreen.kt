@@ -608,7 +608,7 @@ fun EditNotesScreenMain(
                         ElevatedButton(
                             colors = ButtonDefaults.elevatedButtonColors(
                                 PastelRed,
-                                MaterialTheme.colorScheme.onBackground
+                                Color.Black.copy(0.9f)
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
@@ -645,7 +645,7 @@ fun EditNotesScreenMain(
                         ElevatedButton(
                             colors = ButtonDefaults.elevatedButtonColors(
                                 PastelGreen,
-                                MaterialTheme.colorScheme.onBackground
+                                Color.Black.copy(0.9f)
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
@@ -742,7 +742,7 @@ fun EditNotesScreenMain(
                         ElevatedButton(
                             colors = ButtonDefaults.elevatedButtonColors(
                                 PastelLavender,
-                                MaterialTheme.colorScheme.onBackground
+                                Color.Black.copy(0.9f)
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
