@@ -29,4 +29,7 @@
     <string name="record">Record</string>
     <string name="stop">Stop</string>
     <string name="play">Play</string>
+    <string name="set_alarm">Set Alarm</string>
+    <string name="alarm">Alarm</string>
+    <string name="time">Time</string>
 </resources>

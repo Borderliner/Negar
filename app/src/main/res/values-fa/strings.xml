@@ -30,4 +30,7 @@
     <string name="record">ضبط</string>
     <string name="stop">ایست</string>
     <string name="play">پخش</string>
+    <string name="set_alarm">تنظیم زنگ</string>
+    <string name="alarm">زنگ</string>
+    <string name="time">زمان</string>
 </resources>

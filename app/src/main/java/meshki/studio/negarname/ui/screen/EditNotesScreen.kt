@@ -64,9 +64,14 @@ import android.widget.Toast
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimeInput
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import meshki.studio.negarname.R
 import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
@@ -95,6 +100,7 @@ import meshki.studio.negarname.vm.MainViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import timber.log.Timber
+import java.util.Calendar
 
 
 @Composable
@@ -159,6 +165,7 @@ fun EditNotesScreenScaffold(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditNotesScreenMain(
     viewModel: EditNotesViewModel,
@@ -175,6 +182,7 @@ fun EditNotesScreenMain(
 
     val colorTool = remember { mutableStateOf(Tool("color")) }
     val recorderTool = remember { mutableStateOf(Tool("recorder")) }
+    val alarmTool = remember { mutableStateOf(Tool("alarm")) }
     val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
     val ctx = LocalContext.current
 
@@ -194,24 +202,33 @@ fun EditNotesScreenMain(
         )
     }
 
-    LaunchedEffect(colorTool.value.visibility.value) {
-        if (colorTool.value.visibility.value) {
-            offsetAnimation.value.animateTo(
-                80f,
-                tween(280, 0, easing = FastOutSlowInEasing)
-            )
-        } else if (recorderTool.value.visibility.value) {
-            offsetAnimation.value.animateTo(
-                110f,
-                tween(280, 0, easing = FastOutSlowInEasing)
-            )
-        } else {
-            offsetAnimation.value.animateTo(
-                offsetAnimation.value.lowerBound ?: 0f,
-                tween(300, 200, easing = FastOutSlowInEasing)
-            )
-        }
-    }
+//    LaunchedEffect(
+//        colorTool.value.visibility.value,
+//        recorderTool.value.visibility.value,
+//        alarmTool.value.visibility.value
+//    ) {
+//        if (colorTool.value.visibility.value) {
+//            offsetAnimation.value.animateTo(
+//                80f,
+//                tween(280, 0, easing = FastOutSlowInEasing)
+//            )
+//        } else if (recorderTool.value.visibility.value) {
+//            offsetAnimation.value.animateTo(
+//                110f,
+//                tween(280, 0, easing = FastOutSlowInEasing)
+//            )
+//        } else if (alarmTool.value.visibility.value) {
+//            offsetAnimation.value.animateTo(
+//                240f,
+//                tween(280, 0, easing = FastOutSlowInEasing)
+//            )
+//        } else {
+//            offsetAnimation.value.animateTo(
+//                offsetAnimation.value.lowerBound ?: 0f,
+//                tween(300, 200, easing = FastOutSlowInEasing)
+//            )
+//        }
+//    }
 
     LaunchedEffect(viewModel.eventFlow) {
         viewModel.eventFlow.collectLatest { event ->
@@ -259,10 +276,14 @@ fun EditNotesScreenMain(
                     .background(Color(noteState.value.color))
                     .clickable {
                         scope.launch {
-                            if (colorTool.value.visibility.value) {
-                                closeTool(colorTool)
-                            } else {
+                            if (!colorTool.value.visibility.value) {
+                                closeTool(recorderTool)
+                                closeTool(alarmTool)
                                 openTool(colorTool)
+                            } else {
+                                closeTool(colorTool)
+                                closeTool(recorderTool)
+                                closeTool(alarmTool)
                             }
                         }
                     },
@@ -281,24 +302,6 @@ fun EditNotesScreenMain(
                 }
             }
 
-            val notificationPermissions = mutableListOf<String>()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                notificationPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                notificationPermissions.add(Manifest.permission.FOREGROUND_SERVICE)
-            }
-            notificationPermissions.add(Manifest.permission.WAKE_LOCK)
-
-            val notificationPermissionTitle = stringResource(R.string.permission_required_title)
-            val notificationPermissionText = stringResource(R.string.permission_required_text)
-            val notificationPermissionLauncher =
-                rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissionMap ->
-                    val areGranted = permissionMap.values.reduce { acc, next -> acc && next }
-                    if (!areGranted) {
-                        Toast.makeText(ctx, notificationPermissionText, Toast.LENGTH_LONG).show()
-                    }
-                }
             Box(
                 modifier = Modifier
                     .size(45.dp)
@@ -307,23 +310,32 @@ fun EditNotesScreenMain(
                     .background(PastelLavender)
                     .clickable {
                         scope.launch {
-                            Timber.d(notificationPermissions.toString())
-                            checkAlarmsPermission(ctx)
-                            checkPermissions(
-                                ctx,
-                                notificationPermissions.toTypedArray(),
-                                notificationPermissionLauncher
-                            ) {
-                                setAlarm(
-                                    ctx, AlarmData(
-                                        id = 0,
-                                        time = System.currentTimeMillis() + 2000,
-                                        title = noteState.value.title,
-                                        text = noteState.value.text,
-                                        critical = true
-                                    )
-                                )
+                            if (!alarmTool.value.visibility.value) {
+                                closeTool(colorTool)
+                                closeTool(recorderTool)
+                                openTool(alarmTool)
+                            } else {
+                                closeTool(alarmTool)
+                                closeTool(colorTool)
+                                closeTool(recorderTool)
                             }
+//                            Timber.d(notificationPermissions.toString())
+//                            checkAlarmsPermission(ctx)
+//                            checkPermissions(
+//                                ctx,
+//                                notificationPermissions.toTypedArray(),
+//                                notificationPermissionLauncher
+//                            ) {
+//                                setAlarm(
+//                                    ctx, AlarmData(
+//                                        id = 0,
+//                                        time = System.currentTimeMillis() + 2000,
+//                                        title = noteState.value.title,
+//                                        text = noteState.value.text,
+//                                        critical = true
+//                                    )
+//                                )
+//                            }
 
 //                            try {
 //                                val intent = Intent(ctx, AlarmReceiver::class.java)
@@ -374,10 +386,14 @@ fun EditNotesScreenMain(
                     .background(PastelPink)
                     .clickable {
                         scope.launch {
-                            if (recorderTool.value.visibility.value) {
-                                closeTool(recorderTool)
-                            } else {
+                            if (!recorderTool.value.visibility.value) {
+                                closeTool(colorTool)
+                                closeTool(alarmTool)
                                 openTool(recorderTool)
+                            } else {
+                                closeTool(recorderTool)
+                                closeTool(colorTool)
+                                closeTool(alarmTool)
                             }
                         }
                     },
@@ -400,7 +416,7 @@ fun EditNotesScreenMain(
         Column(
             modifier = Modifier
                 .padding(8.dp)
-                .offset(0.dp, offsetAnimation.value.value.dp)
+                //.offset(0.dp, offsetAnimation.value.value.dp)
         ) {
             HintedTextField(
                 modifier = Modifier
@@ -424,7 +440,10 @@ fun EditNotesScreenMain(
                 },
                 isHintVisible = viewModel.isTitleHintVisible,
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
                 textStyle = MaterialTheme.typography.titleSmall.copy(MaterialTheme.colorScheme.onBackground)
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -464,7 +483,10 @@ fun EditNotesScreenMain(
                 },
                 expanded = true,
                 isHintVisible = viewModel.isTextHintVisible,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(MaterialTheme.colorScheme.onBackground),
             )
         }
@@ -550,18 +572,24 @@ fun EditNotesScreenMain(
         PopupSection(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp, start = 40.dp),
+                .padding(top = 8.dp),
             topPadding = 63.dp,
-            offsetPercent = 0.23f,
+            offsetPercent = 0.33f,
             color = MaterialTheme.colorScheme.secondaryContainer,
         ) {
-            Box(modifier = Modifier.padding(all = 12.dp)) {
+            Box(
+                modifier = Modifier
+                    .padding(all = 12.dp)
+                    .fillMaxWidth()
+            ) {
                 Column(
-                    modifier = Modifier.padding(4.dp),
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .fillMaxWidth(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Time: 00:00")
+                    Text("${stringResource(R.string.time)}: 00:00")
                     Row(
                         modifier = Modifier.padding(top = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -606,9 +634,11 @@ fun EditNotesScreenMain(
                                 contentDescription = "",
                                 tint = Color.Black.copy(0.9f)
                             )
-                            Text(text = if (isRecording) stringResource(R.string.stop) else stringResource(
-                                R.string.record
-                            ))
+                            Text(modifier = Modifier.padding(horizontal = 6.dp),
+                                text = if (isRecording) stringResource(R.string.stop) else stringResource(
+                                    R.string.record
+                                )
+                            )
                         }
 
                         var isPlaying by remember { mutableStateOf(false) }
@@ -634,9 +664,115 @@ fun EditNotesScreenMain(
                                 contentDescription = "",
                                 tint = Color.Black.copy(0.9f)
                             )
-                            Text(text = if (isPlaying) stringResource(R.string.stop) else stringResource(
-                                R.string.play
-                            ))
+                            Text(modifier = Modifier.padding(horizontal = 6.dp),
+                                text = if (isPlaying) stringResource(R.string.stop) else stringResource(
+                                    R.string.play
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Toolbox(
+        alarmTool.value.visibility,
+        alarmTool.value.animation
+    ) {
+        PopupSection(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            topPadding = 63.dp,
+            offsetPercent = 0.20f,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(all = 12.dp)
+                    .fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(stringResource(R.string.alarm))
+
+                    val cal = Calendar.getInstance()
+                    val timePicker = rememberTimePickerState(
+                        initialHour = cal.get(Calendar.HOUR_OF_DAY),
+                        initialMinute = cal.get(Calendar.MINUTE),
+                        is24Hour = true
+                    )
+                    TimeInput(state = timePicker, modifier = Modifier.padding(8.dp))
+
+                    Row(
+                        modifier = Modifier.padding(top = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        val notificationPermissions = mutableListOf<String>()
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            notificationPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            notificationPermissions.add(Manifest.permission.FOREGROUND_SERVICE)
+                        }
+                        notificationPermissions.add(Manifest.permission.WAKE_LOCK)
+
+                        val notificationPermissionTitle =
+                            stringResource(R.string.permission_required_title)
+                        val notificationPermissionText =
+                            stringResource(R.string.permission_required_text)
+                        val notificationPermissionLauncher =
+                            rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissionMap ->
+                                val areGranted =
+                                    permissionMap.values.reduce { acc, next -> acc && next }
+                                if (!areGranted) {
+                                    Toast.makeText(
+                                        ctx,
+                                        notificationPermissionText,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                        ElevatedButton(
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                PastelLavender,
+                                MaterialTheme.colorScheme.onBackground
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(4.dp),
+                            onClick = {
+                                scope.launch {
+                                    Timber.d(notificationPermissions.toString())
+                                    checkAlarmsPermission(ctx)
+                                    checkPermissions(
+                                        ctx,
+                                        notificationPermissions.toTypedArray(),
+                                        notificationPermissionLauncher
+                                    ) {
+                                        setAlarm(
+                                            ctx, AlarmData(
+                                                id = 0,
+                                                time = System.currentTimeMillis() + 2000,
+                                                title = noteState.value.title,
+                                                text = noteState.value.text,
+                                                critical = true
+                                            )
+                                        )
+                                    }
+                                }
+                            }) {
+                            Icon(
+                                painterResource(R.drawable.alarm),
+                                //modifier = Modifier.background(Color.Black),
+                                contentDescription = "",
+                                tint = Color.Black.copy(0.9f)
+                            )
+                            Text(modifier = Modifier.padding(horizontal = 6.dp), text = stringResource(R.string.set_alarm))
                         }
                     }
                 }

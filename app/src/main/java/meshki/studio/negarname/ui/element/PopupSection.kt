@@ -52,7 +52,7 @@ fun PopupSection(
             modifier = Modifier
                 .width(size)
                 .height(size * 3.5f)
-                .padding(top = topPadding - 14.dp)
+                .padding(top = topPadding - 15.dp)
                 .offset(x = offsetX)
                 .zIndex(3f)
         ) {
