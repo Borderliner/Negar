@@ -63,10 +63,10 @@ fun Toolbox(
         visible = visibility.value && animation.value.value > (animation.value.upperBound
             ?: Float.MAX_VALUE) * 0.3,
         enter = fadeIn() + slideInVertically(initialOffsetY = {
-            -it / 2 + 150
+            it / 8
         }),
         exit = fadeOut() + slideOutVertically(targetOffsetY = {
-            -it / 2 + 150
+            it / 8
         }),
     ) {
         content()
