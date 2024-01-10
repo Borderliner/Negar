@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -61,6 +60,7 @@ import kotlinx.coroutines.launch
 import android.Manifest
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
@@ -68,13 +68,24 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.consumeDownChange
+import androidx.compose.ui.input.pointer.consumePositionChange
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
 import meshki.studio.negarname.R
+import meshki.studio.negarname.entity.DrawMode
+import meshki.studio.negarname.entity.MotionEvent
 import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
+import meshki.studio.negarname.entity.PathProperties
 import meshki.studio.negarname.entity.Tool
 import meshki.studio.negarname.entity.UiEvent
 import meshki.studio.negarname.service.AlarmData
@@ -86,6 +97,8 @@ import meshki.studio.negarname.ui.element.PopupSection
 import meshki.studio.negarname.ui.element.Toolbox
 import meshki.studio.negarname.ui.theme.PastelGreen
 import meshki.studio.negarname.ui.theme.PastelLavender
+import meshki.studio.negarname.ui.theme.PastelLime
+import meshki.studio.negarname.ui.theme.PastelOrange
 import meshki.studio.negarname.ui.theme.PastelPink
 import meshki.studio.negarname.ui.theme.PastelRed
 import meshki.studio.negarname.ui.theme.RoundedShapes
@@ -94,6 +107,7 @@ import meshki.studio.negarname.util.RightToLeftLayout
 import meshki.studio.negarname.util.checkAlarmsPermission
 import meshki.studio.negarname.util.checkPermission
 import meshki.studio.negarname.util.checkPermissions
+import meshki.studio.negarname.util.dragMotionEvent
 import meshki.studio.negarname.vm.EditNotesEvent
 import meshki.studio.negarname.vm.EditNotesViewModel
 import meshki.studio.negarname.vm.MainViewModel
@@ -183,6 +197,7 @@ fun EditNotesScreenMain(
     val colorTool = remember { mutableStateOf(Tool("color")) }
     val recorderTool = remember { mutableStateOf(Tool("recorder")) }
     val alarmTool = remember { mutableStateOf(Tool("alarm")) }
+    val drawingTool = remember { mutableStateOf(Tool("drawing")) }
     val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
     val ctx = LocalContext.current
 
@@ -279,11 +294,13 @@ fun EditNotesScreenMain(
                             if (!colorTool.value.visibility.value) {
                                 closeTool(recorderTool)
                                 closeTool(alarmTool)
+                                closeTool(drawingTool)
                                 openTool(colorTool)
                             } else {
                                 closeTool(colorTool)
                                 closeTool(recorderTool)
                                 closeTool(alarmTool)
+                                closeTool(drawingTool)
                             }
                         }
                     },
@@ -313,10 +330,12 @@ fun EditNotesScreenMain(
                             if (!alarmTool.value.visibility.value) {
                                 closeTool(colorTool)
                                 closeTool(recorderTool)
+                                closeTool(drawingTool)
                                 openTool(alarmTool)
                             } else {
                                 closeTool(alarmTool)
                                 closeTool(colorTool)
+                                closeTool(drawingTool)
                                 closeTool(recorderTool)
                             }
 //                            Timber.d(notificationPermissions.toString())
@@ -389,10 +408,12 @@ fun EditNotesScreenMain(
                             if (!recorderTool.value.visibility.value) {
                                 closeTool(colorTool)
                                 closeTool(alarmTool)
+                                closeTool(drawingTool)
                                 openTool(recorderTool)
                             } else {
                                 closeTool(recorderTool)
                                 closeTool(colorTool)
+                                closeTool(drawingTool)
                                 closeTool(alarmTool)
                             }
                         }
@@ -411,12 +432,48 @@ fun EditNotesScreenMain(
                     )
                 }
             }
+
+            Box(
+                modifier = Modifier
+                    .size(45.dp)
+                    .shadow(6.dp, CircleShape)
+                    .clip(CircleShape)
+                    .background(PastelLime)
+                    .clickable {
+                        scope.launch {
+                            if (!drawingTool.value.visibility.value) {
+                                closeTool(colorTool)
+                                closeTool(alarmTool)
+                                closeTool(recorderTool)
+                                openTool(drawingTool)
+                            } else {
+                                closeTool(drawingTool)
+                                closeTool(recorderTool)
+                                closeTool(colorTool)
+                                closeTool(alarmTool)
+                            }
+                        }
+                    },
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painterResource(R.drawable.stylus_note),
+                        //modifier = Modifier.background(Color.Black),
+                        contentDescription = "",
+                        tint = Color.Black.copy(0.9f)
+                    )
+                }
+            }
         }
 
         Column(
             modifier = Modifier
                 .padding(8.dp)
-                //.offset(0.dp, offsetAnimation.value.value.dp)
+            //.offset(0.dp, offsetAnimation.value.value.dp)
         ) {
             HintedTextField(
                 modifier = Modifier
@@ -634,7 +691,8 @@ fun EditNotesScreenMain(
                                 contentDescription = "",
                                 tint = Color.Black.copy(0.9f)
                             )
-                            Text(modifier = Modifier.padding(horizontal = 6.dp),
+                            Text(
+                                modifier = Modifier.padding(horizontal = 6.dp),
                                 text = if (isRecording) stringResource(R.string.stop) else stringResource(
                                     R.string.record
                                 )
@@ -664,7 +722,8 @@ fun EditNotesScreenMain(
                                 contentDescription = "",
                                 tint = Color.Black.copy(0.9f)
                             )
-                            Text(modifier = Modifier.padding(horizontal = 6.dp),
+                            Text(
+                                modifier = Modifier.padding(horizontal = 6.dp),
                                 text = if (isPlaying) stringResource(R.string.stop) else stringResource(
                                     R.string.play
                                 )
@@ -772,7 +831,287 @@ fun EditNotesScreenMain(
                                 contentDescription = "",
                                 tint = Color.Black.copy(0.9f)
                             )
-                            Text(modifier = Modifier.padding(horizontal = 6.dp), text = stringResource(R.string.set_alarm))
+                            Text(
+                                modifier = Modifier.padding(horizontal = 6.dp),
+                                text = stringResource(R.string.set_alarm)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Toolbox(
+        drawingTool.value.visibility,
+        drawingTool.value.animation
+    ) {
+        PopupSection(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            topPadding = 63.dp,
+            offsetPercent = 0.46f,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(all = 12.dp)
+                    .fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(stringResource(R.string.drawing))
+
+                    val paths = remember { mutableStateListOf<Pair<Path, PathProperties>>() }
+                    val pathsUndone = remember { mutableStateListOf<Pair<Path, PathProperties>>() }
+
+                    var motionEvent by remember { mutableStateOf(MotionEvent.Idle) }
+                    // This is our motion event we get from touch motion
+                    var currentPosition by remember { mutableStateOf(Offset.Unspecified) }
+                    // This is previous motion event before next touch is saved into this current position
+                    var previousPosition by remember { mutableStateOf(Offset.Unspecified) }
+
+                    var drawMode by remember { mutableStateOf(DrawMode.Draw) }
+                    var currentPath by remember { mutableStateOf(Path()) }
+                    var currentPathProperty by remember { mutableStateOf(PathProperties()) }
+
+                    val drawModifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                        .shadow(1.dp)
+                        .height(375.dp)
+                        .clipToBounds()
+                        .background(Color.White)
+                        .dragMotionEvent(
+                            onDragStart = { pointerInputChange ->
+                                motionEvent = MotionEvent.Down
+                                currentPosition = pointerInputChange.position
+                                pointerInputChange.consumeDownChange()
+
+                            },
+                            onDrag = { pointerInputChange ->
+                                motionEvent = MotionEvent.Move
+                                currentPosition = pointerInputChange.position
+
+                                if (drawMode == DrawMode.Touch) {
+                                    val change = pointerInputChange.positionChange()
+                                    paths.forEach { entry ->
+                                        val path: Path = entry.first
+                                        path.translate(change)
+                                    }
+                                    currentPath.translate(change)
+                                }
+                                pointerInputChange.consumePositionChange()
+
+                            },
+                            onDragEnd = { pointerInputChange ->
+                                motionEvent = MotionEvent.Up
+                                pointerInputChange.consumeDownChange()
+                            }
+                        )
+
+                    Canvas(modifier = drawModifier) {
+                        when (motionEvent) {
+
+                            MotionEvent.Down -> {
+                                if (drawMode != DrawMode.Touch) {
+                                    currentPath.moveTo(currentPosition.x, currentPosition.y)
+                                }
+
+                                previousPosition = currentPosition
+
+                            }
+                            MotionEvent.Move -> {
+
+                                if (drawMode != DrawMode.Touch) {
+                                    currentPath.quadraticBezierTo(
+                                        previousPosition.x,
+                                        previousPosition.y,
+                                        (previousPosition.x + currentPosition.x) / 2,
+                                        (previousPosition.y + currentPosition.y) / 2
+
+                                    )
+                                }
+
+                                previousPosition = currentPosition
+                            }
+
+                            MotionEvent.Up -> {
+                                if (drawMode != DrawMode.Touch) {
+                                    currentPath.lineTo(currentPosition.x, currentPosition.y)
+
+                                    // Pointer is up save current path
+                                    // paths[currentPath] = currentPathProperty
+                                    paths.add(Pair(currentPath, currentPathProperty))
+
+                                    // Since paths are keys for map, use new one for each key
+                                    // and have separate path for each down-move-up gesture cycle
+                                    currentPath = Path()
+
+                                    // Create new instance of path properties to have new path and properties
+                                    // only for the one currently being drawn
+                                    currentPathProperty = PathProperties(
+                                        strokeWidth = currentPathProperty.strokeWidth,
+                                        color = currentPathProperty.color,
+                                        strokeCap = currentPathProperty.strokeCap,
+                                        strokeJoin = currentPathProperty.strokeJoin,
+                                        eraseMode = currentPathProperty.eraseMode
+                                    )
+                                }
+
+                                // Since new path is drawn no need to store paths to undone
+                                pathsUndone.clear()
+
+                                // If we leave this state at MotionEvent.Up it causes current path to draw
+                                // line from (0,0) if this composable recomposes when draw mode is changed
+                                currentPosition = Offset.Unspecified
+                                previousPosition = currentPosition
+                                motionEvent = MotionEvent.Idle
+                            }
+                            else -> Unit
+                        }
+
+                        with(drawContext.canvas.nativeCanvas) {
+
+                            val checkPoint = saveLayer(null, null)
+
+                            paths.forEach {
+
+                                val path = it.first
+                                val property = it.second
+
+                                if (!property.eraseMode) {
+                                    drawPath(
+                                        color = property.color,
+                                        path = path,
+                                        style = Stroke(
+                                            width = property.strokeWidth,
+                                            cap = property.strokeCap,
+                                            join = property.strokeJoin
+                                        )
+                                    )
+                                } else {
+
+                                    // Source
+                                    drawPath(
+                                        color = Color.Transparent,
+                                        path = path,
+                                        style = Stroke(
+                                            width = currentPathProperty.strokeWidth,
+                                            cap = currentPathProperty.strokeCap,
+                                            join = currentPathProperty.strokeJoin
+                                        ),
+                                        blendMode = BlendMode.Clear
+                                    )
+                                }
+                            }
+
+                            if (motionEvent != MotionEvent.Idle) {
+
+                                if (!currentPathProperty.eraseMode) {
+                                    drawPath(
+                                        color = currentPathProperty.color,
+                                        path = currentPath,
+                                        style = Stroke(
+                                            width = currentPathProperty.strokeWidth,
+                                            cap = currentPathProperty.strokeCap,
+                                            join = currentPathProperty.strokeJoin
+                                        )
+                                    )
+                                } else {
+                                    drawPath(
+                                        color = Color.Transparent,
+                                        path = currentPath,
+                                        style = Stroke(
+                                            width = currentPathProperty.strokeWidth,
+                                            cap = currentPathProperty.strokeCap,
+                                            join = currentPathProperty.strokeJoin
+                                        ),
+                                        blendMode = BlendMode.Clear
+                                    )
+                                }
+                            }
+                            restoreToCount(checkPoint)
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.padding(top = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        ElevatedButton(
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                PastelGreen,
+                                Color.Black.copy(0.9f)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(4.dp),
+                            onClick = {
+                                scope.launch {
+                                    //Timber.i("PATH: ${path}")
+                                }
+                            }) {
+                            Icon(
+                                painterResource(R.drawable.vec_done),
+                                //modifier = Modifier.background(Color.Black),
+                                contentDescription = stringResource(R.string.save),
+                                tint = Color.Black.copy(0.9f)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        ElevatedButton(
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                PastelPink,
+                                Color.Black.copy(0.9f)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(4.dp),
+                            onClick = {
+                                scope.launch {
+                                    if (paths.isNotEmpty()) {
+                                        paths.clear()
+                                    }
+                                }
+                            }) {
+                            Icon(
+                                painterResource(R.drawable.vec_delete),
+                                //modifier = Modifier.background(Color.Black),
+                                contentDescription = stringResource(R.string.delete),
+                                tint = Color.Black.copy(0.9f)
+                            )
+                        }
+
+                        ElevatedButton(
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                PastelOrange,
+                                Color.Black.copy(0.9f)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(4.dp),
+                            onClick = {
+                                scope.launch {
+                                    if (paths.isNotEmpty()) {
+
+                                        val lastItem = paths.last()
+                                        val lastPath = lastItem.first
+                                        val lastPathProperty = lastItem.second
+                                        paths.remove(lastItem)
+
+                                        pathsUndone.add(Pair(lastPath, lastPathProperty))
+                                    }
+                                }
+                            }) {
+                            Icon(
+                                painterResource(R.drawable.vec_undo),
+                                //modifier = Modifier.background(Color.Black),
+                                contentDescription = stringResource(R.string.undo),
+                                tint = Color.Black.copy(0.9f)
+                            )
                         }
                     }
                 }
@@ -780,4 +1119,3 @@ fun EditNotesScreenMain(
         }
     }
 }
-

@@ -33,4 +33,7 @@
     <string name="set_alarm">تنظیم زنگ</string>
     <string name="alarm">زنگ</string>
     <string name="time">زمان</string>
+    <string name="drawing">نقاشی</string>
+    <string name="clean">پاک کردن</string>
+    <string name="undo">برگشت</string>
 </resources>
