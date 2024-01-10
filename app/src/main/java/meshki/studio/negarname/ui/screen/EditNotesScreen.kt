@@ -72,7 +72,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.consumeDownChange
@@ -80,8 +79,11 @@ import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import com.google.gson.Gson
 import meshki.studio.negarname.R
+import meshki.studio.negarname.entity.CustomPath
 import meshki.studio.negarname.entity.DrawMode
+import meshki.studio.negarname.entity.DrawingPath
 import meshki.studio.negarname.entity.MotionEvent
 import meshki.studio.negarname.ui.element.BackPressHandler
 import meshki.studio.negarname.entity.Note
@@ -869,8 +871,19 @@ fun EditNotesScreenMain(
                 ) {
                     Text(stringResource(R.string.drawing))
 
-                    val paths = remember { mutableStateListOf<Pair<Path, PathProperties>>() }
-                    val pathsUndone = remember { mutableStateListOf<Pair<Path, PathProperties>>() }
+                    val paths = remember { mutableStateListOf<DrawingPath>() }
+                    val pathsUndone = remember { mutableStateListOf<DrawingPath>() }
+
+                    LaunchedEffect(noteState.value.drawing) {
+                        if (noteState.value.drawing.isNotEmpty()) {
+                            val drawingPaths = Gson().fromJson(noteState.value.drawing, Array<DrawingPath>::class.java).toList()
+                            drawingPaths.forEach {
+                                it.path.draw()
+                                paths.add(it)
+                            }
+                            println("LOADED PATH: $drawingPaths")
+                        }
+                    }
 
                     var motionEvent by remember { mutableStateOf(MotionEvent.Idle) }
                     // This is our motion event we get from touch motion
@@ -879,7 +892,7 @@ fun EditNotesScreenMain(
                     var previousPosition by remember { mutableStateOf(Offset.Unspecified) }
 
                     var drawMode by remember { mutableStateOf(DrawMode.Draw) }
-                    var currentPath by remember { mutableStateOf(Path()) }
+                    var currentPath by remember { mutableStateOf(CustomPath()) }
                     var currentPathProperty by remember { mutableStateOf(PathProperties()) }
 
                     val drawModifier = Modifier
@@ -894,7 +907,6 @@ fun EditNotesScreenMain(
                                 motionEvent = MotionEvent.Down
                                 currentPosition = pointerInputChange.position
                                 pointerInputChange.consumeDownChange()
-
                             },
                             onDrag = { pointerInputChange ->
                                 motionEvent = MotionEvent.Move
@@ -903,8 +915,7 @@ fun EditNotesScreenMain(
                                 if (drawMode == DrawMode.Touch) {
                                     val change = pointerInputChange.positionChange()
                                     paths.forEach { entry ->
-                                        val path: Path = entry.first
-                                        path.translate(change)
+                                        entry.path.translate(change)
                                     }
                                     currentPath.translate(change)
                                 }
@@ -919,17 +930,14 @@ fun EditNotesScreenMain(
 
                     Canvas(modifier = drawModifier) {
                         when (motionEvent) {
-
                             MotionEvent.Down -> {
                                 if (drawMode != DrawMode.Touch) {
                                     currentPath.moveTo(currentPosition.x, currentPosition.y)
                                 }
-
                                 previousPosition = currentPosition
-
                             }
-                            MotionEvent.Move -> {
 
+                            MotionEvent.Move -> {
                                 if (drawMode != DrawMode.Touch) {
                                     currentPath.quadraticBezierTo(
                                         previousPosition.x,
@@ -939,22 +947,18 @@ fun EditNotesScreenMain(
 
                                     )
                                 }
-
                                 previousPosition = currentPosition
                             }
 
                             MotionEvent.Up -> {
                                 if (drawMode != DrawMode.Touch) {
                                     currentPath.lineTo(currentPosition.x, currentPosition.y)
-
                                     // Pointer is up save current path
                                     // paths[currentPath] = currentPathProperty
-                                    paths.add(Pair(currentPath, currentPathProperty))
-
+                                    paths.add(DrawingPath(currentPath, currentPathProperty))
                                     // Since paths are keys for map, use new one for each key
                                     // and have separate path for each down-move-up gesture cycle
-                                    currentPath = Path()
-
+                                    currentPath = CustomPath()
                                     // Create new instance of path properties to have new path and properties
                                     // only for the one currently being drawn
                                     currentPathProperty = PathProperties(
@@ -979,18 +983,15 @@ fun EditNotesScreenMain(
                         }
 
                         with(drawContext.canvas.nativeCanvas) {
-
                             val checkPoint = saveLayer(null, null)
-
                             paths.forEach {
-
-                                val path = it.first
-                                val property = it.second
+                                val path = it.path
+                                val property = it.properties
 
                                 if (!property.eraseMode) {
                                     drawPath(
                                         color = property.color,
-                                        path = path,
+                                        path = path.getPath(),
                                         style = Stroke(
                                             width = property.strokeWidth,
                                             cap = property.strokeCap,
@@ -998,11 +999,10 @@ fun EditNotesScreenMain(
                                         )
                                     )
                                 } else {
-
                                     // Source
                                     drawPath(
                                         color = Color.Transparent,
-                                        path = path,
+                                        path = path.getPath(),
                                         style = Stroke(
                                             width = currentPathProperty.strokeWidth,
                                             cap = currentPathProperty.strokeCap,
@@ -1014,11 +1014,10 @@ fun EditNotesScreenMain(
                             }
 
                             if (motionEvent != MotionEvent.Idle) {
-
                                 if (!currentPathProperty.eraseMode) {
                                     drawPath(
                                         color = currentPathProperty.color,
-                                        path = currentPath,
+                                        path = currentPath.getPath(),
                                         style = Stroke(
                                             width = currentPathProperty.strokeWidth,
                                             cap = currentPathProperty.strokeCap,
@@ -1028,7 +1027,7 @@ fun EditNotesScreenMain(
                                 } else {
                                     drawPath(
                                         color = Color.Transparent,
-                                        path = currentPath,
+                                        path = currentPath.getPath(),
                                         style = Stroke(
                                             width = currentPathProperty.strokeWidth,
                                             cap = currentPathProperty.strokeCap,
@@ -1054,7 +1053,9 @@ fun EditNotesScreenMain(
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
                                 scope.launch {
-                                    //Timber.i("PATH: ${path}")
+                                    val serialized = Gson().toJson(paths.toList())
+                                    println("PATH: $serialized")
+                                    viewModel.onEvent(EditNotesEvent.DrawingSaved(serialized))
                                 }
                             }) {
                             Icon(
@@ -1099,11 +1100,11 @@ fun EditNotesScreenMain(
                                     if (paths.isNotEmpty()) {
 
                                         val lastItem = paths.last()
-                                        val lastPath = lastItem.first
-                                        val lastPathProperty = lastItem.second
+                                        val lastPath = lastItem.path
+                                        val lastPathProperty = lastItem.properties
                                         paths.remove(lastItem)
 
-                                        pathsUndone.add(Pair(lastPath, lastPathProperty))
+                                        pathsUndone.add(DrawingPath(lastPath, lastPathProperty))
                                     }
                                 }
                             }) {

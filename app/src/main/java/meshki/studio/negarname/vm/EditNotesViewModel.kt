@@ -24,6 +24,7 @@ sealed class EditNotesEvent {
     data class TextFocusChanged(val focusState: FocusState) : EditNotesEvent()
     data class ColorChanged(val color: Int) : EditNotesEvent()
     data object NoteSaved : EditNotesEvent()
+    data class DrawingSaved(val serializedPaths: String) : EditNotesEvent()
 }
 
 class EditNotesViewModel(
@@ -32,7 +33,7 @@ class EditNotesViewModel(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val _noteState = mutableStateOf(
-        Note(color = Note.colors.random().toArgb(), title = "", text = "")
+        Note(color = Note.colors.random().toArgb(), title = "", text = "", drawing = "")
     )
     val noteState: State<Note> = _noteState
 
@@ -78,6 +79,11 @@ class EditNotesViewModel(
 
     fun onEvent(event: EditNotesEvent) {
         when (event) {
+            is EditNotesEvent.DrawingSaved -> {
+                _noteState.value = _noteState.value.copy(
+                    drawing = event.serializedPaths
+                )
+            }
             is EditNotesEvent.TitleEntered -> {
                 _noteState.value = _noteState.value.copy(
                     title = event.value
@@ -117,6 +123,7 @@ class EditNotesViewModel(
                                 text = noteState.value.text,
                                 dateCreated = Date(),
                                 dateModified = Date(),
+                                drawing = noteState.value.drawing
                             )
                         )
                         _eventFlow.emit(UiEvent.NoteSaved)

@@ -19,7 +19,7 @@ import meshki.studio.negarname.entity.Todo
         Note::class,
         Todo::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 

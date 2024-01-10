@@ -26,6 +26,10 @@ data class Note(
     @ColumnInfo(name = "color")
     val color: Int,
 
+    @SerializedName("drawing")
+    @ColumnInfo(name = "drawing")
+    val drawing: String,
+
     @SerializedName("pinned")
     @ColumnInfo(name = "pinned")
     val pinned: Boolean = false,
