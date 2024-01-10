@@ -120,6 +120,7 @@ import java.util.Calendar
 @Composable
 fun EditNotesScreen(color: Int, navController: NavHostController) {
     val mainViewModel = koinInject<MainViewModel>()
+    mainViewModel.setBottomBarVisible(false)
     val viewModel = koinViewModel<EditNotesViewModel>()
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(color) {

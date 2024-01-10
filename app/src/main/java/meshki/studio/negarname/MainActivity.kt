@@ -9,6 +9,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -97,7 +102,18 @@ fun MainScreenScaffold(navController: NavHostController) {
     val mainViewModel = koinInject<MainViewModel>()
     Scaffold(
         topBar = { TopBar() },
-        bottomBar = { BottomBar(navController) },
+        bottomBar = {
+            AnimatedVisibility(visible = mainViewModel.isBottomBarVisible,
+                enter = fadeIn() + slideInVertically(initialOffsetY = {
+                    it / 8
+                }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = {
+                    it / 8
+                })
+            ) {
+                BottomBar(navController)
+            }
+        },
         containerColor = Color.Transparent,
         modifier = Modifier.navigationBarsPadding()
     ) {

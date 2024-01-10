@@ -70,6 +70,7 @@ import org.koin.compose.koinInject
 @Composable
 fun NotesScreen(navController: NavHostController) {
     val mainViewModel = koinInject<MainViewModel>()
+    mainViewModel.setBottomBarVisible(true)
     val viewModel = koinViewModel<NotesViewModel>()
     val snackbar = remember { SnackbarHostState() }
     if (mainViewModel.isRtl) {
