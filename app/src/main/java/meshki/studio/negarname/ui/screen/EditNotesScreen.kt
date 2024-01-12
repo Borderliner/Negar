@@ -343,48 +343,6 @@ fun EditNotesScreenMain(
                                 closeTool(drawingTool)
                                 closeTool(recorderTool)
                             }
-//                            Timber.d(notificationPermissions.toString())
-//                            checkAlarmsPermission(ctx)
-//                            checkPermissions(
-//                                ctx,
-//                                notificationPermissions.toTypedArray(),
-//                                notificationPermissionLauncher
-//                            ) {
-//                                setAlarm(
-//                                    ctx, AlarmData(
-//                                        id = 0,
-//                                        time = System.currentTimeMillis() + 2000,
-//                                        title = noteState.value.title,
-//                                        text = noteState.value.text,
-//                                        critical = true
-//                                    )
-//                                )
-//                            }
-
-//                            try {
-//                                val intent = Intent(ctx, AlarmReceiver::class.java)
-//                                val calendar: Calendar = Calendar
-//                                    .getInstance()
-//                                    .apply {
-//                                        timeInMillis = System.currentTimeMillis()
-//                                        set(Calendar.SECOND, Calendar.SECOND + 5)
-//                                    }
-//                                @SuppressLint("UnspecifiedImmutableFlag")
-//                                val pendingIntent =
-//                                    PendingIntent.getBroadcast(
-//                                        ctx, 0, intent,
-//                                        0
-//                                    )
-//                                Timber.i(intent.toString())
-//                                Timber.i(pendingIntent.toString())
-//                                alarm?.setExact(
-//                                    AlarmManager.ELAPSED_REALTIME,
-//                                    calendar.timeInMillis,
-//                                    pendingIntent
-//                                )
-//                            } catch (err: SecurityException) {
-//                                error(err)
-//                            }
                         }
                     },
             ) {

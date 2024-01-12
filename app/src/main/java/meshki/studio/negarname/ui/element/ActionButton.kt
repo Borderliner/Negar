@@ -54,7 +54,7 @@ fun ActionButton(
 
     val isKeyboardOpen by keyboardAsState()
     val fabPadding = remember {
-        mutableFloatStateOf(getNavigationBarHeight() / 2.2f)
+        mutableFloatStateOf(getNavigationBarHeight().toFloat() - 50)
     }
 
     val insets: WindowInsetsCompat? = ViewCompat.getRootWindowInsets((LocalContext.current as Activity).window.decorView)
@@ -63,9 +63,9 @@ fun ActionButton(
 
     LaunchedEffect(isKeyboardOpen) {
         if (isKeyboardOpen) {
-            fabPadding.floatValue = keyboardHeight.toFloat() / -2.1f
+            fabPadding.floatValue = (keyboardHeight.toFloat() * -1f) + getNavigationBarHeight() + 25
         } else {
-            fabPadding.floatValue = getNavigationBarHeight() / 2.2f
+            fabPadding.floatValue = getNavigationBarHeight().toFloat() - 50
         }
     }
 
