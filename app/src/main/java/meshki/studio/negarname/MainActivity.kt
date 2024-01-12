@@ -1,10 +1,5 @@
 package meshki.studio.negarname
 
-import android.annotation.SuppressLint
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -42,7 +37,6 @@ import meshki.studio.negarname.util.RightToLeftLayout
 import meshki.studio.negarname.vm.MainViewModel
 import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
-import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

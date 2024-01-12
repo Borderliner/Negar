@@ -23,9 +23,9 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import kotlinx.parcelize.Parcelize
-import meshki.studio.negarname.MainActivity
 import meshki.studio.negarname.R
 import meshki.studio.negarname.util.getCurrentLocale
+import meshki.studio.negarname.util.getParcelable
 import meshki.studio.negarname.util.setLocale
 import timber.log.Timber
 
@@ -84,7 +84,14 @@ class NotificationService : Service() {
             }
         }
 
-        fun stopNotification(context: Context) {
+        fun stopNotification(context: Context, id: Int) {
+            context.stopService(Intent(context, NotificationService::class.java)
+                .apply {
+                    putExtra("id", id)
+                })
+        }
+
+        fun stopAllNotifications(context: Context) {
             context.stopService(Intent(context, NotificationService::class.java))
         }
     }
@@ -97,12 +104,38 @@ class NotificationService : Service() {
         manager = NotificationManagerCompat.from(this)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val data: NotificationData? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent?.getParcelableExtra("data", NotificationData::class.java)
+    override fun onDestroy() {
+        manager = null
+        notificationIdList.clear()
+        super.onDestroy()
+    }
+
+    override fun stopService(intent: Intent): Boolean {
+        val id = intent.getIntExtra("id", -1)
+        if (id > 0 ) {
+            manager?.cancel(id)
+            stopSelfResult(id)
+            val list = notificationIdList.filter { it != id }
+            notificationIdList.clear()
+            notificationIdList.addAll(list)
         } else {
-            intent?.getParcelableExtra("data")
+            manager?.cancelAll()
+            notificationIdList.forEachIndexed { idx, i ->
+                stopSelfResult(i)
+                notificationIdList.removeAt(idx)
+            }
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            stopForeground(true)
+        }
+        return super.stopService(intent)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val data = intent?.getParcelable("data", NotificationData::class.java)
 
         if (data != null) {
             val notificationBuilder = NotificationCompat.Builder(this, data.channel.id)
@@ -147,12 +180,11 @@ class NotificationService : Service() {
             val priority =
                 if (data.critical) NotificationCompat.PRIORITY_MAX else NotificationCompat.PRIORITY_DEFAULT
 
-            val action1 = data.actions[0]
             notificationBuilder
                 .setSmallIcon(R.drawable.alarm)
                 .setPriority(priority)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
-                .setVibrate(longArrayOf(0L, 1000L))
+                .setCategory(data.category)
+                .setVibrate(data.vibration.toLongArray())
                 .setColor(
                     if (!data.color.isNullOrBlank()) data.color.toColorInt() else ContextCompat.getColor(
                         this,
@@ -164,12 +196,16 @@ class NotificationService : Service() {
                 .setAutoCancel(false)
                 .setOngoing(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-                .addAction(
-                    action1.iconResource,
-                    this.resources.getString(action1.textResource),
-                    action1.intent
-                )
                 .setContentIntent(data.onClickAction?.intent)
+
+            // Add actions
+            data.actions.forEach {
+                notificationBuilder.addAction(
+                    it.iconResource,
+                    this.resources.getString(it.textResource),
+                    it.intent
+                )
+            }
 
             if (!data.critical)
                 notificationBuilder.setSound(data.sound)
@@ -179,18 +215,26 @@ class NotificationService : Service() {
                 notification.flags =
                     notification.flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(
-                        startId,
-                        notification,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-                    )
-                } else {
-                    startForeground(startId, notification)
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        startForeground(
+                            data.id,
+                            notification,
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                        )
+                    } else {
+                        startForeground(data.id, notification)
+                    }
+                } catch (exc: Exception) {
+                    Toast.makeText(
+                        this,
+                        "Unhandled Exception: $exc",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             } else {
                 try {
-                    manager?.notify(startId, notification)
+                    manager?.notify(data.id, notification)
                 } catch (exc: SecurityException) {
                     Toast.makeText(
                         this,
@@ -199,34 +243,17 @@ class NotificationService : Service() {
                     ).show()
                 }
             }
-            notificationIdList.add(startId)
+            notificationIdList.add(data.id)
             Timber.tag("Notification").i("ID List: $notificationIdList")
             //if (data.critical) ringtone?.play()
+        } else {
+            Timber.e("Notification Service received empty intent data.")
         }
-        return START_STICKY
-    }
-
-    override fun onDestroy() {
-        stopService(null)
-        super.onDestroy()
+        return if (data?.critical == true) START_STICKY else START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
-    }
-
-    override fun stopService(intent: Intent?): Boolean {
-        manager?.cancelAll()
-        notificationIdList.forEachIndexed { idx, i ->
-            stopSelfResult(i)
-            notificationIdList.removeAt(idx)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            stopForeground(true)
-        }
-        return super.stopService(intent)
     }
 }
 

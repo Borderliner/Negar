@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
 
     <application
         android:name=".MainApplication"
@@ -46,11 +47,11 @@
             android:foregroundServiceType="mediaPlayback"
             android:exported="false">
         </service>
-<!--        <receiver-->
-<!--            android:name="meshki.studio.negarname.service.AlarmReceiver"-->
-<!--            android:enabled="true"-->
-<!--            android:exported="false"-->
-<!--            android:process=":remote" />-->
+        <receiver
+            android:name="meshki.studio.negarname.service.AlarmReceiver"
+            android:enabled="true"
+            android:exported="false"
+            android:process=":remote" />
     </application>
 
 </manifest>

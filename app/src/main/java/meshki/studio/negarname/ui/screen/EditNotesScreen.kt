@@ -68,6 +68,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -116,6 +117,7 @@ import meshki.studio.negarname.vm.MainViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import timber.log.Timber
+import java.text.NumberFormat
 import java.util.Calendar
 
 
@@ -764,10 +766,27 @@ fun EditNotesScreenMain(
                 ) {
                     Text(stringResource(R.string.alarm))
 
-                    val cal = Calendar.getInstance()
+                    val alarmTime = remember { mutableLongStateOf(0L) }
+                    val cal = remember { mutableStateOf(Calendar.getInstance()) }
+
+                    LaunchedEffect(alarmTime.longValue) {
+                        if (alarmTime.longValue > 0) {
+                            cal.value.timeInMillis = alarmTime.longValue
+                        }
+                    }
+
+                    if (alarmTime.longValue > 0) {
+                        Text(
+                            "${
+                                NumberFormat.getInstance()
+                                    .format(cal.value.get(Calendar.HOUR_OF_DAY))
+                            }:${NumberFormat.getInstance().format(cal.value.get(Calendar.MINUTE))}"
+                        )
+                    }
+
                     val timePicker = rememberTimePickerState(
-                        initialHour = cal.get(Calendar.HOUR_OF_DAY),
-                        initialMinute = cal.get(Calendar.MINUTE),
+                        initialHour = cal.value.get(Calendar.HOUR_OF_DAY),
+                        initialMinute = cal.value.get(Calendar.MINUTE),
                         is24Hour = true
                     )
                     TimeInput(state = timePicker, modifier = Modifier.padding(8.dp))
@@ -785,10 +804,6 @@ fun EditNotesScreenMain(
                         }
                         notificationPermissions.add(Manifest.permission.WAKE_LOCK)
 
-                        val notificationPermissionTitle =
-                            stringResource(R.string.permission_required_title)
-                        val notificationPermissionText =
-                            stringResource(R.string.permission_required_text)
                         val notificationPermissionLauncher =
                             rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissionMap ->
                                 val areGranted =
@@ -796,7 +811,7 @@ fun EditNotesScreenMain(
                                 if (!areGranted) {
                                     Toast.makeText(
                                         ctx,
-                                        notificationPermissionText,
+                                        ctx.resources.getString(R.string.permission_required_text),
                                         Toast.LENGTH_LONG
                                     ).show()
                                 }
@@ -816,13 +831,21 @@ fun EditNotesScreenMain(
                                         notificationPermissions.toTypedArray(),
                                         notificationPermissionLauncher
                                     ) {
+                                        cal.value.apply {
+                                            set(Calendar.HOUR_OF_DAY, timePicker.hour)
+                                            set(Calendar.MINUTE, timePicker.minute)
+                                            set(Calendar.SECOND, 0)
+                                        }
+
+                                        alarmTime.longValue = cal.value.timeInMillis
+
                                         setAlarm(
                                             ctx, AlarmData(
-                                                id = 0,
-                                                time = System.currentTimeMillis() + 2000,
+                                                id = noteState.value.id.toInt(),
+                                                time = alarmTime.longValue,
                                                 title = noteState.value.title,
                                                 text = noteState.value.text,
-                                                critical = true
+                                                critical = false
                                             )
                                         )
                                     }
@@ -876,7 +899,10 @@ fun EditNotesScreenMain(
 
                     LaunchedEffect(noteState.value.drawing) {
                         if (noteState.value.drawing.isNotEmpty()) {
-                            val drawingPaths = Gson().fromJson(noteState.value.drawing, Array<DrawingPath>::class.java).toList()
+                            val drawingPaths = Gson().fromJson(
+                                noteState.value.drawing,
+                                Array<DrawingPath>::class.java
+                            ).toList()
                             drawingPaths.forEach {
                                 it.path.draw()
                                 paths.add(it)
@@ -979,6 +1005,7 @@ fun EditNotesScreenMain(
                                 previousPosition = currentPosition
                                 motionEvent = MotionEvent.Idle
                             }
+
                             else -> Unit
                         }
 
@@ -1065,7 +1092,7 @@ fun EditNotesScreenMain(
                                 tint = Color.Black.copy(0.9f)
                             )
                         }
-                        
+
                         Spacer(modifier = Modifier.weight(1f))
 
                         ElevatedButton(
