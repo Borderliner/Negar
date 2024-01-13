@@ -60,11 +60,19 @@ import kotlinx.coroutines.launch
 import android.Manifest
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
@@ -80,9 +88,11 @@ import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.zIndex
 import com.google.gson.Gson
 import meshki.studio.negarname.R
 import meshki.studio.negarname.entity.CustomPath
+import meshki.studio.negarname.entity.Day
 import meshki.studio.negarname.entity.DrawMode
 import meshki.studio.negarname.entity.DrawingPath
 import meshki.studio.negarname.entity.MotionEvent
@@ -91,8 +101,10 @@ import meshki.studio.negarname.entity.Note
 import meshki.studio.negarname.entity.PathProperties
 import meshki.studio.negarname.entity.Tool
 import meshki.studio.negarname.entity.UiEvent
+import meshki.studio.negarname.entity.Week
 import meshki.studio.negarname.service.AlarmData
 import meshki.studio.negarname.service.VoiceRecorder
+import meshki.studio.negarname.service.deleteAlarm
 import meshki.studio.negarname.service.setAlarm
 import meshki.studio.negarname.ui.element.ActionButton
 import meshki.studio.negarname.ui.element.HintedTextField
@@ -119,7 +131,6 @@ import org.koin.compose.koinInject
 import timber.log.Timber
 import java.text.NumberFormat
 import java.util.Calendar
-
 
 @Composable
 fun EditNotesScreen(color: Int, navController: NavHostController) {
@@ -749,9 +760,66 @@ fun EditNotesScreenMain(
                     )
                     TimeInput(state = timePicker, modifier = Modifier.padding(8.dp))
 
+                    var repeating by remember { mutableStateOf(false) }
+                    var critical by remember { mutableStateOf(false) }
+                    val week by remember { mutableStateOf(Week()) }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(18.dp)
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically) {
+                            Switch(checked = repeating, onCheckedChange = { repeating = it })
+                            Text(stringResource(R.string.repeating))
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically) {
+                            Switch(checked = critical, onCheckedChange = { critical = it }, colors = SwitchDefaults.colors(
+                                checkedThumbColor = PastelRed,
+                                checkedBorderColor = PastelRed,
+                                checkedTrackColor = PastelPink,
+                            ))
+                            Text(stringResource(R.string.critical))
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        visible = repeating,
+                        enter = fadeIn() + slideInVertically(initialOffsetY = {
+                            it / 8
+                        }),
+                        exit = fadeOut() + slideOutVertically(targetOffsetY = {
+                            it / 8
+                        }),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(top = 5.dp),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+
+                            week.list.forEachIndexed { idx, item ->
+                                var checked by remember { mutableStateOf(week.list[idx].value) }
+                                Column(verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(item.name)
+                                    //Text(DateFormatSymbols().getDayOfWeek(firstDayOfWeekIndex % 6))
+                                    Checkbox(
+                                        checked = checked,
+                                        onCheckedChange = {
+                                            week.setDayValueByName(item.name, it)
+                                            checked = it
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     Row(
                         modifier = Modifier.padding(top = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         val notificationPermissions = mutableListOf<String>()
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -776,6 +844,29 @@ fun EditNotesScreenMain(
                             }
                         ElevatedButton(
                             colors = ButtonDefaults.elevatedButtonColors(
+                                PastelRed,
+                                Color.Black.copy(0.9f)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(4.dp),
+                            onClick = {
+                                scope.launch {
+                                    deleteAlarm(ctx, noteState.value.id.toInt())
+                                }
+                            }) {
+                            Icon(
+                                painterResource(R.drawable.timer_off),
+                                //modifier = Modifier.background(Color.Black),
+                                contentDescription = "",
+                                tint = Color.Black.copy(0.9f)
+                            )
+                            Text(
+                                modifier = Modifier.padding(horizontal = 6.dp),
+                                text = stringResource(R.string.delete_alarm)
+                            )
+                        }
+
+                        ElevatedButton(
+                            colors = ButtonDefaults.elevatedButtonColors(
                                 PastelLavender,
                                 Color.Black.copy(0.9f)
                             ),
@@ -796,14 +887,15 @@ fun EditNotesScreenMain(
                                         }
 
                                         alarmTime.longValue = cal.value.timeInMillis
-
                                         setAlarm(
                                             ctx, AlarmData(
                                                 id = noteState.value.id.toInt(),
                                                 time = alarmTime.longValue,
                                                 title = noteState.value.title,
                                                 text = noteState.value.text,
-                                                critical = false
+                                                critical = critical,
+                                                repeating = repeating,
+                                                week = week
                                             )
                                         )
                                     }
@@ -812,7 +904,7 @@ fun EditNotesScreenMain(
                             Icon(
                                 painterResource(R.drawable.alarm),
                                 //modifier = Modifier.background(Color.Black),
-                                contentDescription = "",
+                                contentDescription = stringResource(R.string.set_alarm),
                                 tint = Color.Black.copy(0.9f)
                             )
                             Text(

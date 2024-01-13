@@ -21,17 +21,21 @@ import androidx.core.app.NotificationCompat
 import meshki.studio.negarname.MainActivity
 import timber.log.Timber
 import meshki.studio.negarname.R
+import meshki.studio.negarname.entity.Week
 import java.util.Calendar
 
 const val ACTION_ALARM_SNOOZE = "meshki.studio.negarname.ACTION_ALARM_SNOOZE"
 const val ACTION_ALARM_SHOW = "meshki.studio.negarname.ACTION_ALARM_SHOW"
 const val ACTION_ALARM_CLICK = "meshki.studio.negarname.ACTION_ALARM_CLICK"
+const val ACTION_ALARM_REMOVE = "meshki.studio.negarname.ACTION_ALARM_REMOVE"
 
 data class AlarmData(
     val id: Int = 0,
     val time: Long = System.currentTimeMillis(),
     val title: String,
     val text: String,
+    val repeating: Boolean = false,
+    val week: Week = Week(),
     val critical: Boolean = false
 )
 
@@ -44,15 +48,29 @@ fun setAlarm(context: Context, alarm: AlarmData) {
             putExtra("title", alarm.title)
             putExtra("text", alarm.text)
             putExtra("critical", alarm.critical)
+            putExtra("repeating", alarm.repeating)
             action = ACTION_ALARM_SHOW
         }
 
         val pendingIntent =
-            PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+            PendingIntent.getBroadcast(context, alarm.id, intent, PendingIntent.FLAG_MUTABLE)
         if (alarm.critical) {
             alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(alarm.time, null), pendingIntent)
         } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarm.time, pendingIntent)
+            if (alarm.repeating) {
+                val weekInMillis = 7 * 24 * 60 * 60 * 1000L /* 7 Days */
+                alarm.week.list.forEachIndexed { idx, day ->
+                    if (day.value) {
+                        val cal = Calendar.getInstance().apply {
+                            timeInMillis = alarm.time
+                        }
+                        cal.set(Calendar.DAY_OF_WEEK, idx + 1)
+                        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, cal.timeInMillis, weekInMillis , pendingIntent)
+                    }
+                }
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarm.time, pendingIntent)
+            }
         }
     } catch (err: Error) {
         Toast.makeText(context, err.toString(), Toast.LENGTH_LONG).show()
@@ -63,11 +81,45 @@ fun setAlarm(context: Context, alarm: AlarmData) {
     }
 }
 
+fun deleteAlarm(context: Context, id: Int) {
+    try {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val pendingIntent = PendingIntent.getBroadcast(context, id, Intent(context, AlarmReceiver::class.java), PendingIntent.FLAG_MUTABLE)
+        alarmManager.cancel(pendingIntent)
+        AlarmReceiver.stopAlarm(context, id)
+    } catch (err: Error) {
+        Toast.makeText(context, err.toString(), Toast.LENGTH_LONG).show()
+        Timber.wtf(err)
+    } catch (exc: SecurityException) {
+        Toast.makeText(context, exc.toString(), Toast.LENGTH_LONG).show()
+        Timber.e(exc)
+    }
+}
 
 class AlarmReceiver : BroadcastReceiver() {
     companion object {
         var alert: Uri? = null
         var ringtone: Ringtone? = null
+
+        fun stopAlarm(context: Context, id: Int) {
+            NotificationService.stopNotification(context, id)
+
+            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vibratorManager =
+                    context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vibratorManager.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                context.getSystemService(VIBRATOR_SERVICE) as Vibrator
+            }
+            if (vibrator.hasVibrator()) {
+                vibrator.cancel()
+            }
+
+            if (ringtone?.isPlaying == true) {
+                ringtone?.stop()
+            }
+        }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -90,7 +142,6 @@ class AlarmReceiver : BroadcastReceiver() {
 
             when (intent.action) {
                 ACTION_ALARM_SHOW -> {
-                    Timber.tag("Alarms").i("SHOULD DO SOMETHING NOW")
                     val id = intent.getIntExtra("id", 0)
                     val time = intent.getLongExtra("time", System.currentTimeMillis())
                     val title = intent.getStringExtra("title").orEmpty()
@@ -194,23 +245,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
                 ACTION_ALARM_SNOOZE -> {
                     val id = intent.getIntExtra("id", 0)
-                    NotificationService.stopNotification(context, id)
-
-                    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        val vibratorManager =
-                            context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-                        vibratorManager.defaultVibrator
-                    } else {
-                        @Suppress("DEPRECATION")
-                        context.getSystemService(VIBRATOR_SERVICE) as Vibrator
-                    }
-                    if (vibrator.hasVibrator()) {
-                        vibrator.cancel()
-                    }
-
-                    if (ringtone!!.isPlaying) {
-                        ringtone?.stop()
-                    }
+                    stopAlarm(context, id)
                 }
                 else -> Unit
             }

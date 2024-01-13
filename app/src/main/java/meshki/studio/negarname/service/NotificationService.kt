@@ -77,11 +77,7 @@ class NotificationService : Service() {
                 putExtra("data", data)
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ContextCompat.startForegroundService(context, notificationIntent)
-            } else {
-                context.startService(notificationIntent)
-            }
+            context.startService(notificationIntent)
         }
 
         fun stopNotification(context: Context, id: Int) {
@@ -124,12 +120,6 @@ class NotificationService : Service() {
                 stopSelfResult(i)
                 notificationIdList.removeAt(idx)
             }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            stopForeground(true)
         }
         return super.stopService(intent)
     }

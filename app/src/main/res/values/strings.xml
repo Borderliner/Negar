@@ -35,4 +35,7 @@
     <string name="drawing">Drawing</string>
     <string name="clean">Clean</string>
     <string name="undo">Undo</string>
+    <string name="repeating">Repeating</string>
+    <string name="critical">Critical</string>
+    <string name="delete_alarm">Delete Alarm</string>
 </resources>

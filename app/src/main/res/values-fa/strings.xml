@@ -36,4 +36,7 @@
     <string name="drawing">نقاشی</string>
     <string name="clean">پاک کردن</string>
     <string name="undo">برگشت</string>
+    <string name="repeating">قابل تکرار</string>
+    <string name="critical">حساس</string>
+    <string name="delete_alarm">حذف زنگ</string>
 </resources>
