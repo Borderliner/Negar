@@ -1,7 +1,8 @@
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
 }
@@ -25,8 +26,9 @@ android {
     }
 
     buildTypes {
-        release {
-            isMinifyEnabled = false
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         getByName("debug") {
@@ -60,8 +62,8 @@ android {
 dependencies {
     implementation(project(":Kalendar:kalendar"))
     implementation(project(":Kalendar:kalendar-endlos"))
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
-
+    implementation(libs.kotlin.serialization)
+    implementation(libs.kotlin.datetime)
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.viewmodel.ktx)
@@ -86,6 +88,7 @@ dependencies {
     implementation(libs.acra)
     implementation(libs.acra.mail)
     implementation(libs.acra.dialog)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
