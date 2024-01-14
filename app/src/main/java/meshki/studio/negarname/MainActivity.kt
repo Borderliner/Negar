@@ -101,8 +101,8 @@ fun MainScreenScaffold(navController: NavHostController) {
                 BottomBar(navController)
             }
         },
-        containerColor = Color.Transparent,
-        modifier = Modifier.navigationBarsPadding()
+        containerColor = Color.Red,
+        //modifier = Modifier.navigationBarsPadding()
     ) {
         Box(
             Modifier.padding(it)

@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -39,7 +40,8 @@ fun ActionButton(
     text: String,
     icon: @Composable () -> Unit,
     onClick: () -> Unit = {},
-    modifier: Modifier
+    modifier: Modifier,
+    isBottomBarVisible: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -54,26 +56,31 @@ fun ActionButton(
 
     val isKeyboardOpen by keyboardAsState()
     val fabPadding = remember {
-        mutableFloatStateOf(getNavigationBarHeight().toFloat() - 50)
+        mutableFloatStateOf(120f)
     }
 
     val insets: WindowInsetsCompat? = ViewCompat.getRootWindowInsets((LocalContext.current as Activity).window.decorView)
     val keyboardHeight = insets!!.getInsets(WindowInsetsCompat.Type.ime()).bottom
-    println("Kbd height: $keyboardHeight")
 
     LaunchedEffect(isKeyboardOpen) {
         if (isKeyboardOpen) {
-            fabPadding.floatValue = (keyboardHeight.toFloat() * -1f) + getNavigationBarHeight() + 25
+            fabPadding.floatValue = (keyboardHeight.toFloat() * -0.7f)
         } else {
-            fabPadding.floatValue = getNavigationBarHeight().toFloat() - 50
+            fabPadding.floatValue = 120f
         }
     }
 
     ExtendedFloatingActionButton(
         modifier = with(LocalDensity.current) {
+            val off = if (isBottomBarVisible && isKeyboardOpen) {
+                fabPadding.floatValue.toDp() + 70.dp
+            } else {
+                fabPadding.floatValue.toDp()
+            }
             modifier
-                .offset(y = fabPadding.floatValue.toDp())
+                .offset(y = off)
                 .bounceClick()
+                .padding(bottom = 6.dp)
                 .border(1.dp, Color.Gray, RoundedShapes.large)
         },
         onClick = onClick,

@@ -28,9 +28,9 @@ fun BottomBar(navController: NavHostController) {
     NavigationBar(
         Modifier
             .fillMaxWidth()
-            .height(82.dp)
+            .defaultMinSize(minHeight = 100.dp)
             .padding(horizontal = 16.dp)
-            .padding(bottom = 6.dp),
+            .navigationBarsPadding(),
         contentColor = MaterialTheme.colorScheme.onSurface,
         containerColor = Color.Transparent,
     ) {

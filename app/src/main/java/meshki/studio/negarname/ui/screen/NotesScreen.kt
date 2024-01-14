@@ -108,6 +108,7 @@ fun NotesScreenScaffold(
     snackbar: SnackbarHostState,
     content: @Composable () -> Unit
 ) {
+    val mainViewModel = koinInject<MainViewModel>()
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
@@ -123,6 +124,7 @@ fun NotesScreenScaffold(
                 onClick = {
                     navController.navigate(ScreenEntity.EditNotes.route)
                 },
+                isBottomBarVisible = mainViewModel.isBottomBarVisible
             )
         },
         floatingActionButtonPosition = FabPosition.End,
