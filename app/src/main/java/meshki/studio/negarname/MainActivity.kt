@@ -97,14 +97,7 @@ fun MainScreenScaffold(navController: NavHostController) {
     Scaffold(
         topBar = { TopBar() },
         bottomBar = {
-            AnimatedVisibility(visible = mainViewModel.isBottomBarVisible,
-                enter = fadeIn() + slideInVertically(initialOffsetY = {
-                    it / 8
-                }),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = {
-                    it / 8
-                })
-            ) {
+            if (mainViewModel.isBottomBarVisible) {
                 BottomBar(navController)
             }
         },
