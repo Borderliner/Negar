@@ -58,10 +58,19 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.zIndex
+import androidx.core.content.ContextCompat.getString
 import meshki.studio.negarname.entity.Tool
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -135,6 +144,8 @@ fun NotesScreenMain(
     val orderTool = remember { mutableStateOf(Tool("order")) }
     val searchTool =  remember { mutableStateOf(Tool("search")) }
 
+    var isRowView by rememberSaveable { mutableStateOf(true) }
+
     val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
 
     LaunchedEffect(searchTool.value.visibility.value, orderTool.value.visibility.value) {
@@ -194,6 +205,26 @@ fun NotesScreenMain(
                         modifier = Modifier.zIndex(16f),
                         onClick = {
                             scope.launch {
+                                isRowView = !isRowView
+                            }
+                        },
+                    ) {
+                        Icon(
+                            modifier = Modifier.scale(scaleX = 1f, scaleY = 1f),
+                            imageVector = ImageVector.vectorResource(
+                                if (isRowView) {
+                                    R.drawable.vec_row
+                                } else {
+                                    R.drawable.vec_grid
+                                }
+                            ),
+                            contentDescription = stringResource(R.string.view)
+                        )
+                    }
+                    IconButton(
+                        modifier = Modifier.zIndex(16f),
+                        onClick = {
+                            scope.launch {
                                 //onToolClicked(searchTool)
                                 if (!searchTool.value.visibility.value) {
                                     closeTool(orderTool)
@@ -208,7 +239,7 @@ fun NotesScreenMain(
                         Icon(
                             modifier = Modifier.scale(scaleX = 1f, scaleY = 1f),
                             imageVector = ImageVector.vectorResource(R.drawable.vec_search),
-                            contentDescription = "Search"
+                            contentDescription = stringResource(R.string.search)
                         )
                     }
                     IconButton(
@@ -229,7 +260,7 @@ fun NotesScreenMain(
                         Icon(
                             modifier = Modifier.scale(scaleX = -1f, scaleY = 1f),
                             imageVector = ImageVector.vectorResource(R.drawable.vec_sort),
-                            contentDescription = "Order"
+                            contentDescription = stringResource(R.string.order)
                         )
                     }
                 }
@@ -250,55 +281,109 @@ fun NotesScreenMain(
             elevation = CardDefaults.cardElevation(0.dp)
         ) {
             if (uiState.notes.isNotEmpty()) {
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 65.dp),
-                    modifier = Modifier.offset(
-                        0.dp, offsetAnimation.value.value.dp
-                    )
-                ) {
-                    items(uiState.notes) { note ->
-                        SingleNote(
-                            note = note,
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .fillMaxWidth(),
-                            isRtl = mainViewModel.isRtl,
-                            onTap = {
-                                println("Note ID: $note.id, Color: $note.color")
-                                navController.navigate(
-                                    ScreenEntity.EditNotes.route +
-                                            "?id=${note.id}&color=${note.color}"
-                                )
-                            },
-                            onDelete = {
-                                scope.launch {
-                                    viewModel.onEvent(NotesEvent.NoteDeleted(note))
-                                    val result =
-                                        snackbar.showSnackbar(
-                                            message = "یادداشت پاک شد",
-                                            actionLabel = "بازیابی"
-                                        )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel.onEvent(NotesEvent.NoteRestored)
-                                    }
-                                }
-                            },
-                            onPin = {
-                                if (!note.pinned) {
-                                    scope.launch {
-                                        snackbar.showSnackbar(
-                                            message = "یادداشت سوزن شد.",
-                                        )
-                                    }
-                                }
-
-                                scope.launch {
-                                    viewModel.onEvent(NotesEvent.NotePinToggled(note))
-                                }
-                            }
+                val ctx = LocalContext.current
+                if (isRowView) {
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = 65.dp),
+                        modifier = Modifier.offset(
+                            0.dp, offsetAnimation.value.value.dp
                         )
+                    ) {
+                        itemsIndexed(uiState.notes) { idx, note ->
+                            SingleNote(
+                                note = note,
+                                modifier = Modifier
+                                    .padding(horizontal = 8.dp)
+                                    .fillMaxWidth(),
+                                isRtl = mainViewModel.isRtl,
+                                onTap = {
+                                    navController.navigate(
+                                        ScreenEntity.EditNotes.route +
+                                                "?id=${note.id}&color=${note.color}"
+                                    )
+                                },
+                                onDelete = {
+                                    scope.launch {
+                                        viewModel.onEvent(NotesEvent.NoteDeleted(note))
+                                        val result =
+                                            snackbar.showSnackbar(
+                                                message = getString(ctx, R.string.note_removed),
+                                                actionLabel = getString(ctx, R.string.restore)
+                                            )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            viewModel.onEvent(NotesEvent.NoteRestored)
+                                        }
+                                    }
+                                },
+                                onPin = {
+                                    if (!note.pinned) {
+                                        scope.launch {
+                                            snackbar.showSnackbar(
+                                                message = getString(ctx, R.string.restore),
+                                            )
+                                        }
+                                    }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                                    scope.launch {
+                                        viewModel.onEvent(NotesEvent.NotePinToggled(note))
+                                    }
+                                }
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    }
+                } else {
+                    val lazyGridState = rememberLazyStaggeredGridState()
+                    LazyVerticalStaggeredGrid(
+                        contentPadding = PaddingValues(bottom = 65.dp),
+                        columns = StaggeredGridCells.Fixed(2),
+                        state = lazyGridState,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalItemSpacing = 10.dp,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    ) {
+                        itemsIndexed(uiState.notes) { idx, note ->
+                            SingleNote(
+                                note = note,
+                                modifier = Modifier.fillMaxWidth(),
+                                isRtl = mainViewModel.isRtl,
+                                onTap = {
+                                    navController.navigate(
+                                        ScreenEntity.EditNotes.route +
+                                                "?id=${note.id}&color=${note.color}"
+                                    )
+                                },
+                                onDelete = {
+                                    scope.launch {
+                                        viewModel.onEvent(NotesEvent.NoteDeleted(note))
+                                        val result =
+                                            snackbar.showSnackbar(
+                                                message = getString(ctx, R.string.note_removed),
+                                                actionLabel = getString(ctx, R.string.restore)
+                                            )
+                                        if (result == SnackbarResult.ActionPerformed) {
+                                            viewModel.onEvent(NotesEvent.NoteRestored)
+                                        }
+                                    }
+                                },
+                                onPin = {
+                                    if (!note.pinned) {
+                                        scope.launch {
+                                            snackbar.showSnackbar(
+                                                message = getString(ctx, R.string.restore),
+                                            )
+                                        }
+                                    }
+
+                                    scope.launch {
+                                        viewModel.onEvent(NotesEvent.NotePinToggled(note))
+                                    }
+                                }
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
                     }
                 }
             } else {

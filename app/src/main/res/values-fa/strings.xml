@@ -39,4 +39,9 @@
     <string name="repeating">قابل تکرار</string>
     <string name="critical">حساس</string>
     <string name="delete_alarm">حذف زنگ</string>
+    <string name="order">مرتب سازی</string>
+    <string name="view">نمایش</string>
+    <string name="note_removed">یادداشت پاک شد.</string>
+    <string name="restore">بازیابی شود؟</string>
+    <string name="note_pinned">یادداشت سوزن شد.</string>
 </resources>

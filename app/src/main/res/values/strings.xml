@@ -38,4 +38,9 @@
     <string name="repeating">Repeating</string>
     <string name="critical">Critical</string>
     <string name="delete_alarm">Delete Alarm</string>
+    <string name="order">Order</string>
+    <string name="view">View</string>
+    <string name="note_removed">Note was removed.</string>
+    <string name="restore">Restore?</string>
+    <string name="note_pinned">Note pinned.</string>
 </resources>
