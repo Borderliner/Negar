@@ -1,10 +1,17 @@
 package meshki.studio.negarname.service
 
 import android.content.Context
+import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import linc.com.amplituda.Amplituda
+import linc.com.amplituda.Cache
+import linc.com.amplituda.callback.AmplitudaErrorListener
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
@@ -14,6 +21,31 @@ class VoiceRecorder(ctx: Context, path: String = "") {
     companion object {
         private var _isRecording = false
         private var _isPlaying = false
+
+        suspend fun getAmplitudes(path: String, context: Context): List<Int> = withContext(
+            Dispatchers.IO) {
+            val audioPath = "${context.filesDir.path}/$path"
+            Timber.tag("VoiceRecorder:Waveform").i(audioPath)
+            return@withContext Amplituda(context).processAudio(audioPath, Cache.withParams(Cache.REUSE))
+                .get(AmplitudaErrorListener {
+                    Timber.tag("Amplituda").e(it)
+                })
+                .amplitudesAsList()
+        }
+
+        fun getAudioFileDuration(path: String, context: Context): Long {
+            return try {
+                val audioPath = "${context.filesDir.path}/$path"
+                val uri = Uri.parse(audioPath)
+                val mmr = MediaMetadataRetriever()
+                mmr.setDataSource(context, uri)
+                val duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)!!
+                duration.toLong()
+            } catch (exc: Exception) {
+                Timber.tag("Audio Processing").e(exc)
+                0
+            }
+        }
     }
 
     private val _ctx = WeakReference(ctx)

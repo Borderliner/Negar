@@ -89,6 +89,9 @@ dependencies {
     implementation(libs.acra.mail)
     implementation(libs.acra.dialog)
 
+    implementation("com.github.lincollincol:amplituda:2.2.2")
+    implementation("com.github.lincollincol:compose-audiowaveform:1.1.1")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
