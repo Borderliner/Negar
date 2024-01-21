@@ -50,7 +50,7 @@ data class NotificationChannelData(
 
 @Parcelize
 data class NotificationData(
-    val id: Int,
+    val id: Long,
     val title: String,
     val text: String,
     val channel: NotificationChannelData,
@@ -208,12 +208,12 @@ class NotificationService : Service() {
                 try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         startForeground(
-                            data.id,
+                            data.id.toInt(),
                             notification,
                             ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
                         )
                     } else {
-                        startForeground(data.id, notification)
+                        startForeground(data.id.toInt(), notification)
                     }
                 } catch (exc: Exception) {
                     Toast.makeText(
@@ -224,7 +224,7 @@ class NotificationService : Service() {
                 }
             } else {
                 try {
-                    manager?.notify(data.id, notification)
+                    manager?.notify(data.id.toInt(), notification)
                 } catch (exc: SecurityException) {
                     Toast.makeText(
                         this,
@@ -233,7 +233,7 @@ class NotificationService : Service() {
                     ).show()
                 }
             }
-            notificationIdList.add(data.id)
+            notificationIdList.add(data.id.toInt())
             Timber.tag("Notification").i("ID List: $notificationIdList")
             //if (data.critical) ringtone?.play()
         } else {

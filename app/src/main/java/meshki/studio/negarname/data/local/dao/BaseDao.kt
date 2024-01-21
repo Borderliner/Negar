@@ -3,6 +3,7 @@ package meshki.studio.negarname.data.local.dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.REPLACE
+import androidx.room.Query
 import androidx.room.Update
 
 /**
@@ -12,7 +13,7 @@ interface BaseDao<T> {
     /**
      * Insert single value on database*/
     @Insert(onConflict = REPLACE)
-    fun insert(value: T)
+    fun insert(value: T): Long
 
     /**
      * Insert list of data into database
@@ -32,4 +33,7 @@ interface BaseDao<T> {
      * Delete data from table*/
     @Delete
     fun delete(value: T)
+
+    @Delete
+    fun delete(list: List<T>)
 }

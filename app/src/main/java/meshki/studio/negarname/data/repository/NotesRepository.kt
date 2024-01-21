@@ -4,15 +4,19 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import meshki.studio.negarname.data.local.dao.AlarmsDao
 import meshki.studio.negarname.data.local.dao.NotesDao
+import meshki.studio.negarname.entity.Alarm
 import meshki.studio.negarname.entity.Note
+import meshki.studio.negarname.entity.NoteAndAlarm
+import meshki.studio.negarname.entity.NotesAlarmsCrossRef
 import meshki.studio.negarname.entity.OrderBy
 import meshki.studio.negarname.entity.OrderType
 import meshki.studio.negarname.entity.UiStates
 import meshki.studio.negarname.util.handleTryCatch
+import timber.log.Timber
 
 interface NotesRepository {
     suspend fun addNote(note: Note): UiStates<Boolean>
@@ -30,10 +34,17 @@ interface NotesRepository {
     suspend fun pinNote(note: Note): UiStates<Boolean>
     suspend fun unpinNote(note: Note): UiStates<Boolean>
     suspend fun togglePinNote(note: Note): UiStates<Boolean>
+
+    suspend fun getNoteAlarms(note: Note): UiStates<Flow<List<Alarm>>>
+    suspend fun getNoteAlarmsById(id: Long): UiStates<Flow<List<Alarm>>>
+    suspend fun getAlarmById(id: Long): UiStates<Flow<Alarm>>
+    suspend fun addAlarm(noteId: Long, alarm: Alarm): UiStates<Long>
+    suspend fun deleteNoteAlarms(noteId: Long): UiStates<Boolean>
 }
 
 class NotesRepoImpl(
     private val notesDao: NotesDao,
+    private val alarmsDao: AlarmsDao,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : NotesRepository {
     override suspend fun addNote(note: Note): UiStates<Boolean> {
@@ -174,5 +185,55 @@ class NotesRepoImpl(
             }
         }
     }
-}
 
+    override suspend fun getNoteAlarms(note: Note): UiStates<Flow<List<Alarm>>> {
+        return withContext(dispatcher) {
+            handleTryCatch {
+                UiStates.Success(getNoteAlarmsById(note.id).data)
+            }
+        }
+    }
+
+    override suspend fun getNoteAlarmsById(id: Long): UiStates<Flow<List<Alarm>>> {
+        return withContext(dispatcher) {
+            handleTryCatch {
+                UiStates.Success(notesDao.getNoteAlarmsById(id).map {
+                    it.alarms
+                })
+            }
+        }
+    }
+
+    override suspend fun getAlarmById(id: Long): UiStates<Flow<Alarm>> {
+        return withContext(dispatcher) {
+            handleTryCatch {
+                UiStates.Success(alarmsDao.getById(id))
+            }
+        }
+    }
+
+    override suspend fun addAlarm(noteId: Long, alarm: Alarm): UiStates<Long> {
+        return withContext(dispatcher) {
+            handleTryCatch {
+                val id = alarmsDao.insert(alarm)
+                notesDao.insertNoteAlarm(NotesAlarmsCrossRef(
+                    noteId,
+                    id
+                ))
+                UiStates.Success(id)
+            }
+        }
+    }
+
+    override suspend fun deleteNoteAlarms(noteId: Long): UiStates<Boolean> {
+        return withContext(dispatcher) {
+            handleTryCatch {
+                notesDao.getNoteAlarmsById(noteId).collectLatest {
+                    alarmsDao.delete(it.alarms)
+                    notesDao.deleteNoteAlarmsRef(noteId)
+                }
+                UiStates.Success(true)
+            }
+        }
+    }
+}

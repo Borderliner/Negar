@@ -30,7 +30,7 @@ const val ACTION_ALARM_CLICK = "meshki.studio.negarname.ACTION_ALARM_CLICK"
 const val ACTION_ALARM_REMOVE = "meshki.studio.negarname.ACTION_ALARM_REMOVE"
 
 data class AlarmData(
-    val id: Int = 0,
+    val id: Long = 0,
     val time: Long = System.currentTimeMillis(),
     val title: String,
     val text: String,
@@ -39,7 +39,7 @@ data class AlarmData(
     val critical: Boolean = false
 )
 
-fun setAlarm(context: Context, alarm: AlarmData) {
+fun setAlarm(context: Context, alarm: AlarmData): Boolean {
     try {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, AlarmReceiver::class.java).apply {
@@ -53,7 +53,7 @@ fun setAlarm(context: Context, alarm: AlarmData) {
         }
 
         val pendingIntent =
-            PendingIntent.getBroadcast(context, alarm.id, intent, PendingIntent.FLAG_MUTABLE)
+            PendingIntent.getBroadcast(context, alarm.id.toInt(), intent, PendingIntent.FLAG_MUTABLE)
         if (alarm.critical) {
             alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(alarm.time, null), pendingIntent)
         } else {
@@ -72,12 +72,15 @@ fun setAlarm(context: Context, alarm: AlarmData) {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarm.time, pendingIntent)
             }
         }
+        return true
     } catch (err: Error) {
         Toast.makeText(context, err.toString(), Toast.LENGTH_LONG).show()
         Timber.wtf(err)
+        return false
     } catch (exc: SecurityException) {
         Toast.makeText(context, exc.toString(), Toast.LENGTH_LONG).show()
         Timber.e(exc)
+        return false
     }
 }
 
@@ -142,7 +145,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
             when (intent.action) {
                 ACTION_ALARM_SHOW -> {
-                    val id = intent.getIntExtra("id", 0)
+                    val id = intent.getLongExtra("id", 0)
                     val time = intent.getLongExtra("time", System.currentTimeMillis())
                     val title = intent.getStringExtra("title").orEmpty()
                     val text = intent.getStringExtra("text").orEmpty()

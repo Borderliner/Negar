@@ -61,6 +61,7 @@ import android.Manifest
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -81,6 +82,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.consumeDownChange
@@ -88,11 +92,14 @@ import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.zIndex
+import androidx.compose.ui.unit.sp
 import com.google.gson.Gson
+import com.linc.audiowaveform.AudioWaveform
+import com.linc.audiowaveform.infiniteLinearGradient
+import com.linc.audiowaveform.model.AmplitudeType
+import com.linc.audiowaveform.model.WaveformAlignment
 import meshki.studio.negarname.R
 import meshki.studio.negarname.entity.CustomPath
-import meshki.studio.negarname.entity.Day
 import meshki.studio.negarname.entity.DrawMode
 import meshki.studio.negarname.entity.DrawingPath
 import meshki.studio.negarname.entity.MotionEvent
@@ -340,7 +347,7 @@ fun EditNotesScreenMain(
                     .size(45.dp)
                     .shadow(6.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(PastelLavender)
+                    .background(if (viewModel.alarms.size > 0) PastelLavender else MaterialTheme.colorScheme.background)
                     .clickable {
                         scope.launch {
                             if (!alarmTool.value.visibility.value) {
@@ -620,7 +627,59 @@ fun EditNotesScreenMain(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("${stringResource(R.string.time)}: 00:00")
+                    val voiceDuration = remember { mutableStateOf(0L) }
+                    val formatter = NumberFormat.getInstance()
+                    Text(
+                        fontSize = 22.sp,
+                        text = "${stringResource(R.string.time)}: ${formatter.format((voiceDuration.value / 1000) / 60)}:${
+                            formatter.format(
+                                (voiceDuration.value / 1000) % 60
+                            )
+                        }"
+                    )
+                    var waveformProgress by remember { mutableStateOf(0F) }
+
+                    val animatedGradientBrush = Brush.infiniteLinearGradient(
+                        colors = listOf(Color(0xff22c1c3), Color(0xfffdbb2d)),
+                        animation = tween(durationMillis = 6000, easing = LinearEasing),
+                        width = 128F
+                    )
+
+                    val amplitudes: MutableList<Int> = mutableListOf()
+                    LaunchedEffect(noteState.value.id) {
+                        scope.launch {
+                            voiceDuration.value = VoiceRecorder.getAudioFileDuration(
+                                "records/${noteState.value.id}.aac",
+                                ctx
+                            )
+                            amplitudes.clear()
+                            if (voiceDuration.value > 0) {
+                                amplitudes.addAll(
+                                    VoiceRecorder.getAmplitudes(
+                                        "records/${noteState.value.id}.aac",
+                                        ctx
+                                    )
+                                )
+                            }
+                            Timber.tag("Waveform").i(amplitudes.toString())
+                        }
+                    }
+                    AudioWaveform(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        style = Fill,
+                        waveformAlignment = WaveformAlignment.Center,
+                        amplitudeType = AmplitudeType.Avg,
+                        amplitudes = amplitudes,
+                        progressBrush = animatedGradientBrush,
+                        waveformBrush = SolidColor(Color.LightGray),
+                        spikeWidth = 4.dp,
+                        spikePadding = 2.dp,
+                        spikeRadius = 4.dp,
+                        progress = waveformProgress,
+                        onProgressChange = { waveformProgress = it }
+                    )
                     Row(
                         modifier = Modifier.padding(top = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -736,21 +795,25 @@ fun EditNotesScreenMain(
                     Text(stringResource(R.string.alarm))
 
                     val alarmTime = remember { mutableLongStateOf(0L) }
-                    val cal = remember { mutableStateOf(Calendar.getInstance()) }
+                    val cal = remember {
+                        mutableStateOf(Calendar.getInstance().apply {
+                            if (viewModel.alarms.size > 0) {
+                                val tempCal = Calendar.getInstance().apply {
+                                    timeInMillis = viewModel.alarms[0].time
+                                }
+                                val hour = tempCal.get(Calendar.HOUR_OF_DAY)
+                                val minute = tempCal.get(Calendar.MINUTE)
+
+                                set(Calendar.HOUR_OF_DAY, hour)
+                                set(Calendar.MINUTE, minute)
+                            }
+                        })
+                    }
 
                     LaunchedEffect(alarmTime.longValue) {
                         if (alarmTime.longValue > 0) {
                             cal.value.timeInMillis = alarmTime.longValue
                         }
-                    }
-
-                    if (alarmTime.longValue > 0) {
-                        Text(
-                            "${
-                                NumberFormat.getInstance()
-                                    .format(cal.value.get(Calendar.HOUR_OF_DAY))
-                            }:${NumberFormat.getInstance().format(cal.value.get(Calendar.MINUTE))}"
-                        )
                     }
 
                     val timePicker = rememberTimePickerState(
@@ -760,26 +823,40 @@ fun EditNotesScreenMain(
                     )
                     TimeInput(state = timePicker, modifier = Modifier.padding(8.dp))
 
-                    var repeating by remember { mutableStateOf(false) }
-                    var critical by remember { mutableStateOf(false) }
-                    val week by remember { mutableStateOf(Week()) }
+                    var repeating by remember { mutableStateOf(viewModel.alarms.size > 1) }
+                    var critical by remember {
+                        mutableStateOf(
+                            if (viewModel.alarms.size > 0) {
+                                viewModel.alarms[0].critical
+                            } else false
+                        )
+                    }
+                    val week by remember { mutableStateOf(Week.fromAlarms(viewModel.alarms)) }
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(18.dp)
                     ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Switch(checked = repeating, onCheckedChange = { repeating = it })
                             Text(stringResource(R.string.repeating))
                         }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            Switch(checked = critical, onCheckedChange = { critical = it }, colors = SwitchDefaults.colors(
-                                checkedThumbColor = PastelRed,
-                                checkedBorderColor = PastelRed,
-                                checkedTrackColor = PastelPink,
-                            ))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Switch(
+                                checked = critical,
+                                onCheckedChange = { critical = it },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = PastelRed,
+                                    checkedBorderColor = PastelRed,
+                                    checkedTrackColor = PastelPink,
+                                )
+                            )
                             Text(stringResource(R.string.critical))
                         }
                     }
@@ -797,11 +874,12 @@ fun EditNotesScreenMain(
                             modifier = Modifier.padding(top = 5.dp),
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-
                             week.list.forEachIndexed { idx, item ->
                                 var checked by remember { mutableStateOf(week.list[idx].value) }
-                                Column(verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally) {
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
                                     Text(item.name)
                                     //Text(DateFormatSymbols().getDayOfWeek(firstDayOfWeekIndex % 6))
                                     Checkbox(
@@ -842,75 +920,83 @@ fun EditNotesScreenMain(
                                     ).show()
                                 }
                             }
-                        ElevatedButton(
-                            colors = ButtonDefaults.elevatedButtonColors(
-                                PastelRed,
-                                Color.Black.copy(0.9f)
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(4.dp),
-                            onClick = {
-                                scope.launch {
-                                    deleteAlarm(ctx, noteState.value.id.toInt())
-                                }
-                            }) {
-                            Icon(
-                                painterResource(R.drawable.timer_off),
-                                //modifier = Modifier.background(Color.Black),
-                                contentDescription = "",
-                                tint = Color.Black.copy(0.9f)
-                            )
-                            Text(
-                                modifier = Modifier.padding(horizontal = 6.dp),
-                                text = stringResource(R.string.delete_alarm)
-                            )
-                        }
-
-                        ElevatedButton(
-                            colors = ButtonDefaults.elevatedButtonColors(
-                                PastelLavender,
-                                Color.Black.copy(0.9f)
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(4.dp),
-                            onClick = {
-                                scope.launch {
-                                    Timber.d(notificationPermissions.toString())
-                                    checkAlarmsPermission(ctx)
-                                    checkPermissions(
-                                        ctx,
-                                        notificationPermissions.toTypedArray(),
-                                        notificationPermissionLauncher
-                                    ) {
-                                        cal.value.apply {
-                                            set(Calendar.HOUR_OF_DAY, timePicker.hour)
-                                            set(Calendar.MINUTE, timePicker.minute)
-                                            set(Calendar.SECOND, 0)
-                                        }
-
-                                        alarmTime.longValue = cal.value.timeInMillis
-                                        setAlarm(
-                                            ctx, AlarmData(
-                                                id = noteState.value.id.toInt(),
-                                                time = alarmTime.longValue,
-                                                title = noteState.value.title,
-                                                text = noteState.value.text,
-                                                critical = critical,
-                                                repeating = repeating,
-                                                week = week
-                                            )
-                                        )
+                        if (viewModel.alarms.size > 0) {
+                            ElevatedButton(
+                                colors = ButtonDefaults.elevatedButtonColors(
+                                    PastelRed,
+                                    Color.Black.copy(0.9f)
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(4.dp),
+                                onClick = {
+                                    scope.launch {
+                                        viewModel.onEvent(EditNotesEvent.DeleteNoteAlarms(noteState.value.id))
+                                        viewModel.alarms.clear()
+                                        repeating = false
+                                        critical = false
                                     }
-                                }
-                            }) {
-                            Icon(
-                                painterResource(R.drawable.alarm),
-                                //modifier = Modifier.background(Color.Black),
-                                contentDescription = stringResource(R.string.set_alarm),
-                                tint = Color.Black.copy(0.9f)
-                            )
-                            Text(
-                                modifier = Modifier.padding(horizontal = 6.dp),
-                                text = stringResource(R.string.set_alarm)
-                            )
+                                }) {
+                                Icon(
+                                    painterResource(R.drawable.timer_off),
+                                    //modifier = Modifier.background(Color.Black),
+                                    contentDescription = "",
+                                    tint = Color.Black.copy(0.9f)
+                                )
+                                Text(
+                                    modifier = Modifier.padding(horizontal = 6.dp),
+                                    text = stringResource(R.string.delete_alarm)
+                                )
+                            }
+                        } else {
+                            ElevatedButton(
+                                colors = ButtonDefaults.elevatedButtonColors(
+                                    PastelLavender,
+                                    Color.Black.copy(0.9f)
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(4.dp),
+                                onClick = {
+                                    scope.launch {
+                                        Timber.d(notificationPermissions.toString())
+                                        checkAlarmsPermission(ctx)
+                                        checkPermissions(
+                                            ctx,
+                                            notificationPermissions.toTypedArray(),
+                                            notificationPermissionLauncher
+                                        ) {
+                                            cal.value.apply {
+                                                set(Calendar.HOUR_OF_DAY, timePicker.hour)
+                                                set(Calendar.MINUTE, timePicker.minute)
+                                                set(Calendar.SECOND, 0)
+                                            }
+
+                                            alarmTime.longValue = cal.value.timeInMillis
+
+                                            viewModel.onEvent(
+                                                EditNotesEvent.SetAlarm(
+                                                    AlarmData(
+                                                        id = noteState.value.id,
+                                                        time = alarmTime.longValue,
+                                                        title = noteState.value.title,
+                                                        text = noteState.value.text,
+                                                        critical = critical,
+                                                        repeating = repeating,
+                                                        week = week
+                                                    )
+                                                )
+                                            )
+                                        }
+                                    }
+                                }) {
+                                Icon(
+                                    painterResource(R.drawable.alarm),
+                                    //modifier = Modifier.background(Color.Black),
+                                    contentDescription = stringResource(R.string.set_alarm),
+                                    tint = Color.Black.copy(0.9f)
+                                )
+                                Text(
+                                    modifier = Modifier.padding(horizontal = 6.dp),
+                                    text = stringResource(R.string.set_alarm)
+                                )
+                            }
                         }
                     }
                 }

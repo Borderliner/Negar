@@ -1,17 +1,20 @@
 package meshki.studio.negarname.entity
 
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Junction
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 import com.google.gson.annotations.SerializedName
 import meshki.studio.negarname.ui.theme.*
 import java.util.Date
 
-@Entity(tableName = "Notes")
+@Entity(tableName = "notes")
 data class Note(
     @PrimaryKey(autoGenerate = true)
-    @SerializedName("id")
-    @ColumnInfo(name = "id")
+    @SerializedName("note_id")
+    @ColumnInfo(name = "note_id", index = true)
     val id: Long = 0,
 
     @SerializedName("title")
@@ -25,6 +28,10 @@ data class Note(
     @SerializedName("color")
     @ColumnInfo(name = "color")
     val color: Int,
+
+    @SerializedName("voice")
+    @ColumnInfo(name = "voice")
+    val voice: String,
 
     @SerializedName("drawing")
     @ColumnInfo(name = "drawing")
@@ -55,6 +62,28 @@ data class Note(
         )
     }
 }
+
+@Entity(
+    tableName = "notes_alarms_ref",
+    primaryKeys = ["note_id", "alarm_id"],
+)
+data class NotesAlarmsCrossRef (
+    @ColumnInfo(name = "note_id", index = true)
+    val noteId: Long,
+    @ColumnInfo(name = "alarm_id", index = true)
+    val alarmId: Long
+)
+
+data class NoteAndAlarm (
+    @Embedded
+    val note: Note,
+    @Relation(
+        parentColumn = "note_id",
+        entityColumn = "alarm_id",
+        associateBy = Junction(NotesAlarmsCrossRef::class)
+    )
+    val alarms: List<Alarm>
+)
 
 sealed interface NotesStateInterface {
     val isLoading: Boolean
