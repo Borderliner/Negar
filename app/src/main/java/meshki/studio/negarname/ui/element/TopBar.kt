@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -11,13 +12,16 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import meshki.studio.negarname.vm.MainViewModel
 import meshki.studio.negarname.R
 import org.koin.compose.koinInject
@@ -29,20 +33,27 @@ fun TopBar() {
     val appMenuState = remember { mutableStateOf(false) }
     val aboutDialogState = remember { mutableStateOf(false) }
     val logoSize = 125.dp
+    val scope = rememberCoroutineScope()
 
     AboutDialog(aboutDialogState)
 
     TopAppBar(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)),
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent),
         navigationIcon = {
             IconButton(
-                enabled = !appMenuState.value,
-                modifier = Modifier.padding(top = 10.dp, start = 10.dp),
+                //enabled = !appMenuState.value,
+                modifier = Modifier.padding(top = 8.dp, start = 8.dp),
                 onClick = {
-//                    if (!appMenuState.value) {
-//                        appMenuState.value = !appMenuState.value
-//                    }
-                    // popup.value = !popup.value
+                    scope.launch {
+                        if (mainViewModel.drawerState.isOpen) {
+                            mainViewModel.drawerState.close()
+                        } else {
+                            mainViewModel.drawerState.open()
+                        }
+                    }
                 }) {
                 Icon(
                     Icons.Filled.MoreVert,
@@ -102,7 +113,6 @@ fun TopBar() {
                 )
             }
         },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(Color.Black.copy(0.1f)),
     )
 }
 

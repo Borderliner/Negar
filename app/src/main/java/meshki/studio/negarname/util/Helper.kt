@@ -3,6 +3,7 @@ package meshki.studio.negarname.util
 import android.annotation.SuppressLint
 import android.app.LocaleManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.Build
 import android.os.LocaleList
@@ -16,6 +17,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.os.LocaleListCompat
 
 @Composable
@@ -71,4 +73,29 @@ fun Context.pxToDp(px: Int): Int {
 
 fun Context.dpToPx(dp: Int): Int {
     return (dp * this.resources.displayMetrics.density).toInt()
+}
+
+data class AppVersion(
+    val versionName: String,
+    val versionNumber: Long,
+)
+
+fun getAppVersion(
+    context: Context,
+): AppVersion {
+    return try {
+        val packageManager = context.packageManager
+        val packageName = context.packageName
+        val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+        } else {
+            packageManager.getPackageInfo(packageName, 0)
+        }
+        AppVersion(
+            versionName = packageInfo.versionName,
+            versionNumber = PackageInfoCompat.getLongVersionCode(packageInfo),
+        )
+    } catch (e: Exception) {
+        AppVersion("", 0)
+    }
 }

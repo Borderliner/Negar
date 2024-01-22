@@ -51,4 +51,12 @@
     <string name="no">خیر</string>
     <string name="yes">بله</string>
     <string name="voice_delete_text">آیا از حذف صدای کنونی اطمینان دارید؟ این کار بازگشت پذیر نیست!</string>
+    <string name="language">زبان</string>
+    <string name="dark_mode">حالت شب</string>
+    <string name="exit">پایان</string>
+    <string name="version">نسخه</string>
+    <string name="buy">خرید</string>
+    <string name="on">روشن</string>
+    <string name="off">خاموش</string>
+    <string name="pro_version">نسخه حرفه‌ای</string>
 </resources>

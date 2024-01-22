@@ -1,6 +1,8 @@
 package meshki.studio.negarname.vm
 
 import android.content.Context
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -19,6 +21,7 @@ class MainViewModel(ctx: Context) : ViewModel() {
     val isRtl get() = _locale.value == "fa"
     val locale get() = _locale.value
     val isBottomBarVisible: State<Boolean> = _bottomBarVisible
+    val drawerState = DrawerState(DrawerValue.Closed)
 
     init {
         viewModelScope.launch {
@@ -35,5 +38,12 @@ class MainViewModel(ctx: Context) : ViewModel() {
 
     fun setBottomBarVisible(value: Boolean) {
         _bottomBarVisible.value = value
+    }
+
+    fun getLocaleName(): String = when(locale) {
+        "fa" -> "پارسی \uD83C\uDDEE\uD83C\uDDF7"
+        "en" -> "English \uD83C\uDDFA\uD83C\uDDF8"
+        "fr" -> "Français \uD83C\uDDEB\uD83C\uDDF7"
+        else -> ""
     }
 }
