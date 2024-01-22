@@ -68,6 +68,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -297,6 +298,71 @@ fun EditNotesScreenMain(
         } else {
             navController.navigateUp()
         }
+    }
+
+    if (workInProgressAlertVisible) {
+        AlertDialog(
+            icon = {
+                Icon(
+                    Icons.Filled.Warning,
+                    contentDescription = stringResource(R.string.warning)
+                )
+            },
+
+            title = {
+                Text(
+                    text = stringResource(R.string.incomplete_note_title),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.incomplete_note_text),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            },
+            onDismissRequest = { workInProgressAlertVisible = false },
+            confirmButton = {
+                TextButton(
+                    modifier = Modifier.padding(horizontal = 2.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PastelGreen,
+                        contentColor = Color.Black
+                    ),
+                    onClick = {
+                        workInProgressAlertVisible = false
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.continue_job),
+                        fontSize = 14.sp,
+                        color = Color.Black
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    modifier = Modifier.padding(horizontal = 2.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PastelRed,
+                        contentColor = Color.Black
+                    ),
+                    onClick = {
+                        workInProgressAlertVisible = false
+                        navController.navigateUp()
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.return_job),
+                        fontSize = 14.sp,
+                        color = Color.Black
+                    )
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.background,
+            textContentColor = MaterialTheme.colorScheme.onBackground
+        )
     }
 
     Column(
@@ -666,7 +732,10 @@ fun EditNotesScreenMain(
                     var waveformProgress by remember { mutableStateOf(0F) }
 
                     val animatedGradientBrush = Brush.infiniteLinearGradient(
-                        colors = listOf(Color(noteState.value.color), MaterialTheme.colorScheme.primary),
+                        colors = listOf(
+                            Color(noteState.value.color),
+                            MaterialTheme.colorScheme.primary
+                        ),
                         animation = tween(durationMillis = 6000, easing = LinearEasing),
                         width = 128F
                     )
@@ -713,10 +782,13 @@ fun EditNotesScreenMain(
                         if (replaceRecordAlert) {
                             AlertDialog(
                                 icon = {
-                                    Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.record))
+                                    Icon(
+                                        Icons.Filled.Warning,
+                                        contentDescription = stringResource(R.string.record)
+                                    )
                                 },
                                 title = {
-                                    Text(text = stringResource(R.string.voice_replace_title))
+                                    Text(text = stringResource(R.string.voice_replace_title), style = MaterialTheme.typography.titleLarge)
                                 },
                                 text = {
                                     Text(text = stringResource(R.string.voice_replace_text))
@@ -726,24 +798,32 @@ fun EditNotesScreenMain(
                                 },
                                 confirmButton = {
                                     TextButton(
-                                        colors = ButtonDefaults.textButtonColors(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.error),
+                                        modifier = Modifier.padding(horizontal = 2.dp),
+                                        colors = ButtonDefaults.textButtonColors(
+                                            PastelRed,
+                                            Color.Black
+                                        ),
                                         onClick = {
                                             replaceRecordAlert = false
                                             viewModel.recorder.value.startRecording()
                                             isRecording = viewModel.recorder.value.isRecording()
                                         }
                                     ) {
-                                        Text(stringResource(R.string.yes))
+                                        Text(stringResource(R.string.yes), fontSize = 14.sp)
                                     }
                                 },
                                 dismissButton = {
                                     TextButton(
-                                        colors = ButtonDefaults.textButtonColors(PastelGreen, MaterialTheme.colorScheme.onBackground),
+                                        modifier = Modifier.padding(horizontal = 2.dp),
+                                        colors = ButtonDefaults.textButtonColors(
+                                            PastelGreen,
+                                            Color.Black
+                                        ),
                                         onClick = {
                                             replaceRecordAlert = false
                                         }
                                     ) {
-                                        Text(stringResource(R.string.no))
+                                        Text(stringResource(R.string.no), fontSize = 14.sp)
                                     }
                                 }
                             )
@@ -752,7 +832,10 @@ fun EditNotesScreenMain(
                         if (deleteRecordAlert) {
                             AlertDialog(
                                 icon = {
-                                    Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.record))
+                                    Icon(
+                                        Icons.Filled.Warning,
+                                        contentDescription = stringResource(R.string.record)
+                                    )
                                 },
                                 title = {
                                     Text(text = stringResource(R.string.voice_delete_title))
@@ -765,7 +848,10 @@ fun EditNotesScreenMain(
                                 },
                                 confirmButton = {
                                     TextButton(
-                                        colors = ButtonDefaults.textButtonColors(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.error),
+                                        colors = ButtonDefaults.textButtonColors(
+                                            MaterialTheme.colorScheme.errorContainer,
+                                            MaterialTheme.colorScheme.error
+                                        ),
                                         onClick = {
                                             deleteRecordAlert = false
                                             viewModel.onEvent(EditNotesEvent.VoiceRemoved)
@@ -776,7 +862,10 @@ fun EditNotesScreenMain(
                                 },
                                 dismissButton = {
                                     TextButton(
-                                        colors = ButtonDefaults.textButtonColors(PastelGreen, MaterialTheme.colorScheme.onBackground),
+                                        colors = ButtonDefaults.textButtonColors(
+                                            PastelGreen,
+                                            MaterialTheme.colorScheme.onBackground
+                                        ),
                                         onClick = {
                                             deleteRecordAlert = false
                                         }

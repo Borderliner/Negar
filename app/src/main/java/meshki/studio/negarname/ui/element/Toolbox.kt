@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 fun Toolbox(
     visibility: MutableState<Boolean>,
     animation: MutableState<Animatable<Float, AnimationVector1D>>,
+    animateFromUp: Boolean = false,
     content: @Composable () -> Unit
 ) {
     if (visibility.value) {
@@ -63,7 +64,7 @@ fun Toolbox(
         visible = visibility.value && animation.value.value > (animation.value.upperBound
             ?: Float.MAX_VALUE) * 0.3,
         enter = fadeIn() + slideInVertically(initialOffsetY = {
-            it / 8
+            it / 8 * (if (animateFromUp) -1 else 1)
         }),
         exit = fadeOut() + slideOutVertically(targetOffsetY = {
             it / 8

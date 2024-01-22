@@ -58,4 +58,9 @@
     <string name="on">On</string>
     <string name="off">Off</string>
     <string name="pro_version">Pro Version</string>
+    <string name="incomplete_note_title">Incomplete Note</string>
+    <string name="incomplete_note_text">Your current note is incomplete. Are you sure you want to discard it and go back?</string>
+    <string name="continue_job">Continue</string>
+    <string name="return_job">Return</string>
+    <string name="warning">Warning</string>
 </resources>

@@ -69,7 +69,7 @@ class MainApplication : Application() {
                     //defaults to android.R.drawable.ic_dialog_alert
                     resIcon = R.drawable.pulse_alert
                     //optional, defaults to @android:style/Theme.Dialog
-                    // resTheme = R.style.dialog_theme
+                    resTheme = R.style.Theme_Negarname
                     //allows other customization
                     // reportDialogClass = MyCustomDialog::class.java
                 }

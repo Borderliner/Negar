@@ -392,7 +392,7 @@ fun NotesScreenMain(
                 }
             } else {
                 Column(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().offset(y = (-90).dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -404,7 +404,8 @@ fun NotesScreenMain(
 
     Toolbox(
         orderTool.value.visibility,
-        orderTool.value.animation
+        orderTool.value.animation,
+        animateFromUp = true
     ) {
         NotesOrderSection(
             modifier = Modifier
@@ -423,7 +424,8 @@ fun NotesScreenMain(
 
     Toolbox(
         searchTool.value.visibility,
-        searchTool.value.animation
+        searchTool.value.animation,
+        animateFromUp = true
     ) {
         NotesSearchSection(
             modifier = Modifier

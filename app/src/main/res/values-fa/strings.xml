@@ -7,7 +7,7 @@
     <string name="settings">تنظیمات</string>
     <string name="edit_notes">ویرایش یادداشت</string>
     <string name="edit_todos">ویرایش کار</string>
-    <string name="no_notes">یادداشتی وجود نداره، یکی بساز!</string>
+    <string name="no_notes">یادداشتی وجود نداره، چطوره یکی بنویسی؟</string>
     <string name="write">بنویس</string>
     <string name="save">ذخیره</string>
     <string name="title">عنوان</string>
@@ -18,12 +18,12 @@
     <string name="ascending">صعودی</string>
     <string name="descending">نزولی</string>
     <string name="search">جستجو</string>
-    <string name="crash_report_text">Unfortunately, Negarname has fatally crashed. Please allow it to send a report to the developer via email.</string>
-    <string name="crash_report_title">Report Crash?</string>
+    <string name="crash_report_text">متاسفانه نگارنامه در هنگام کار دچار خرابی شده است. خواهشمندیم بگذارید تا گزارشی به سازنده‌ی این برنامه فرستاده شود.</string>
+    <string name="crash_report_title">گزارش خرابی؟</string>
     <string name="ok">باشه</string>
     <string name="cancel">نمی‌خوام</string>
-    <string name="crash_report_comment">Your reports will help us become better.</string>
-    <string name="crash_report_email">Your Email</string>
+    <string name="crash_report_comment">گزارش شما به بهبود این برنامه کمک شایانی می‌کند.</string>
+    <string name="crash_report_email">ایمیل شما</string>
     <string name="permission_required_title">نیازمند دسترسی بیشتر</string>
     <string name="permission_required_text">برای اینکه نگارنامه به درستی کار کند، نیازمند دسترسی‌های بیشتر است.</string>
     <string name="snooze">خاموش</string>
@@ -59,4 +59,9 @@
     <string name="on">روشن</string>
     <string name="off">خاموش</string>
     <string name="pro_version">نسخه حرفه‌ای</string>
+    <string name="incomplete_note_title">یادداشتِ ناقص</string>
+    <string name="incomplete_note_text">یادداشت شما ناقص مانده است. آیا واقعا می‌خواهید یادداشت را فراموش کرده و بازگردید؟</string>
+    <string name="continue_job">ادامه</string>
+    <string name="return_job">بازگشت</string>
+    <string name="warning">اخطار</string>
 </resources>
