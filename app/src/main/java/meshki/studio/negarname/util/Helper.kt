@@ -64,3 +64,11 @@ fun keyboardAsState(): State<Boolean> {
     val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     return rememberUpdatedState(isImeVisible)
 }
+
+fun Context.pxToDp(px: Int): Int {
+    return (px / this.resources.displayMetrics.density).toInt()
+}
+
+fun Context.dpToPx(dp: Int): Int {
+    return (dp * this.resources.displayMetrics.density).toInt()
+}

@@ -29,8 +29,8 @@ fun BottomBar(navController: NavHostController) {
         Modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 100.dp)
-            .padding(horizontal = 16.dp)
-            .navigationBarsPadding(),
+            .padding(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 8.dp),
+            //.navigationBarsPadding(),
         contentColor = MaterialTheme.colorScheme.onSurface,
         containerColor = Color.Transparent,
     ) {
@@ -39,10 +39,11 @@ fun BottomBar(navController: NavHostController) {
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.outlinedCardColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             ),
             border = BorderStroke(
                 1.dp,
-                Color.Gray
+                MaterialTheme.colorScheme.secondary
             ),
             modifier = Modifier.fillMaxSize()
         ) {
@@ -53,6 +54,13 @@ fun BottomBar(navController: NavHostController) {
                 screenItems.forEach { screen ->
                     if (currentRoute != null) {
                         NavigationBarItem(
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
+                                unselectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
+                            ),
                             icon = {
                                 Icon(
                                     painterResource(id = screen.icon),

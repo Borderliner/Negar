@@ -1,6 +1,7 @@
 package meshki.studio.negarname.vm
 
 import android.content.Context
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,7 +18,7 @@ class MainViewModel(ctx: Context) : ViewModel() {
     val isReady get() = _isReady.value
     val isRtl get() = _locale.value == "fa"
     val locale get() = _locale.value
-    val isBottomBarVisible get() = _bottomBarVisible.value
+    val isBottomBarVisible: State<Boolean> = _bottomBarVisible
 
     init {
         viewModelScope.launch {

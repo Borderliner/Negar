@@ -1,5 +1,6 @@
 package meshki.studio.negarname
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -60,7 +61,7 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxSize()
                                 .statusBarsPadding()
                                 .padding(
-                                    top = 15.dp,
+                                    top = 16.dp,
                                     bottom = 0.dp,
                                     start = 0.dp,
                                     end = 0.dp
@@ -97,7 +98,7 @@ fun MainScreenScaffold(navController: NavHostController) {
     Scaffold(
         topBar = { TopBar() },
         bottomBar = {
-            if (mainViewModel.isBottomBarVisible) {
+            if (mainViewModel.isBottomBarVisible.value) {
                 BottomBar(navController)
             }
         },
@@ -105,7 +106,7 @@ fun MainScreenScaffold(navController: NavHostController) {
         //modifier = Modifier.navigationBarsPadding()
     ) {
         Box(
-            Modifier.padding(it)
+            Modifier.padding(top = it.calculateTopPadding())
         ) {
             Divider(color = Color.Gray.copy(0.4f), thickness = 1.dp)
             if (mainViewModel.isReady) {
