@@ -67,7 +67,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedButton
@@ -75,6 +79,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.mutableLongStateOf
@@ -111,8 +116,6 @@ import meshki.studio.negarname.entity.UiEvent
 import meshki.studio.negarname.entity.Week
 import meshki.studio.negarname.service.AlarmData
 import meshki.studio.negarname.service.VoiceRecorder
-import meshki.studio.negarname.service.deleteAlarm
-import meshki.studio.negarname.service.setAlarm
 import meshki.studio.negarname.ui.element.ActionButton
 import meshki.studio.negarname.ui.element.HintedTextField
 import meshki.studio.negarname.ui.element.PopupSection
@@ -347,7 +350,11 @@ fun EditNotesScreenMain(
                     .size(45.dp)
                     .shadow(6.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(if (viewModel.alarms.size > 0) PastelLavender else MaterialTheme.colorScheme.background)
+                    .background(
+                        if (viewModel.alarms.size > 0) PastelLavender else {
+                            if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
+                        }
+                    )
                     .clickable {
                         scope.launch {
                             if (!alarmTool.value.visibility.value) {
@@ -383,7 +390,13 @@ fun EditNotesScreenMain(
                     .size(45.dp)
                     .shadow(6.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(PastelPink)
+                    .background(
+                        if (viewModel.voiceState.value.duration > 0)
+                            PastelPink
+                        else {
+                            if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
+                        }
+                    )
                     .clickable {
                         scope.launch {
                             if (!recorderTool.value.visibility.value) {
@@ -419,7 +432,11 @@ fun EditNotesScreenMain(
                     .size(45.dp)
                     .shadow(6.dp, CircleShape)
                     .clip(CircleShape)
-                    .background(PastelLime)
+                    .background(
+                        if (noteState.value.drawing.isNotEmpty()) PastelLime else {
+                            if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
+                        }
+                    )
                     .clickable {
                         scope.launch {
                             if (!drawingTool.value.visibility.value) {
@@ -627,59 +644,52 @@ fun EditNotesScreenMain(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    val voiceDuration = remember { mutableStateOf(0L) }
                     val formatter = NumberFormat.getInstance()
                     Text(
                         fontSize = 22.sp,
-                        text = "${stringResource(R.string.time)}: ${formatter.format((voiceDuration.value / 1000) / 60)}:${
+                        text = "${
+                            if (viewModel.voiceState.value.duration / 1000 / 60 < 10) formatter.format(
+                                0
+                            ) else ""
+                        }${formatter.format((viewModel.voiceState.value.duration / 1000) / 60)}:${
+                            if (viewModel.voiceState.value.duration / 1000 % 60 < 10) formatter.format(
+                                0
+                            ) else ""
+                        }${
                             formatter.format(
-                                (voiceDuration.value / 1000) % 60
+                                (viewModel.voiceState.value.duration / 1000) % 60
                             )
                         }"
                     )
                     var waveformProgress by remember { mutableStateOf(0F) }
 
                     val animatedGradientBrush = Brush.infiniteLinearGradient(
-                        colors = listOf(Color(0xff22c1c3), Color(0xfffdbb2d)),
+                        colors = listOf(Color(noteState.value.color), MaterialTheme.colorScheme.primary),
                         animation = tween(durationMillis = 6000, easing = LinearEasing),
                         width = 128F
                     )
 
-                    val amplitudes: MutableList<Int> = mutableListOf()
-                    LaunchedEffect(noteState.value.id) {
-                        scope.launch {
-                            voiceDuration.value = VoiceRecorder.getAudioFileDuration(
-                                "records/${noteState.value.id}.aac",
-                                ctx
-                            )
-                            amplitudes.clear()
-                            if (voiceDuration.value > 0) {
-                                amplitudes.addAll(
-                                    VoiceRecorder.getAmplitudes(
-                                        "records/${noteState.value.id}.aac",
-                                        ctx
-                                    )
-                                )
+                    if (viewModel.voiceState.value.duration > 0) {
+                        AudioWaveform(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            style = Fill,
+                            waveformAlignment = WaveformAlignment.Center,
+                            amplitudeType = AmplitudeType.Avg,
+                            amplitudes = viewModel.voiceState.value.amplitudes,
+                            progressBrush = animatedGradientBrush,
+                            waveformBrush = SolidColor(Color.LightGray),
+                            spikeWidth = 4.dp,
+                            spikePadding = 2.dp,
+                            spikeRadius = 4.dp,
+                            progress = waveformProgress,
+                            onProgressChange = {
+                                waveformProgress = it
+                                viewModel.recorder.value.seekTo((it * viewModel.voiceState.value.duration).toInt())
                             }
-                            Timber.tag("Waveform").i(amplitudes.toString())
-                        }
+                        )
                     }
-                    AudioWaveform(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        style = Fill,
-                        waveformAlignment = WaveformAlignment.Center,
-                        amplitudeType = AmplitudeType.Avg,
-                        amplitudes = amplitudes,
-                        progressBrush = animatedGradientBrush,
-                        waveformBrush = SolidColor(Color.LightGray),
-                        spikeWidth = 4.dp,
-                        spikePadding = 2.dp,
-                        spikeRadius = 4.dp,
-                        progress = waveformProgress,
-                        onProgressChange = { waveformProgress = it }
-                    )
                     Row(
                         modifier = Modifier.padding(top = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -695,9 +705,106 @@ fun EditNotesScreenMain(
                                 }
                             }
                         var isRecording by remember { mutableStateOf(false) }
+                        var replaceRecordAlert by remember { mutableStateOf(false) }
+                        var deleteRecordAlert by remember { mutableStateOf(false) }
+
+                        if (replaceRecordAlert) {
+                            AlertDialog(
+                                icon = {
+                                    Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.record))
+                                },
+                                title = {
+                                    Text(text = stringResource(R.string.voice_replace_title))
+                                },
+                                text = {
+                                    Text(text = stringResource(R.string.voice_replace_text))
+                                },
+                                onDismissRequest = {
+                                    replaceRecordAlert = false
+                                },
+                                confirmButton = {
+                                    TextButton(
+                                        colors = ButtonDefaults.textButtonColors(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.error),
+                                        onClick = {
+                                            replaceRecordAlert = false
+                                            viewModel.recorder.value.startRecording()
+                                            isRecording = viewModel.recorder.value.isRecording()
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.yes))
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(
+                                        colors = ButtonDefaults.textButtonColors(PastelGreen, MaterialTheme.colorScheme.onBackground),
+                                        onClick = {
+                                            replaceRecordAlert = false
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.no))
+                                    }
+                                }
+                            )
+                        }
+
+                        if (deleteRecordAlert) {
+                            AlertDialog(
+                                icon = {
+                                    Icon(Icons.Filled.Warning, contentDescription = stringResource(R.string.record))
+                                },
+                                title = {
+                                    Text(text = stringResource(R.string.voice_delete_title))
+                                },
+                                text = {
+                                    Text(text = stringResource(R.string.voice_delete_text))
+                                },
+                                onDismissRequest = {
+                                    deleteRecordAlert = false
+                                },
+                                confirmButton = {
+                                    TextButton(
+                                        colors = ButtonDefaults.textButtonColors(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.error),
+                                        onClick = {
+                                            deleteRecordAlert = false
+                                            viewModel.onEvent(EditNotesEvent.VoiceRemoved)
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.yes))
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(
+                                        colors = ButtonDefaults.textButtonColors(PastelGreen, MaterialTheme.colorScheme.onBackground),
+                                        onClick = {
+                                            deleteRecordAlert = false
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.no))
+                                    }
+                                }
+                            )
+                        }
+
                         ElevatedButton(
                             colors = ButtonDefaults.elevatedButtonColors(
-                                PastelRed,
+                                PastelOrange,
+                                Color.Black.copy(0.9f)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(4.dp),
+                            onClick = { deleteRecordAlert = true }) {
+                            Icon(
+                                painterResource(R.drawable.vec_delete),
+                                //modifier = Modifier.background(Color.Black),
+                                contentDescription = stringResource(R.string.delete),
+                                tint = Color.Black.copy(0.9f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        ElevatedButton(
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                if (isRecording) PastelOrange else PastelRed,
                                 Color.Black.copy(0.9f)
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
@@ -708,13 +815,27 @@ fun EditNotesScreenMain(
                                         Manifest.permission.RECORD_AUDIO,
                                         voicePermissionLauncher
                                     ) {
-                                        val recorder =
-                                            VoiceRecorder(ctx, noteState.value.id.toString())
-                                        if (!isRecording) {
-                                            isRecording = recorder.startRecording()
+
+                                        if (!viewModel.recorder.value.isRecording()) {
+                                            if (viewModel.voiceState.value.duration > 0) {
+                                                replaceRecordAlert = true
+                                            } else {
+                                                viewModel.recorder.value.startRecording()
+                                            }
                                         } else {
-                                            isRecording = !recorder.stopRecording()
+                                            viewModel.recorder.value.stopRecording()
+                                            scope.launch {
+                                                viewModel.readVoiceToState(
+                                                    "records/${noteState.value.id}.aac",
+                                                    scope.coroutineContext
+                                                ).data?.collectLatest {
+                                                    viewModel.setVoiceState(it)
+                                                    Timber.tag("Edit Screen").i(it.toString())
+                                                }
+                                            }
                                         }
+
+                                        isRecording = viewModel.recorder.value.isRecording()
                                     }
                                 }
                             }) {
@@ -738,15 +859,17 @@ fun EditNotesScreenMain(
                                 PastelGreen,
                                 Color.Black.copy(0.9f)
                             ),
+                            enabled = viewModel.voiceState.value.duration > 0,
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
                                 scope.launch {
                                     val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
-                                    if (!isPlaying) {
-                                        isPlaying = recorder.startPlaying()
+                                    if (!recorder.isPlaying()) {
+                                        recorder.startPlaying()
                                     } else {
-                                        isPlaying = !recorder.stopPlaying()
+                                        !recorder.stopPlaying()
                                     }
+                                    isPlaying = recorder.isPlaying()
                                 }
                             }) {
                             Icon(
@@ -1241,6 +1364,7 @@ fun EditNotesScreenMain(
                                 scope.launch {
                                     if (paths.isNotEmpty()) {
                                         paths.clear()
+                                        viewModel.onEvent(EditNotesEvent.DrawingRemoved)
                                     }
                                 }
                             }) {

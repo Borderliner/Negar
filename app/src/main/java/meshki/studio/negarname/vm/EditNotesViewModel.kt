@@ -2,7 +2,6 @@ package meshki.studio.negarname.vm
 
 import android.app.AlarmManager
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,18 +17,25 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import linc.com.amplituda.Amplituda
+import linc.com.amplituda.Cache
+import linc.com.amplituda.callback.AmplitudaErrorListener
 import meshki.studio.negarname.data.repository.NotesRepository
 import meshki.studio.negarname.entity.Alarm
 import meshki.studio.negarname.entity.Note
-import meshki.studio.negarname.entity.NoteAndAlarm
 import meshki.studio.negarname.entity.UiEvent
+import meshki.studio.negarname.entity.UiStates
 import meshki.studio.negarname.service.AlarmData
+import meshki.studio.negarname.service.VoiceRecorder
 import meshki.studio.negarname.service.setAlarm
+import meshki.studio.negarname.util.handleTryCatch
 import timber.log.Timber
+import java.io.File
 import java.lang.ref.WeakReference
 import java.util.Calendar
 import java.util.Date
+import kotlin.coroutines.CoroutineContext
 
 sealed class EditNotesEvent {
     data class TitleEntered(val value: String) : EditNotesEvent()
@@ -39,9 +45,13 @@ sealed class EditNotesEvent {
     data class ColorChanged(val color: Int) : EditNotesEvent()
     data object NoteSaved : EditNotesEvent()
     data class DrawingSaved(val serializedPaths: String) : EditNotesEvent()
+    data object DrawingRemoved : EditNotesEvent()
+    data object VoiceRemoved : EditNotesEvent()
     data class SetAlarm(val alarmData: AlarmData) : EditNotesEvent()
     data class DeleteNoteAlarms(val noteId: Long) : EditNotesEvent()
 }
+
+data class VoiceState(val duration: Long = 0, val amplitudes: List<Int> = listOf())
 
 class EditNotesViewModel(
     private val notesRepository: NotesRepository,
@@ -55,6 +65,8 @@ class EditNotesViewModel(
     val noteState: State<Note> = _noteState
 
     val alarms = mutableStateListOf<Alarm>()
+    private val _voiceState = mutableStateOf(VoiceState())
+    val voiceState: State<VoiceState> = _voiceState
 
     private val ctx = WeakReference(context)
 
@@ -82,6 +94,13 @@ class EditNotesViewModel(
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
+    val recorder = mutableStateOf(VoiceRecorder(context, noteState.value.id.toString()))
+
+    override fun onCleared() {
+        recorder.value.release()
+        super.onCleared()
+    }
+
     init {
         savedStateHandle.get<Long>("id")?.let { noteId ->
             if (noteId > 0) {
@@ -92,9 +111,14 @@ class EditNotesViewModel(
                         _noteState.value = note
                         isTitleHintVisible = note.title.isEmpty()
                         isTextHintVisible = note.title.isEmpty()
-                        notesRepository.getNoteAlarmsById(note.id).data?.collectLatest {
-                            alarms.addAll(it)
-                            Timber.tag("EditViewModel").i("Alarms added: $it")
+                        notesRepository.getNoteAlarmsById(note.id).data?.collectLatest { noteAlarms ->
+                            alarms.addAll(noteAlarms)
+                            Timber.tag("EditViewModel").i("Alarms added: $noteAlarms")
+                            recorder.value.setPath(note.id.toString())
+                            readVoiceToState("records/${note.id}.aac", this.coroutineContext).data?.collectLatest {
+                                Timber.tag("EditViewModel").i("Voice added: $it")
+                                setVoiceState(it)
+                            }
                         }
                     }
                 }
@@ -111,12 +135,84 @@ class EditNotesViewModel(
         }
     }
 
+    fun setVoiceDuration(duration: Long) {
+        _voiceState.value = _voiceState.value.copy(
+            duration = duration
+        )
+    }
+
+    fun setVoiceAmplitudes(amps: List<Int>) {
+        _voiceState.value = _voiceState.value.copy(
+            amplitudes = amps
+        )
+    }
+
+    fun setVoiceState(state: VoiceState) {
+        _voiceState.value = _voiceState.value.copy(
+            duration = state.duration,
+            amplitudes = state.amplitudes
+        )
+    }
+
+    suspend fun readVoiceToState(path: String, coroutineContext: CoroutineContext): UiStates<Flow<VoiceState>> {
+        return withContext(coroutineContext) {
+            handleTryCatch {
+                val duration = VoiceRecorder.getAudioFileDuration(
+                    path,
+                    ctx.get()!!
+                )
+
+                val audioPath = "${ctx.get()!!.filesDir.path}/$path"
+                val amps = Amplituda(ctx.get()!!).processAudio(audioPath, Cache.withParams(Cache.REUSE))
+                    .get(AmplitudaErrorListener {
+                        Timber.tag("Amplituda").w(it)
+                    })
+                    .amplitudesAsList()
+
+                if (duration > 0 && amps.size > 0) {
+                    UiStates.Success(flow {
+                        emit(
+                            VoiceState(
+                                duration,
+                                amps
+                            )
+                        )
+                    })
+                } else {
+                    UiStates.Success(emptyFlow())
+                }
+            }
+        }
+    }
+
     fun onEvent(event: EditNotesEvent) {
         when (event) {
             is EditNotesEvent.DrawingSaved -> {
+                if (event.serializedPaths == "[]") {
+                    _noteState.value = _noteState.value.copy(
+                        drawing = ""
+                    )
+                } else {
+                    _noteState.value = _noteState.value.copy(
+                        drawing = event.serializedPaths
+                    )
+                }
+            }
+
+            is EditNotesEvent.DrawingRemoved -> {
                 _noteState.value = _noteState.value.copy(
-                    drawing = event.serializedPaths
+                    drawing = ""
                 )
+            }
+
+            is EditNotesEvent.VoiceRemoved -> {
+                val path = ctx.get()!!.filesDir.path + File.separator + "records" + File.separator + noteState.value.id + ".aac"
+                Timber.tag("BULLS").i(path)
+                val file = File(path)
+                if (file.exists()) {
+                    file.delete()
+                }
+                _voiceState.value = VoiceState()
             }
 
             is EditNotesEvent.TitleEntered -> {

@@ -343,7 +343,9 @@ fun NotesScreenMain(
                         state = lazyGridState,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalItemSpacing = 10.dp,
-                        modifier = Modifier.padding(horizontal = 8.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp).offset(
+                            0.dp, offsetAnimation.value.value.dp
+                        )
                     ) {
                         itemsIndexed(uiState.notes) { idx, note ->
                             SingleNote(

@@ -26,11 +26,16 @@ class VoiceRecorder(ctx: Context, path: String = "") {
             Dispatchers.IO) {
             val audioPath = "${context.filesDir.path}/$path"
             Timber.tag("VoiceRecorder:Waveform").i(audioPath)
-            return@withContext Amplituda(context).processAudio(audioPath, Cache.withParams(Cache.REUSE))
-                .get(AmplitudaErrorListener {
-                    Timber.tag("Amplituda").e(it)
-                })
-                .amplitudesAsList()
+            try {
+                Amplituda(context).processAudio(audioPath, Cache.withParams(Cache.REUSE))
+                    .get(AmplitudaErrorListener {
+                        Timber.tag("Amplituda").w(it)
+                    })
+                    .amplitudesAsList()
+            } catch (exc: Exception) {
+                Timber.tag("Wave Processing").e(exc)
+                listOf()
+            }
         }
 
         fun getAudioFileDuration(path: String, context: Context): Long {
@@ -42,26 +47,25 @@ class VoiceRecorder(ctx: Context, path: String = "") {
                 val duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)!!
                 duration.toLong()
             } catch (exc: Exception) {
-                Timber.tag("Audio Processing").e(exc)
+                Timber.tag("Audio Processing").w(exc)
                 0
             }
         }
     }
 
     private val _ctx = WeakReference(ctx)
-    private val _path = setPath(path)
-    private var _recorder: MediaRecorder? = null
-    private var _player: MediaPlayer? = null
+    private var _path = sanitizePath(path)
+    private val _recorder: MediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        MediaRecorder(ctx)
+    } else {
+        MediaRecorder()
+    }
+    private var _player: MediaPlayer = MediaPlayer()
 
     fun startRecording(): Boolean {
         try {
-            if (!_isPlaying) {
-                _recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    MediaRecorder(_ctx.get()!!)
-                } else {
-                    MediaRecorder()
-                }
-                _recorder?.apply {
+            if (!_isPlaying && !_isRecording) {
+                _recorder.apply {
                     setAudioSource(MediaRecorder.AudioSource.MIC)
                     setOutputFormat(MediaRecorder.OutputFormat.AAC_ADTS)
                     setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
@@ -71,14 +75,14 @@ class VoiceRecorder(ctx: Context, path: String = "") {
                     setOutputFile(getPath())
                 }
                 Timber.tag("VoiceRecorder:Record").i(getPath())
-                _recorder?.prepare()
-                _recorder?.start()
+                _recorder.prepare()
+                _recorder.start()
                 _isRecording = true
                 return true
             } else {
                 Toast.makeText(
                     _ctx.get()!!,
-                    "Please stop record playing first.",
+                    "Please stop playing first.",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -102,11 +106,8 @@ class VoiceRecorder(ctx: Context, path: String = "") {
 
     fun stopRecording(): Boolean {
         if (_isRecording) {
-            _recorder?.apply {
-                stop()
-                release()
-            }
-            _recorder = null
+            _recorder.stop()
+            _recorder.reset()
             _isRecording = false
             return true
         } else return false
@@ -114,13 +115,13 @@ class VoiceRecorder(ctx: Context, path: String = "") {
 
     fun startPlaying(): Boolean {
         try {
-            if (!_isRecording) {
+            if (!_isRecording && !_isPlaying) {
                 _player = MediaPlayer()
-                _player?.apply {
+                _player.apply {
                     setDataSource(getPath())
                     prepare()
-                    start()
                 }
+                _player.start()
                 Timber.tag("VoiceRecorder:Play").i(getPath())
                 _isPlaying = true
                 return true
@@ -145,8 +146,7 @@ class VoiceRecorder(ctx: Context, path: String = "") {
 
     fun stopPlaying(): Boolean {
         if (_isPlaying) {
-            _player?.release()
-            _player = null
+            _player.reset()
             _isPlaying = false
             return true
         } else {
@@ -154,20 +154,41 @@ class VoiceRecorder(ctx: Context, path: String = "") {
         }
     }
 
-    fun setPath(path: String): String {
-        return sanitizePath(path)
+    fun seekTo(msec: Int) {
+        _player.seekTo(msec)
     }
+
+    fun release() {
+        _recorder.release()
+        _player.release()
+    }
+
+    fun isRecording(): Boolean = _isRecording
+    fun isPlaying(): Boolean = _isPlaying
 
     fun getPath(): String {
         return _path
     }
 
+    fun setPath(path: String) {
+        if (path.isNotEmpty()) {
+            _path = sanitizePath(path)
+        }
+    }
+
     private fun checkAndCreateFolder(folder: String): String {
-        val path = "${_ctx.get()!!.filesDir}/$folder"
+        Timber.tag("VoiceRecorder:Check").i("Checking record folder")
+        val path = "${_ctx.get()!!.filesDir.absolutePath}${File.separator}$folder"
+        Timber.tag("VoiceRecorder:Check").i("PATH: $path")
         val file = File(path)
-        if (!file.exists()) {
+        _ctx.get()!!.fileList().forEach {
+            Timber.tag("VoiceRecorder:Check").i("File: $it")
+        }
+
+        if (!file.exists() or !file.isDirectory) {
             try {
-                file.mkdir()
+                Timber.tag("VoiceRecorder:Check").i("Record folder doesn't exist")
+                file.mkdirs()
             } catch (e: SecurityException) {
                 Toast.makeText(
                     _ctx.get()!!,
@@ -176,6 +197,8 @@ class VoiceRecorder(ctx: Context, path: String = "") {
                 ).show()
                 Timber.tag("VoiceRecorder:Check").e(e)
             }
+        } else {
+            Timber.tag("VoiceRecorder:Check").i("Record folder exists")
         }
         return path
     }
@@ -183,7 +206,7 @@ class VoiceRecorder(ctx: Context, path: String = "") {
     private fun sanitizePath(path: String): String {
         val _path = "$path.aac"
         val recordsPath = checkAndCreateFolder("records")
-        val finalPath = "$recordsPath/$_path"
+        val finalPath = "$recordsPath${File.separator}$_path"
         Timber.tag("VoiceRecorder:Sanitize").i(finalPath)
         return finalPath
     }

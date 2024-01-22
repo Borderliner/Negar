@@ -15,7 +15,6 @@ import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import timber.log.Timber
-import meshki.studio.negarname.BuildConfig
 
 class MainApplication : Application() {
     override fun onCreate() {
@@ -60,9 +59,9 @@ class MainApplication : Application() {
                     //optional, enables the dialog title
                     title = getString(R.string.crash_report_title)
                     //defaults to android.R.string.ok
-                    positiveButtonText = getString(R.string.crash_report_ok)
+                    positiveButtonText = getString(R.string.ok)
                     //defaults to android.R.string.cancel
-                    negativeButtonText = getString(R.string.crash_report_cancel)
+                    negativeButtonText = getString(R.string.cancel)
                     //optional, enables the comment input
                     commentPrompt = getString(R.string.crash_report_comment)
                     //optional, enables the email input

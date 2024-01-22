@@ -19,8 +19,8 @@
     <string name="search">Search</string>
     <string name="crash_report_text">Unfortunately, Negarname has fatally crashed. Please allow it to send a report to the developer via email.</string>
     <string name="crash_report_title">Report Crash?</string>
-    <string name="crash_report_ok">OK</string>
-    <string name="crash_report_cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
     <string name="crash_report_comment">Your reports will help us become better.</string>
     <string name="crash_report_email">Your Email</string>
     <string name="permission_required_title">Permission Required</string>
@@ -43,4 +43,11 @@
     <string name="note_removed">Note was removed.</string>
     <string name="restore">Restore?</string>
     <string name="note_pinned">Note pinned.</string>
+    <string name="duration">Duration</string>
+    <string name="voice_replace_title">Voice exists</string>
+    <string name="voice_replace_text">Are you sure you want to replace your old voice? This cannot be undone!</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="voice_delete_title">Delete voice?</string>
+    <string name="voice_delete_text">Are you sure you want to delete this voice? It cannot be undone!</string>
 </resources>
