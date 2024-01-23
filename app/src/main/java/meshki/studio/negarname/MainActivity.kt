@@ -5,6 +5,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,12 +52,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import io.embrace.android.embracesdk.Embrace
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.ui.element.BottomBar
 import meshki.studio.negarname.ui.element.TopBar
 import meshki.studio.negarname.ui.theme.NegarTheme
+import meshki.studio.negarname.ui.theme.PastelRed
 import meshki.studio.negarname.util.LeftToRightLayout
 import meshki.studio.negarname.util.RightToLeftLayout
 import meshki.studio.negarname.util.getAppVersion
@@ -120,122 +129,226 @@ fun MainScreenScaffold(navController: NavHostController) {
     val mainViewModel = koinInject<MainViewModel>()
     val scope = rememberCoroutineScope()
 
-    var drawerWidth by remember {
-        mutableStateOf(mainViewModel.drawerState.offset.value)
-    }
-
-    val contentOffset = remember {
-        derivedStateOf {
-            mainViewModel.drawerState.offset.value
-        }
-    }
-
-    SideEffect {
-        if (drawerWidth == 0f) {
-            drawerWidth = mainViewModel.drawerState.offset.value
-        }
-    }
-
     ModalNavigationDrawer(
         modifier = Modifier
-            .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.1f), Color.Transparent))),
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color.Black.copy(alpha = 0.1f),
+                        Color.Transparent
+                    )
+                )
+            ),
         drawerState = mainViewModel.drawerState,
         drawerContent = {
             ModalDrawerSheet(
-                modifier = Modifier.width(250.dp),
+                modifier = Modifier.width(270.dp),
                 drawerShape = RoundedCornerShape(30.dp),
             ) {
                 val ctx = LocalContext.current
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.1f))) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Black.copy(alpha = 0.1f))
+                ) {
                     Text(stringResource(R.string.app_name), modifier = Modifier.padding(16.dp))
                 }
                 Divider()
-                NavigationDrawerItem(
-                    label = {
+                Column(modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 6.dp)) {
+                    NavigationDrawerItem(
+                        label = {
                             Row {
-                                Icon(modifier = Modifier.padding(end = 4.dp), painter = painterResource(R.drawable.language), contentDescription = stringResource(R.string.language))
-                                Text(text = stringResource(R.string.language) + ": ", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = stringResource(R.string.language) + ": ",
+                                    fontWeight = FontWeight.Bold
+                                )
                                 Text(mainViewModel.getLocaleName())
                             }
-                    },
-                    selected = false,
-                    onClick = {
-                        scope.launch {
-                            mainViewModel.drawerState.close()
-                            if (mainViewModel.locale == "fa") {
-                                mainViewModel.setLocale(Locale("en").toLanguageTag())
-                            } else {
-                                mainViewModel.setLocale(Locale("fa").toLanguageTag())
+                        },
+                        badge = {
+                            Icon(
+                                painter = painterResource(R.drawable.language),
+                                contentDescription = stringResource(R.string.language)
+                            )
+                        },
+                        selected = false,
+                        onClick = {
+                            scope.launch {
+                                mainViewModel.drawerState.close()
+                                if (mainViewModel.locale == "fa") {
+                                    mainViewModel.setLocale(Locale("en").toLanguageTag())
+                                } else {
+                                    mainViewModel.setLocale(Locale("fa").toLanguageTag())
+                                }
                             }
                         }
-                    }
-                )
-                NavigationDrawerItem(
-                    label = {
-                        Row {
-                            Icon(modifier = Modifier.padding(end = 4.dp), painter = painterResource(R.drawable.vec_nights_stay), contentDescription = stringResource(R.string.dark_mode))
-                            Text(text = stringResource(R.string.dark_mode) + ": ", fontWeight = FontWeight.Bold)
-                            Text(if (isSystemInDarkTheme()) stringResource(R.string.on) else stringResource(R.string.off))
+                    )
+                    NavigationDrawerItem(
+                        label = {
+                            Row {
+                                Text(
+                                    text = stringResource(R.string.dark_mode) + ": ",
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    if (isSystemInDarkTheme()) stringResource(R.string.on) else stringResource(
+                                        R.string.off
+                                    )
+                                )
+                            }
+                        },
+                        badge = {
+                            Icon(
+                                painter = painterResource(R.drawable.vec_nights_stay),
+                                contentDescription = stringResource(R.string.dark_mode)
+                            )
+                        },
+                        selected = false,
+                        onClick = {
+                            scope.launch {
+                                //
+                            }
                         }
-                    },
-                    selected = false,
-                    onClick = {
-                        scope.launch {
+                    )
+                    NavigationDrawerItem(
+                        label = {
+                            Row {
+                                Text(
+                                    text = stringResource(R.string.buy) + " ",
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(text = stringResource(R.string.pro_version))
+                            }
+                        },
+                        badge = {
+                            Icon(
+                                painter = painterResource(R.drawable.vec_verified),
+                                contentDescription = stringResource(R.string.buy)
+                            )
+                        },
+                        selected = false,
+                        onClick = {
+                            scope.launch {
+                                //
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    NavigationDrawerItem(
+                        label = {
+                            Row {
+                                Text(
+                                    text = stringResource(R.string.report_bugs),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        },
+                        badge = {
+                            Icon(
+                                painter = painterResource(R.drawable.vec_bug_report),
+                                contentDescription = stringResource(R.string.report_bugs)
+                            )
+                        },
+                        selected = false,
+                        onClick = {
+                            scope.launch {
+                                Embrace.getInstance().showBugReportForm()
+                            }
+                        }
+                    )
+                    NavigationDrawerItem(
+                        label = {
+                            Text(
+                                text = stringResource(R.string.about),
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        badge = {
+                            Icon(
+                                painter = painterResource(R.drawable.vec_info),
+                                contentDescription = stringResource(R.string.about)
+                            )
+                        },
+                        selected = false,
+                        onClick = {
                             //
                         }
-                    }
-                )
-                NavigationDrawerItem(
-                    label = {
-                        Row {
-                            Icon(modifier = Modifier.padding(end = 4.dp), painter = painterResource(R.drawable.vec_verified), contentDescription = stringResource(R.string.buy))
-                            Text(text = stringResource(R.string.buy) + " ", fontWeight = FontWeight.Bold)
-                            Text(text = stringResource(R.string.pro_version))
+                    )
+                    NavigationDrawerItem(
+                        colors = NavigationDrawerItemDefaults.colors(
+                            unselectedContainerColor = PastelRed,
+                            unselectedTextColor = Color.Black
+                        ),
+                        label = {
+                            Text(
+                                text = stringResource(R.string.exit),
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        badge = {
+                            Icon(
+                                painter = painterResource(R.drawable.vec_power),
+                                contentDescription = stringResource(R.string.exit)
+                            )
+                        },
+                        selected = false,
+                        onClick = {
+                            scope.launch {
+                                val activity = (ctx as? Activity)
+                                activity?.finish()
+                            }
                         }
-                    },
-                    selected = false,
-                    onClick = {
-                        scope.launch {
-                            //
-                        }
-                    }
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                NavigationDrawerItem(
-                    label = {
-                        Row {
-                            Icon(modifier = Modifier.padding(end = 4.dp), painter = painterResource(R.drawable.vec_power), contentDescription = stringResource(R.string.exit))
-                            Text(text = stringResource(R.string.exit), fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    selected = false,
-                    onClick = {
-                        scope.launch {
-                            val activity = (ctx as? Activity)
-                            activity?.finish()
-                        }
-                    }
-                )
-                Text(stringResource(R.string.version) + ": " + DecimalFormat.getInstance().format(getAppVersion(ctx).versionName.toDouble()), modifier = Modifier.padding(16.dp))
+                    )
+                    Text(
+                        stringResource(R.string.version) + ": " + DecimalFormat.getInstance()
+                            .format(getAppVersion(ctx).versionName.toDouble()),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         },
         gesturesEnabled = true
     ) {
-        LaunchedEffect(mainViewModel.drawerState.offset.value) {
-            Timber.tag("SHI").i(mainViewModel.drawerState.offset.value.toString())
+        var drawerWidth by remember {
+            mutableStateOf(mainViewModel.drawerState.offset.value)
         }
-        val xPos = (abs(drawerWidth) - abs(contentOffset.value))
+
+        val contentOffset = remember {
+            derivedStateOf {
+                mainViewModel.drawerState.offset.value
+            }
+        }
+
+        SideEffect {
+            if (drawerWidth == 0f) {
+                drawerWidth = mainViewModel.drawerState.offset.value
+            }
+        }
+        var xPos by remember { mutableFloatStateOf(abs(drawerWidth) - abs(contentOffset.value)) }
+
+        LaunchedEffect(drawerWidth, contentOffset.value) {
+            xPos = abs(drawerWidth) - abs(contentOffset.value)
+        }
+
         Scaffold(
             modifier = Modifier
                 .offset(x = with(LocalDensity.current) {
-                    max(0.dp, xPos.toDp() - 112.dp)
+                    max(0.dp, xPos.toDp() - 90.dp)
                 })
-                .blur(radius = (xPos / 400).dp),
+                .blur(radius = (xPos / 500).dp),
             topBar = { TopBar() },
             bottomBar = {
-                if (mainViewModel.isBottomBarVisible.value) {
+                AnimatedVisibility(
+                    visible = mainViewModel.isBottomBarVisible.value,
+                    enter = fadeIn() + slideInVertically(initialOffsetY = {
+                        it / 12
+                    }),
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = {
+                        it / 12
+                    }),
+                ) {
                     BottomBar(navController)
                 }
             },

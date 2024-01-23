@@ -63,4 +63,6 @@
     <string name="continue_job">Continue</string>
     <string name="return_job">Return</string>
     <string name="warning">Warning</string>
+    <string name="report_bugs">Report Bugs</string>
+    <string name="about">About</string>
 </resources>

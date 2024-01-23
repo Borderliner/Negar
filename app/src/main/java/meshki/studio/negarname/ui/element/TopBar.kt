@@ -95,20 +95,13 @@ fun TopBar() {
             //ToggleThemeButton()
             IconButton(
                 enabled = !aboutDialogState.value,
-                modifier = Modifier.padding(top = 10.dp, end = 10.dp),
+                modifier = Modifier.padding(top = 8.dp, end = 8.dp),
                 onClick = {
-//                    if (!aboutDialogState.value) {
-//                        aboutDialogState.value = !aboutDialogState.value
-//                    }
-                    if (mainViewModel.locale == "fa") {
-                        mainViewModel.setLocale(Locale("en").toLanguageTag())
-                    } else {
-                        mainViewModel.setLocale(Locale("fa").toLanguageTag())
-                    }
+                    //
                 }) {
                 Icon(
-                    Icons.Outlined.Info,
-                    "درباره‌ی نگارنامه",
+                    painterResource(R.drawable.vec_sync),
+                    "",
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = .85f)
                 )
             }

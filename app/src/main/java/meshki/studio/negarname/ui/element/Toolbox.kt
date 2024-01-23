@@ -67,7 +67,7 @@ fun Toolbox(
             it / 8 * (if (animateFromUp) -1 else 1)
         }),
         exit = fadeOut() + slideOutVertically(targetOffsetY = {
-            it / 8
+            it / 8 * (if (animateFromUp) -1 else 1)
         }),
     ) {
         content()
