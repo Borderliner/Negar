@@ -326,18 +326,13 @@ fun MainScreenScaffold(navController: NavHostController) {
                 drawerWidth = mainViewModel.drawerState.offset.value
             }
         }
-        var xPos by remember { mutableFloatStateOf(abs(drawerWidth) - abs(contentOffset.value)) }
-
-        LaunchedEffect(drawerWidth, contentOffset.value) {
-            xPos = abs(drawerWidth) - abs(contentOffset.value)
-        }
 
         Scaffold(
             modifier = Modifier
                 .offset(x = with(LocalDensity.current) {
-                    max(0.dp, xPos.toDp() - 90.dp)
+                    max(0.dp, (abs(drawerWidth) - abs(contentOffset.value)).toDp() - 90.dp)
                 })
-                .blur(radius = (xPos / 500).dp),
+                .blur(radius = ((abs(drawerWidth) - abs(contentOffset.value)) / 500).dp),
             topBar = { TopBar() },
             bottomBar = {
                 AnimatedVisibility(
