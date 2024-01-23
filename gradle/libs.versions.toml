@@ -20,7 +20,6 @@ room = "2.6.1"
 gson = "2.10.1"
 richtext = "1.0.0-beta05"
 timber = "5.0.1"
-acra = "5.11.3"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -52,9 +51,6 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 richtext = { group = "com.mohamedrejeb.richeditor", name = "richeditor-compose", version.ref = "richtext" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
-acra = { group = "ch.acra", name = "acra-core", version.ref = "acra" }
-acra-mail = { group = "ch.acra", name = "acra-mail", version.ref = "acra" }
-acra-dialog = { group = "ch.acra", name = "acra-dialog", version.ref = "acra" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
+    id("embrace-swazzler")
 }
 
 android {
@@ -59,6 +60,10 @@ android {
     }
 }
 
+swazzler {
+    disableComposeDependencyInjection.set(false)
+}
+
 dependencies {
     implementation(project(":Kalendar:kalendar"))
     implementation(project(":Kalendar:kalendar-endlos"))
@@ -85,9 +90,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.richtext)
     implementation(libs.timber)
-    implementation(libs.acra)
-    implementation(libs.acra.mail)
-    implementation(libs.acra.dialog)
+    implementation("io.embrace:embrace-android-bug-shake:0.9.0")
 
     implementation("com.github.lincollincol:amplituda:2.2.2")
     implementation("com.github.lincollincol:compose-audiowaveform:1.1.1")

@@ -1,0 +1,13 @@
+{
+  "app_id": "tFKRh",
+  "api_token": "c3e90a32143841289ea19b2961017afb",
+  "ndk_enabled": false,
+  "sdk_config": {
+    "app": {
+      "report_disk_usage": true
+    },
+    "compose": {
+      "capture_compose_onclick": true
+    }
+  }
+}

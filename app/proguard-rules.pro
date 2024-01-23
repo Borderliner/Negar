@@ -25,8 +25,17 @@
 -keep class meshki.studio.negarname.data.repository.* { *; }
 -keep class meshki.studio.negarname.data.local.dao.* { *; }
 
+-keep class androidx.compose.ui.platform.AndroidComposeView {
+    <fields>;
+    <methods>;
+}
+
 -dontwarn javax.annotation.processing.AbstractProcessor
 -dontwarn javax.annotation.processing.SupportedOptions
+-dontwarn javax.annotation.Nullable
+-dontwarn javax.annotation.concurrent.Immutable
+-dontwarn javax.annotation.concurrent.ThreadSafe
+-dontwarn com.google.auto.value.AutoValue
 #-dontwarn kotlinx.serialization.KSerializer
 #-dontwarn kotlinx.serialization.Serializable
 #-dontwarn kotlinx.serialization.internal.AbstractPolymorphicSerializer
