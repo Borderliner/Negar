@@ -565,7 +565,7 @@ fun EditNotesScreenMain(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done
+                    imeAction = ImeAction.Next
                 ),
                 textStyle = MaterialTheme.typography.titleSmall.copy(MaterialTheme.colorScheme.onBackground)
             )
@@ -605,10 +605,11 @@ fun EditNotesScreenMain(
                     viewModel.isTextHintVisible = !it.isFocused && noteState.value.text.isBlank()
                 },
                 expanded = true,
+                singleLine = false,
                 isHintVisible = viewModel.isTextHintVisible,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done
+                    imeAction = ImeAction.None
                 ),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(MaterialTheme.colorScheme.onBackground),
             )
