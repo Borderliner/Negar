@@ -65,4 +65,8 @@
     <string name="warning">Warning</string>
     <string name="report_bugs">Report Bugs</string>
     <string name="about">About</string>
+    <string name="theme">Theme</string>
+    <string name="dark">Dark</string>
+    <string name="light">Light</string>
+    <string name="system">System</string>
 </resources>

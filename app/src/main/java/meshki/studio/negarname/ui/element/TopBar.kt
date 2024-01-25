@@ -21,6 +21,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.vm.MainViewModel
 import meshki.studio.negarname.R
@@ -68,14 +70,14 @@ fun TopBar() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (isSystemInDarkTheme()) {
+                if (mainViewModel.theme.lowercase() == "light") {
                     Image(
                         modifier = Modifier
                             .size(logoSize, logoSize)
                             .offset(x = 0.dp, y = 5.dp),
                         alpha = 1f,
-                        painter = painterResource(R.drawable.img_logo_white),
-                        colorFilter = ColorFilter.tint(Color.White.copy(alpha = 0.9f)),
+                        painter = painterResource(R.drawable.img_logo),
+                        colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.85f)),
                         contentDescription = stringResource(R.string.app_name)
                     )
                 } else {
@@ -84,8 +86,8 @@ fun TopBar() {
                             .size(logoSize, logoSize)
                             .offset(x = 0.dp, y = 5.dp),
                         alpha = 1f,
-                        painter = painterResource(R.drawable.img_logo),
-                        colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.85f)),
+                        painter = painterResource(R.drawable.img_logo_white),
+                        colorFilter = ColorFilter.tint(Color.White.copy(alpha = 0.9f)),
                         contentDescription = stringResource(R.string.app_name)
                     )
                 }

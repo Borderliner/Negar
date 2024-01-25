@@ -85,11 +85,13 @@ dependencies {
     implementation(libs.compose.navigation)
     implementation(libs.compose.navigation.runtime)
     implementation(libs.room.runtime)
+    implementation(libs.androidx.datastore.preferences.core)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
     implementation(libs.gson)
     implementation(libs.richtext)
     implementation(libs.timber)
+    implementation(libs.datastore)
     implementation("io.embrace:embrace-android-bug-shake:0.9.0")
 
     implementation("com.github.lincollincol:amplituda:2.2.2")

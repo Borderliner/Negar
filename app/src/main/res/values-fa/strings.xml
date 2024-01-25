@@ -66,4 +66,8 @@
     <string name="warning">اخطار</string>
     <string name="report_bugs">گزارش خرابی</string>
     <string name="about">درباره‌ی برنامه</string>
+    <string name="theme">پوسته</string>
+    <string name="dark">شب</string>
+    <string name="light">روز</string>
+    <string name="system">سیستم</string>
 </resources>

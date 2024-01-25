@@ -3,6 +3,7 @@ package meshki.studio.negarname
 import android.app.Application
 import io.embrace.android.embracesdk.Embrace
 import meshki.studio.negarname.di.appModule
+import meshki.studio.negarname.di.dataStoreModule
 import meshki.studio.negarname.di.dbModule
 import meshki.studio.negarname.di.repositoryModule
 import meshki.studio.negarname.di.systemModule
@@ -28,10 +29,11 @@ class MainApplication : Application() {
             androidContext(this@MainApplication)
             modules(
                 listOf(
-                    dbModule,
-                    viewModelModule,
-                    repositoryModule,
                     systemModule,
+                    dataStoreModule,
+                    dbModule,
+                    repositoryModule,
+                    viewModelModule,
                     appModule,
                 )
             )

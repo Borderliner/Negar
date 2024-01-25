@@ -53,6 +53,8 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import io.embrace.android.embracesdk.Embrace
@@ -81,7 +83,12 @@ class MainActivity : ComponentActivity() {
                 val mainViewModel = koinInject<MainViewModel>()
                 val navController = rememberNavController()
 
-                NegarTheme {
+                NegarTheme(darkTheme = when (mainViewModel.theme) {
+                    "system" -> isSystemInDarkTheme()
+                    "dark" -> true
+                    "light" -> false
+                    else -> isSystemInDarkTheme()
+                }) {
                     Surface(
                         modifier = Modifier
                             .fillMaxSize(),
@@ -189,26 +196,40 @@ fun MainScreenScaffold(navController: NavHostController) {
                         label = {
                             Row {
                                 Text(
-                                    text = stringResource(R.string.dark_mode) + ": ",
+                                    text = stringResource(R.string.theme) + ": ",
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    if (isSystemInDarkTheme()) stringResource(R.string.on) else stringResource(
-                                        R.string.off
-                                    )
+                                    stringResource(when (mainViewModel.theme.lowercase()) {
+                                        "light" -> R.string.light
+                                        "dark" -> R.string.dark
+                                        "system" -> R.string.system
+                                        else -> R.string.off
+                                    })
                                 )
                             }
                         },
                         badge = {
                             Icon(
-                                painter = painterResource(R.drawable.vec_nights_stay),
-                                contentDescription = stringResource(R.string.dark_mode)
+                                painter = painterResource(when (mainViewModel.theme.lowercase()) {
+                                    "light" -> R.drawable.vec_light_mode
+                                    "dark" -> R.drawable.dark_mode
+                                    "system" -> R.drawable.vec_routine
+                                    else -> R.drawable.vec_routine
+                                }),
+                                contentDescription = stringResource(R.string.theme)
                             )
                         },
                         selected = false,
                         onClick = {
                             scope.launch {
-                                //
+                                mainViewModel.viewModelScope.launch {
+                                    when (mainViewModel.theme) {
+                                        "system" -> mainViewModel.setTheme("dark")
+                                        "dark" -> mainViewModel.setTheme("light")
+                                        "light" -> mainViewModel.setTheme("system")
+                                    }
+                                }
                             }
                         }
                     )
