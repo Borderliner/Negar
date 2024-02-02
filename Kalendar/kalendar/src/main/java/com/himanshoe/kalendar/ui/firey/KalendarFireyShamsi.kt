@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.himanshoe.kalendar.KalendarEvent
 import com.himanshoe.kalendar.KalendarEvents
 import com.himanshoe.kalendar.color.KalendarColors
+import com.himanshoe.kalendar.color.KalendarColorsShamsi
 import com.himanshoe.kalendar.ui.component.day.KalendarDay
 import com.himanshoe.kalendar.ui.component.day.KalendarDayKonfig
 import com.himanshoe.kalendar.ui.component.day.KalendarDayShamsi
@@ -89,7 +90,7 @@ internal fun KalendarFireyShamsi(
     modifier: Modifier = Modifier,
     showLabel: Boolean = true,
     kalendarHeaderTextKonfig: KalendarTextKonfig? = null,
-    kalendarColors: KalendarColors = KalendarColors.default(),
+    kalendarColors: KalendarColorsShamsi = KalendarColorsShamsi.default(),
     events: KalendarEvents = KalendarEvents(),
     kalendarDayKonfig: KalendarDayKonfig = KalendarDayKonfig.default(),
     dayContent: (@Composable (PersianDate) -> Unit)? = null,

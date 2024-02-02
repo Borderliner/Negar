@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,6 +40,7 @@ import androidx.compose.ui.util.fastForEachIndexed
 import com.himanshoe.kalendar.KalendarEvent
 import com.himanshoe.kalendar.KalendarEvents
 import com.himanshoe.kalendar.color.KalendarColor
+import com.himanshoe.kalendar.color.KalendarColorShamsi
 import com.himanshoe.kalendar.ui.component.day.modifier.FULL_ALPHA
 import com.himanshoe.kalendar.ui.component.day.modifier.TOWNED_DOWN_ALPHA
 import com.himanshoe.kalendar.ui.component.day.modifier.circleLayout
@@ -72,7 +74,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun KalendarDayShamsi(
     date: PersianDate,
-    kalendarColors: KalendarColor,
+    kalendarColors: KalendarColorShamsi,
     onDayClick: (PersianDate, List<KalendarEvent>) -> Unit,
     selectedRange: KalendarSelectedDayRangeShamsi?,
     modifier: Modifier = Modifier,
@@ -80,8 +82,9 @@ fun KalendarDayShamsi(
     kalendarEvents: KalendarEvents = KalendarEvents(),
     kalendarDayKonfig: KalendarDayKonfig = KalendarDayKonfig.default(),
 ) {
-    val selected = selectedDate == date
-    val isToday = date.isToday
+    val selected = selectedDate.isEqualTo(date)
+    val today = PersianDate()
+    val isToday = date.isEqualTo(today)
 
     Column(
         modifier = modifier
@@ -93,9 +96,10 @@ fun KalendarDayShamsi(
             .clickable { onDayClick(date, kalendarEvents.events) }
             .dayBackgroundColorShamsi(
                 selected,
+                MaterialTheme.colorScheme.primaryContainer,
                 kalendarColors.dayBackgroundColor,
                 date,
-                selectedRange
+                selectedRange,
             )
             .circleLayout()
             .wrapContentSize()
@@ -108,7 +112,7 @@ fun KalendarDayShamsi(
             modifier = Modifier.wrapContentSize(),
             textAlign = TextAlign.Center,
             fontSize = kalendarDayKonfig.textSize,
-            color = if (selected) kalendarDayKonfig.selectedTextColor else kalendarDayKonfig.textColor,
+            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else kalendarDayKonfig.textColor,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold
         )
         Row {
@@ -128,6 +132,7 @@ fun KalendarDayShamsi(
         }
     }
 }
+
 @MultiplePreviews
 @Composable
 private fun KalendarDayShamsiPreview() {
@@ -142,7 +147,7 @@ private fun KalendarDayShamsiPreview() {
     Row {
         KalendarDayShamsi(
             date = date,
-            kalendarColors = KalendarColor.previewDefault(),
+            kalendarColors = KalendarColorShamsi.previewDefault(),
             onDayClick = { _, _ -> },
             selectedDate = previous,
             kalendarEvents = KalendarEvents(events),
@@ -151,7 +156,7 @@ private fun KalendarDayShamsiPreview() {
         Spacer(modifier = Modifier.padding(vertical = 8.dp))
         KalendarDayShamsi(
             date = date.addDay(),
-            kalendarColors = KalendarColor.previewDefault(),
+            kalendarColors = KalendarColorShamsi.previewDefault(),
             onDayClick = { _, _ -> },
             selectedDate = previous,
             kalendarEvents = KalendarEvents(events),
@@ -160,9 +165,9 @@ private fun KalendarDayShamsiPreview() {
         Spacer(modifier = Modifier.padding(vertical = 8.dp))
         KalendarDayShamsi(
             date = date,
-            kalendarColors = KalendarColor.previewDefault(),
+            kalendarColors = KalendarColorShamsi.previewDefault(),
             onDayClick = { _, _ -> },
-            selectedDate = previous,
+            selectedDate = date,
             kalendarEvents = KalendarEvents(events),
             selectedRange = null
         )
@@ -171,14 +176,17 @@ private fun KalendarDayShamsiPreview() {
 
 fun Modifier.dayBackgroundColorShamsi(
     selected: Boolean,
+    selectedColor: Color,
     color: Color,
     date: PersianDate,
     selectedRange: KalendarSelectedDayRangeShamsi?
 ): Modifier {
-    val inRange = date == selectedRange?.start || date == selectedRange?.end
+    val inRange = if (selectedRange != null) {
+        date.after(selectedRange.start) && date.before(selectedRange.end)
+    } else false
 
     val backgroundColor = when {
-        selected -> color
+        selected -> selectedColor
         selectedRange != null && date.after(selectedRange.start) && date.before(selectedRange.end) -> {
             val alpha = if (inRange) FULL_ALPHA else TOWNED_DOWN_ALPHA
             color.copy(alpha = alpha)
@@ -200,4 +208,10 @@ fun PersianDate.toLocalDate(): LocalDate {
     val month = if (this.grgMonth > 9) this.grgMonth else "0" + this.grgMonth
     val day = if (this.grgDay > 9) this.grgDay else "0" + this.grgDay
     return LocalDate.parse("${this.grgYear}-$month-$day")
+}
+
+fun PersianDate.isEqualTo(other: PersianDate): Boolean {
+    return this.shYear == other.shYear
+            && this.shMonth == other.shMonth
+            && this.shDay == other.shDay
 }
