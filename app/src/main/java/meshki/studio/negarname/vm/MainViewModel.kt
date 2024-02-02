@@ -4,22 +4,23 @@ import android.content.Context
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import meshki.studio.negarname.data.storage.StorageApi
+import meshki.studio.negarname.data.local.Database
+import meshki.studio.negarname.data.repository.AppRepository
+import meshki.studio.negarname.data.storage.Storage
 import meshki.studio.negarname.data.storage.StorageConstants
 import meshki.studio.negarname.util.getCurrentLocale
-import timber.log.Timber
 import java.lang.ref.WeakReference
 
 class MainViewModel(
-    private val dataStore: StorageApi,
+    private val dataStore: Storage,
+    val appRepository: AppRepository,
+    val database: Database,
     ctx: Context) : ViewModel() {
     private val _ctx = WeakReference(ctx)
     private val _isReady = mutableStateOf(false)

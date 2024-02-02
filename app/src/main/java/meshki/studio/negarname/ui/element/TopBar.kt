@@ -1,43 +1,173 @@
 package meshki.studio.negarname.ui.element
 
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.os.Environment
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import meshki.studio.negarname.vm.MainViewModel
+import meshki.studio.negarname.AppState
 import meshki.studio.negarname.R
+import meshki.studio.negarname.ui.theme.PastelGreen
+import meshki.studio.negarname.ui.theme.PastelRed
+import meshki.studio.negarname.util.checkPermission
+import meshki.studio.negarname.vm.MainViewModel
 import org.koin.compose.koinInject
+import timber.log.Timber
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.channels.FileChannel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar() {
+fun TopBar(appState: AppState) {
     val mainViewModel = koinInject<MainViewModel>()
-    val appMenuState = remember { mutableStateOf(false) }
-    val aboutDialogState = remember { mutableStateOf(false) }
     val logoSize = 125.dp
-    val scope = rememberCoroutineScope()
 
-    AboutDialog(aboutDialogState)
+    val modalSheetState = rememberModalBottomSheetState()
+
+    if (modalSheetState.currentValue != SheetValue.Hidden) {
+        ModalBottomSheet(onDismissRequest = {
+            appState.coroutineScope.launch { modalSheetState.hide() }
+        }) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = stringResource(R.string.import_export), fontSize = 20.sp)
+                Text(text = stringResource(R.string.import_export_desc))
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 48.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    ElevatedButton(
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = PastelGreen,
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        onClick = {}
+                    ) {
+                        Column(
+                            Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.vec_download),
+                                contentDescription = null,
+                                modifier = Modifier.size(42.dp),
+                                tint = Color.Black.copy(alpha = 0.9f)
+                            )
+                            Text(text = stringResource(R.string.import_data), fontSize = 16.sp)
+                        }
+                    }
+
+                    val ctx = LocalContext.current
+                    val permissionLauncher =
+                        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                            if (!granted) {
+                                appState.coroutineScope.launch {
+                                    val result = appState.snackbar.showSnackbar(
+                                        message = ctx.resources.getString(R.string.storage_permission),
+                                        actionLabel = ctx.resources.getString(R.string.allow),
+                                        withDismissAction = false,
+                                        duration = SnackbarDuration.Long
+                                    )
+
+                                    when (result) {
+                                        SnackbarResult.Dismissed -> println()
+                                        SnackbarResult.ActionPerformed -> {
+                                            ActivityCompat.requestPermissions(
+                                                ctx as Activity, arrayOf(
+                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                                ), 0
+                                            )
+                                        }
+                                    }
+                                }
+//                                Toast.makeText(ctx, permissionText, Toast.LENGTH_LONG)
+//                                    .show()
+                            }
+                        }
+                    ElevatedButton(
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = PastelRed,
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        onClick = {
+                            appState.coroutineScope.launch {
+                                checkPermission(
+                                    ctx,
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                    permissionLauncher
+                                ) {
+                                    mainViewModel.viewModelScope.launch {
+                                        mainViewModel.database.close()
+                                        mainViewModel.appRepository.checkpoint()
+                                        val path =
+                                            mainViewModel.appRepository.getDatabaseFilePath().data
+                                        if (path != null) {
+                                            val sourceFile = File(path)
+                                            Timber.tag("Import/Export").i("Export source file: $path")
+                                            val documentsFolder = ctx.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+                                            if (documentsFolder != null) {
+                                                val destinationPath = documentsFolder.absolutePath + File.separator + sourceFile.name
+                                                Timber.tag("Import/Export").i("Export destination file: $destinationPath")
+                                                val destinationFile = File(destinationPath)
+                                                copyFile(sourceFile, destinationFile)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        Column(
+                            Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.vec_upload),
+                                contentDescription = null,
+                                modifier = Modifier.size(42.dp),
+                                tint = Color.Black.copy(alpha = 0.9f)
+                            )
+                            Text(text = stringResource(R.string.export_data), fontSize = 16.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     TopAppBar(
         modifier = Modifier
@@ -49,7 +179,7 @@ fun TopBar() {
                 //enabled = !appMenuState.value,
                 modifier = Modifier.padding(top = 8.dp, start = 8.dp),
                 onClick = {
-                    scope.launch {
+                    appState.coroutineScope.launch {
                         if (mainViewModel.drawerState.isOpen) {
                             mainViewModel.drawerState.close()
                         } else {
@@ -70,7 +200,7 @@ fun TopBar() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (mainViewModel.theme.lowercase() == "light") {
+                if (mainViewModel.theme.lowercase() == "light" || (mainViewModel.theme.lowercase() == "system" && !isSystemInDarkTheme())) {
                     Image(
                         modifier = Modifier
                             .size(logoSize, logoSize)
@@ -80,7 +210,7 @@ fun TopBar() {
                         colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.85f)),
                         contentDescription = stringResource(R.string.app_name)
                     )
-                } else {
+                } else if (mainViewModel.theme.lowercase() == "dark" || (mainViewModel.theme.lowercase() == "system" && isSystemInDarkTheme())) {
                     Image(
                         modifier = Modifier
                             .size(logoSize, logoSize)
@@ -96,13 +226,14 @@ fun TopBar() {
         actions = {
             //ToggleThemeButton()
             IconButton(
-                enabled = !aboutDialogState.value,
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp),
                 onClick = {
-                    //
+                    appState.coroutineScope.launch {
+                        modalSheetState.show()
+                    }
                 }) {
                 Icon(
-                    painterResource(R.drawable.vec_sync),
+                    painterResource(R.drawable.vec_export_notes),
                     "",
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = .85f)
                 )
@@ -111,92 +242,20 @@ fun TopBar() {
     )
 }
 
-@Composable
-fun AboutDialog(state: MutableState<Boolean>) {
-    val _moreInfo = remember { mutableStateOf(false) }
-    val moreInfo: State<Boolean> = _moreInfo
-
-    if (state.value) {
-        AlertDialog(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(350.dp),
-            onDismissRequest = {
-                // Dismiss the dialog when the user clicks outside the dialog or on the back
-                // button. If you want to disable that functionality, simply use an empty
-                // onCloseRequest.
-                state.value = false
-            },
-            text = {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(unbounded = true)
-                ) {
-                    // create custom title
-                    Text(
-                        stringResource(id = R.string.app_name),
-                        modifier = Modifier.padding(top = 35.dp, bottom = 10.dp),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .border(1.dp, MaterialTheme.colorScheme.onBackground)
-                    )
-
-                    if (moreInfo.value) {
-                        Spacer(modifier = Modifier.height(25.dp))
-                    } else {
-                        Text(
-                            text = "نگارنامه ابزاریست برای شما تا بتوانید کارهای خود را نظم دهید و با برنامه پیش بروید. اگر نگارنامه برای شما مفید است، می‌توانید با حمایت مالی به بهتر شدن آن کمک کنید!",
-                            textAlign = TextAlign.Justify,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(top = 15.dp)
-                        )
-                        Spacer(modifier = Modifier.padding(vertical = 4.dp))
-                        Text(
-                            text = "برنامه نویس: محمدرضا حاجیانپور",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    modifier = Modifier
-                        .padding(start = 30.dp, bottom = 10.dp)
-                        .width(100.dp),
-                    onClick = {
-                        state.value = false
-                    }) {
-                    Text(
-                        "باشه",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black
-                    )
-                }
-
-            },
-            dismissButton = {
-                Button(
-                    modifier = Modifier
-                        .padding(start = 30.dp, bottom = 10.dp)
-                        .width(100.dp),
-                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.secondary),
-                    onClick = {
-                        _moreInfo.value = !moreInfo.value
-                    }) {
-                    Text(
-                        "بیشتر",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black
-                    )
-                }
-            }
-        )
+@Throws(IOException::class)
+fun copyFile(sourceFile: File?, destFile: File) {
+    if (!destFile.parentFile?.exists()!!) destFile.parentFile?.mkdirs()
+    if (!destFile.exists()) {
+        destFile.createNewFile()
     }
-
+    var source: FileChannel? = null
+    var destination: FileChannel? = null
+    try {
+        source = FileInputStream(sourceFile).channel
+        destination = FileOutputStream(destFile).channel
+        destination.transferFrom(source, 0, source.size())
+    } finally {
+        source?.close()
+        destination?.close()
+    }
 }

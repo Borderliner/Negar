@@ -1,6 +1,8 @@
 package meshki.studio.negarname.di
 
 import kotlinx.coroutines.Dispatchers
+import meshki.studio.negarname.data.repository.AppRepository
+import meshki.studio.negarname.data.repository.AppRepositoryImpl
 import meshki.studio.negarname.data.repository.NotesRepoImpl
 import meshki.studio.negarname.data.repository.NotesRepository
 import meshki.studio.negarname.data.repository.TodosRepoImpl
@@ -10,4 +12,5 @@ import org.koin.dsl.module
 val repositoryModule = module {
     single<NotesRepository> { NotesRepoImpl(get(), get(), Dispatchers.IO) }
     single<TodosRepository> { TodosRepoImpl(get(), get()) }
+    single<AppRepository> { AppRepositoryImpl(get(), get(), Dispatchers.IO) }
 }

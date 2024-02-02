@@ -70,4 +70,16 @@
     <string name="dark">شب</string>
     <string name="light">روز</string>
     <string name="system">سیستم</string>
+    <string name="more">بیشتر</string>
+    <string name="about_text">نگارنامه برنامه‌ایست برای کمک به شما تا بتوانید به راحتی برنامه‌ریزی کرده و کارهایتان را به پایان برسانید. با قرار دادن امکانات کافی در اختیار شما، این برنامه سعی می‌کند تا کارهای شمارا سازمان‌دهی کند تا از برنامه‌یتان عقب نیوفتید.</string>
+    <string name="developer_name">برنامه‌نویس: محمدرضا حاجیانپور</string>
+    <string name="developer_email">ایمیل: hajianpour.mr@gmail.com</string>
+    <string name="back">بازگشت</string>
+    <string name="about_text_2">اگر نگارنامه برایتان مفید واقع شده است، خواهشمندیم که خرید نسخه‌ی حرفه‌ای این برنامه با امکانات امنیتی بیشتر را در نظر بگیرید.</string>
+    <string name="import_data">تهیه پشتیبان</string>
+    <string name="export_data">بارگذاری</string>
+    <string name="storage_permission">لطفا به برنامه اجازه دهید تا به پرونده‌های تلفن همراه دسترسی داشته باشد.</string>
+    <string name="allow">اجازه بده</string>
+    <string name="import_export">تهیه پشتیبان</string>
+    <string name="import_export_desc">شما می‌توانید به راحتی از اطلاعات خود پشتیبان تهیه یا بارگذاری کنید.</string>
 </resources>

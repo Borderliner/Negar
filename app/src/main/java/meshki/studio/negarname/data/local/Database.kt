@@ -7,6 +7,7 @@ import meshki.studio.negarname.data.local.converters.DateConverter
 import meshki.studio.negarname.data.local.converters.NoteConverter
 import meshki.studio.negarname.data.local.converters.TodoConverter
 import meshki.studio.negarname.data.local.dao.AlarmsDao
+import meshki.studio.negarname.data.local.dao.AppDao
 import meshki.studio.negarname.data.local.dao.NotesDao
 import meshki.studio.negarname.data.local.dao.TodosDao
 import meshki.studio.negarname.entity.Alarm
@@ -34,6 +35,7 @@ import meshki.studio.negarname.entity.Todo
 )
 
 abstract class Database : RoomDatabase() {
+    abstract fun getAppDao(): AppDao
     abstract fun getNotesDao(): NotesDao
     abstract fun getTodosDao(): TodosDao
     abstract fun getAlarmsDao(): AlarmsDao

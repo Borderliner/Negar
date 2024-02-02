@@ -104,6 +104,7 @@ import com.linc.audiowaveform.AudioWaveform
 import com.linc.audiowaveform.infiniteLinearGradient
 import com.linc.audiowaveform.model.AmplitudeType
 import com.linc.audiowaveform.model.WaveformAlignment
+import meshki.studio.negarname.AppState
 import meshki.studio.negarname.R
 import meshki.studio.negarname.entity.CustomPath
 import meshki.studio.negarname.entity.DrawMode
@@ -144,11 +145,11 @@ import java.text.NumberFormat
 import java.util.Calendar
 
 @Composable
-fun EditNotesScreen(color: Int, navController: NavHostController) {
+fun EditNotesScreen(color: Int, appState: AppState) {
     val mainViewModel = koinInject<MainViewModel>()
     mainViewModel.setBottomBarVisible(false)
     val viewModel = koinViewModel<EditNotesViewModel>()
-    val snackbar = remember { SnackbarHostState() }
+
     LaunchedEffect(color) {
         if (color > 0) {
             viewModel.viewModelScope.launch {
@@ -158,17 +159,17 @@ fun EditNotesScreen(color: Int, navController: NavHostController) {
     }
     if (mainViewModel.isRtl) {
         LeftToRightLayout {
-            EditNotesScreenScaffold(viewModel, snackbar) {
+            EditNotesScreenScaffold(viewModel, appState) {
                 RightToLeftLayout {
-                    EditNotesScreenMain(viewModel, navController, snackbar)
+                    EditNotesScreenMain(viewModel, appState)
                 }
             }
         }
     } else {
         RightToLeftLayout {
-            EditNotesScreenScaffold(viewModel, snackbar) {
+            EditNotesScreenScaffold(viewModel, appState) {
                 LeftToRightLayout {
-                    EditNotesScreenMain(viewModel, navController, snackbar)
+                    EditNotesScreenMain(viewModel, appState)
                 }
             }
         }
@@ -179,12 +180,23 @@ fun EditNotesScreen(color: Int, navController: NavHostController) {
 @Composable
 fun EditNotesScreenScaffold(
     viewModel: EditNotesViewModel,
-    snackbar: SnackbarHostState,
+    appState: AppState,
     content: @Composable () -> Unit
 ) {
+    val snackbar = remember { SnackbarHostState() }
     val mainViewModel = koinInject<MainViewModel>()
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = {
+            if (mainViewModel.isRtl) {
+                LeftToRightLayout {
+                    SnackbarHost(snackbar)
+                }
+            } else {
+                RightToLeftLayout {
+                    SnackbarHost(snackbar)
+                }
+            }
+        },
         floatingActionButton = {
             ActionButton(
                 text = stringResource(R.string.save),
@@ -198,6 +210,7 @@ fun EditNotesScreenScaffold(
                 onClick = {
                     viewModel.onEvent(EditNotesEvent.NoteSaved)
                     viewModel.isNoteModified = false
+                    appState.navController.navigateUp()
                 },
                 isBottomBarVisible = mainViewModel.isBottomBarVisible
             )
@@ -212,10 +225,8 @@ fun EditNotesScreenScaffold(
 @Composable
 fun EditNotesScreenMain(
     viewModel: EditNotesViewModel,
-    navController: NavHostController,
-    snackbar: SnackbarHostState
+    appState: AppState
 ) {
-    val scope = rememberCoroutineScope()
     val noteState = viewModel.noteState
     val noteColorsArgb = Note.colors.map {
         it.toArgb()
@@ -274,29 +285,11 @@ fun EditNotesScreenMain(
 //        }
 //    }
 
-    LaunchedEffect(viewModel.eventFlow) {
-        viewModel.eventFlow.collectLatest { event ->
-            when (event) {
-                is UiEvent.ShowSnackBar -> {
-                    snackbar.showSnackbar(
-                        message = event.message
-                    )
-                }
-
-                is UiEvent.NoteSaved -> {
-                    navController.navigateUp()
-                }
-
-                else -> {}
-            }
-        }
-    }
-
     BackPressHandler {
         if ((noteState.value.title.isNotEmpty() || noteState.value.text.isNotEmpty()) && viewModel.isNoteModified) {
             workInProgressAlertVisible = true
         } else {
-            navController.navigateUp()
+            appState.navController.navigateUp()
         }
     }
 
@@ -350,7 +343,7 @@ fun EditNotesScreenMain(
                     ),
                     onClick = {
                         workInProgressAlertVisible = false
-                        navController.navigateUp()
+                        appState.navController.navigateUp()
                     }
                 ) {
                     Text(
@@ -368,7 +361,7 @@ fun EditNotesScreenMain(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Transparent)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             modifier = Modifier
@@ -384,7 +377,7 @@ fun EditNotesScreenMain(
                     .clip(CircleShape)
                     .background(Color(noteState.value.color))
                     .clickable {
-                        scope.launch {
+                        appState.coroutineScope.launch {
                             if (!colorTool.value.visibility.value) {
                                 closeTool(recorderTool)
                                 closeTool(alarmTool)
@@ -424,7 +417,7 @@ fun EditNotesScreenMain(
                         }
                     )
                     .clickable {
-                        scope.launch {
+                        appState.coroutineScope.launch {
                             if (!alarmTool.value.visibility.value) {
                                 closeTool(colorTool)
                                 closeTool(recorderTool)
@@ -466,7 +459,7 @@ fun EditNotesScreenMain(
                         }
                     )
                     .clickable {
-                        scope.launch {
+                        appState.coroutineScope.launch {
                             if (!recorderTool.value.visibility.value) {
                                 closeTool(colorTool)
                                 closeTool(alarmTool)
@@ -506,7 +499,7 @@ fun EditNotesScreenMain(
                         }
                     )
                     .clickable {
-                        scope.launch {
+                        appState.coroutineScope.launch {
                             if (!drawingTool.value.visibility.value) {
                                 closeTool(colorTool)
                                 closeTool(alarmTool)
@@ -555,8 +548,8 @@ fun EditNotesScreenMain(
                 color = Color(noteState.value.color),
                 hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
                 onValueChange = {
-                    viewModel.onEvent(EditNotesEvent.TitleEntered(it))
                     viewModel.isNoteModified = true
+                    viewModel.onEvent(EditNotesEvent.TitleEntered(it))
                 },
                 onFocusChange = {
                     viewModel.isTitleHintVisible = !it.isFocused && noteState.value.title.isBlank()
@@ -598,8 +591,8 @@ fun EditNotesScreenMain(
                 color = Color(noteState.value.color),
                 hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
                 onValueChange = {
-                    viewModel.onEvent(EditNotesEvent.TextEntered(it))
                     viewModel.isNoteModified = true
+                    viewModel.onEvent(EditNotesEvent.TextEntered(it))
                 },
                 onFocusChange = {
                     viewModel.isTextHintVisible = !it.isFocused && noteState.value.text.isBlank()
@@ -629,7 +622,7 @@ fun EditNotesScreenMain(
             color = MaterialTheme.colorScheme.secondaryContainer,
         ) {
             LaunchedEffect(noteState.value.color) {
-                scope.launch {
+                appState.coroutineScope.launch {
                     delay(500)
                     if (noteState.value.color != 0) {
                         colorPaletteState.animateScrollToItem(noteColorsArgb.indexOf(noteState.value.color))
@@ -766,8 +759,6 @@ fun EditNotesScreenMain(
                         modifier = Modifier.padding(top = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        val voicePermissionTitle =
-                            stringResource(R.string.permission_required_title)
                         val voicePermissionText = stringResource(R.string.permission_required_text)
                         val voicePermissionLauncher =
                             rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -901,7 +892,7 @@ fun EditNotesScreenMain(
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
-                                scope.launch {
+                                appState.coroutineScope.launch {
                                     checkPermission(
                                         ctx,
                                         Manifest.permission.RECORD_AUDIO,
@@ -916,10 +907,10 @@ fun EditNotesScreenMain(
                                             }
                                         } else {
                                             viewModel.recorder.value.stopRecording()
-                                            scope.launch {
+                                            appState.coroutineScope.launch {
                                                 viewModel.readVoiceToState(
                                                     "records/${noteState.value.id}.aac",
-                                                    scope.coroutineContext
+                                                    appState.coroutineScope.coroutineContext
                                                 ).data?.collectLatest {
                                                     viewModel.setVoiceState(it)
                                                     Timber.tag("Edit Screen").i(it.toString())
@@ -954,7 +945,7 @@ fun EditNotesScreenMain(
                             enabled = viewModel.voiceState.value.duration > 0,
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
-                                scope.launch {
+                                appState.coroutineScope.launch {
                                     val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
                                     if (!recorder.isPlaying()) {
                                         recorder.startPlaying()
@@ -1143,7 +1134,7 @@ fun EditNotesScreenMain(
                                 ),
                                 elevation = ButtonDefaults.buttonElevation(4.dp),
                                 onClick = {
-                                    scope.launch {
+                                    appState.coroutineScope.launch {
                                         viewModel.onEvent(EditNotesEvent.DeleteNoteAlarms(noteState.value.id))
                                         viewModel.alarms.clear()
                                         repeating = false
@@ -1169,7 +1160,7 @@ fun EditNotesScreenMain(
                                 ),
                                 elevation = ButtonDefaults.buttonElevation(4.dp),
                                 onClick = {
-                                    scope.launch {
+                                    appState.coroutineScope.launch {
                                         Timber.d(notificationPermissions.toString())
                                         checkAlarmsPermission(ctx)
                                         checkPermissions(
@@ -1430,7 +1421,7 @@ fun EditNotesScreenMain(
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
-                                scope.launch {
+                                appState.coroutineScope.launch {
                                     val serialized = Gson().toJson(paths.toList())
                                     println("PATH: $serialized")
                                     viewModel.onEvent(EditNotesEvent.DrawingSaved(serialized))
@@ -1453,7 +1444,7 @@ fun EditNotesScreenMain(
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
-                                scope.launch {
+                                appState.coroutineScope.launch {
                                     if (paths.isNotEmpty()) {
                                         paths.clear()
                                         viewModel.onEvent(EditNotesEvent.DrawingRemoved)
@@ -1475,7 +1466,7 @@ fun EditNotesScreenMain(
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
-                                scope.launch {
+                                appState.coroutineScope.launch {
                                     if (paths.isNotEmpty()) {
 
                                         val lastItem = paths.last()

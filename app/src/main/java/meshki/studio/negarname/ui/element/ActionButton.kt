@@ -1,12 +1,14 @@
 package meshki.studio.negarname.ui.element
 
 import android.app.Activity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -29,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -73,7 +76,8 @@ fun ActionButton(
         mutableIntStateOf(-1)
     }
 
-    val insets: WindowInsetsCompat? = ViewCompat.getRootWindowInsets((LocalContext.current as Activity).window.decorView)
+    val insets: WindowInsetsCompat? =
+        ViewCompat.getRootWindowInsets((LocalContext.current as Activity).window.decorView)
     //val insets2 = WindowInsets.ime.getBottom(LocalDensity.current)
 
     LaunchedEffect(isKeyboardOpen, isBottomBarVisible) {
@@ -94,31 +98,37 @@ fun ActionButton(
         }
     }
 
+    val opacity = 0.93f
     ExtendedFloatingActionButton(
         modifier = //with(LocalDensity.current) {
-            modifier
-                //.offset(y = fabPadding.intValue.toDp())
-                .offset {
-                    IntOffset(x = 0, y = fabPadding.intValue)
-                }
-                .bounceClick()
-                //.navigationBarsPadding()
-                //.imePadding()
-                .padding(bottom = if (isBottomBarVisible.value) 0.dp else 0.dp)
-                .border(1.dp, MaterialTheme.colorScheme.secondary, RoundedShapes.large),
+        modifier
+            //.offset(y = fabPadding.intValue.toDp())
+            .offset {
+                IntOffset(x = 0, y = fabPadding.intValue)
+            }
+            .bounceClick()
+            //.navigationBarsPadding()
+            //.imePadding()
+            //.padding(bottom = if (isBottomBarVisible.value) 0.dp else 0.dp)
+            .padding(bottom = 0.dp)
+            .border(1.dp, MaterialTheme.colorScheme.secondary, RoundedShapes.large),
         //},
         onClick = onClick,
         interactionSource = interactionSource,
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = opacity),
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         shape = RoundedShapes.large,
-        elevation = FloatingActionButtonDefaults.elevation(1.dp)
+        elevation = FloatingActionButtonDefaults.elevation(0.dp)
+        //elevation = FloatingActionButtonDefaults.elevation(2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(
-                start = paddingSize,
-                end = paddingSize
-            ),
+            modifier = Modifier
+                .background(Color.Transparent)
+                .padding(
+                    start = paddingSize,
+                    end = paddingSize
+                ),
+                //.background(Color.Transparent),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (text.isNotBlank()) {

@@ -24,7 +24,7 @@ object StorageConstants {
 
 class PersistentStorage(
     context: Context
-) : StorageApi {
+) : Storage {
     // dataSource access the DataStore file and does the manipulation based on our requirements.
     private val dataSource = context.dataStore
 

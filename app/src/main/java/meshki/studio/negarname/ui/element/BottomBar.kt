@@ -1,11 +1,13 @@
 package meshki.studio.negarname.ui.element
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -25,45 +27,49 @@ fun BottomBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val opacity = 0.93f
+
     NavigationBar(
         Modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 100.dp)
             .padding(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 8.dp),
             //.navigationBarsPadding(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
         containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         OutlinedCard(
-            elevation = CardDefaults.elevatedCardElevation(),
+            elevation = CardDefaults.cardElevation(),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.outlinedCardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                containerColor = Color.Transparent,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             ),
             border = BorderStroke(
                 1.dp,
                 MaterialTheme.colorScheme.secondary
             ),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             Row(
-                Modifier.fillMaxHeight(),
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = opacity)),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 screenItems.forEach { screen ->
                     if (currentRoute != null) {
                         NavigationBarItem(
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                selectedIconColor = MaterialTheme.colorScheme.secondaryContainer,
                                 selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
-                                unselectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
+                                indicatorColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.65f),
+                                unselectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.65f),
                             ),
                             icon = {
                                 Icon(
-                                    painterResource(id = screen.icon),
+                                    painter = painterResource(id = screen.icon),
                                     contentDescription = screen.title + " Icon",
                                     //tint = MaterialTheme.colorScheme.primary0
                                 )

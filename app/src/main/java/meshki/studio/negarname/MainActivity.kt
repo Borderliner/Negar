@@ -59,6 +59,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import io.embrace.android.embracesdk.Embrace
 import kotlinx.coroutines.launch
+import meshki.studio.negarname.ui.element.AboutDialog
 import meshki.studio.negarname.ui.element.BottomBar
 import meshki.studio.negarname.ui.element.TopBar
 import meshki.studio.negarname.ui.theme.NegarTheme
@@ -81,7 +82,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             KoinContext {
                 val mainViewModel = koinInject<MainViewModel>()
-                val navController = rememberNavController()
+                val appState: AppState = rememberAppState()
 
                 NegarTheme(darkTheme = when (mainViewModel.theme) {
                     "system" -> isSystemInDarkTheme()
@@ -116,11 +117,11 @@ class MainActivity : ComponentActivity() {
                             ) {
                             if (mainViewModel.isRtl) {
                                 RightToLeftLayout {
-                                    MainScreenScaffold(navController)
+                                    MainScreenScaffold(appState)
                                 }
                             } else {
                                 LeftToRightLayout {
-                                    MainScreenScaffold(navController)
+                                    MainScreenScaffold(appState)
                                 }
                             }
                         }
@@ -132,9 +133,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreenScaffold(navController: NavHostController) {
+fun MainScreenScaffold(appState: AppState) {
     val mainViewModel = koinInject<MainViewModel>()
-    val scope = rememberCoroutineScope()
+
+    val aboutDialog = remember { mutableStateOf(false) }
+    AboutDialog(state = aboutDialog)
 
     ModalNavigationDrawer(
         modifier = Modifier
@@ -182,7 +185,7 @@ fun MainScreenScaffold(navController: NavHostController) {
                         },
                         selected = false,
                         onClick = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 mainViewModel.drawerState.close()
                                 if (mainViewModel.locale == "fa") {
                                     mainViewModel.setLocale(Locale("en").toLanguageTag())
@@ -222,7 +225,7 @@ fun MainScreenScaffold(navController: NavHostController) {
                         },
                         selected = false,
                         onClick = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 mainViewModel.viewModelScope.launch {
                                     when (mainViewModel.theme) {
                                         "system" -> mainViewModel.setTheme("dark")
@@ -251,7 +254,7 @@ fun MainScreenScaffold(navController: NavHostController) {
                         },
                         selected = false,
                         onClick = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 //
                             }
                         }
@@ -274,11 +277,12 @@ fun MainScreenScaffold(navController: NavHostController) {
                         },
                         selected = false,
                         onClick = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 Embrace.getInstance().showBugReportForm()
                             }
                         }
                     )
+
                     NavigationDrawerItem(
                         label = {
                             Text(
@@ -294,7 +298,7 @@ fun MainScreenScaffold(navController: NavHostController) {
                         },
                         selected = false,
                         onClick = {
-                            //
+                            aboutDialog.value = true
                         }
                     )
                     NavigationDrawerItem(
@@ -316,7 +320,7 @@ fun MainScreenScaffold(navController: NavHostController) {
                         },
                         selected = false,
                         onClick = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 val activity = (ctx as? Activity)
                                 activity?.finish()
                             }
@@ -336,9 +340,9 @@ fun MainScreenScaffold(navController: NavHostController) {
             mutableStateOf(mainViewModel.drawerState.offset.value)
         }
 
-        val contentOffset = remember {
+        val xPos = remember {
             derivedStateOf {
-                mainViewModel.drawerState.offset.value
+                abs(drawerWidth) - abs(mainViewModel.drawerState.offset.value)
             }
         }
 
@@ -349,12 +353,25 @@ fun MainScreenScaffold(navController: NavHostController) {
         }
 
         Scaffold(
+            snackbarHost = {
+                if (mainViewModel.isRtl) {
+                    LeftToRightLayout {
+                        SnackbarHost(appState.snackbar)
+                    }
+                } else {
+                    RightToLeftLayout {
+                        SnackbarHost(appState.snackbar)
+                    }
+                }
+            },
             modifier = Modifier
                 .offset(x = with(LocalDensity.current) {
-                    max(0.dp, (abs(drawerWidth) - abs(contentOffset.value)).toDp() - 90.dp)
+                    max(0.dp, xPos.value.toDp() - 90.dp)
                 })
-                .blur(radius = ((abs(drawerWidth) - abs(contentOffset.value)) / 500).dp),
-            topBar = { TopBar() },
+                .blur(radius =  with(LocalDensity.current) {
+                    (xPos.value / 500).toDp()
+                }),
+            topBar = { TopBar(appState) },
             bottomBar = {
                 AnimatedVisibility(
                     visible = mainViewModel.isBottomBarVisible.value,
@@ -365,7 +382,7 @@ fun MainScreenScaffold(navController: NavHostController) {
                         it / 12
                     }),
                 ) {
-                    BottomBar(navController)
+                    BottomBar(appState.navController)
                 }
             },
             containerColor = Color.Transparent,
@@ -377,7 +394,7 @@ fun MainScreenScaffold(navController: NavHostController) {
             ) {
                 Divider(color = Color.Gray.copy(0.4f), thickness = 1.dp)
                 if (mainViewModel.isReady) {
-                    Navigation(navController)
+                    Navigation(appState)
                 } else {
                     Column(
                         modifier = Modifier.fillMaxSize(),

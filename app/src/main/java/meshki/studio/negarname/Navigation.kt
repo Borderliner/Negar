@@ -18,11 +18,11 @@ import meshki.studio.negarname.ui.screen.SettingsScreen
 import meshki.studio.negarname.ui.screen.TodosScreen
 
 @Composable
-fun Navigation(navController: NavHostController) {
+fun Navigation(appState: AppState) {
     val navigationSpeed = 450
     val pageSpeed = 300
 
-    NavHost(navController, startDestination = ScreenEntity.Notes.route) {
+    NavHost(appState.navController, startDestination = ScreenEntity.Notes.route) {
         composable(
             ScreenEntity.Calendar.route,
             enterTransition = {
@@ -41,7 +41,7 @@ fun Navigation(navController: NavHostController) {
             }
         ) {
             CalendarScreen {
-                navController.navigate(it)
+                appState.navController.navigate(it)
             }
         }
 
@@ -86,7 +86,7 @@ fun Navigation(navController: NavHostController) {
             popExitTransition = {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(navigationSpeed))
             }) {
-            NotesScreen(navController)
+            NotesScreen(appState)
         }
 
         composable(
@@ -125,7 +125,7 @@ fun Navigation(navController: NavHostController) {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(navigationSpeed))
             }) {
             TodosScreen {
-                navController.navigate(it)
+                appState.navController.navigate(it)
             }
 
         }
@@ -160,7 +160,7 @@ fun Navigation(navController: NavHostController) {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(pageSpeed))
             }
         ) { nav ->
-            EditNotesScreen(color = nav.arguments?.getInt("color") ?: -1, navController)
+            EditNotesScreen(color = nav.arguments?.getInt("color") ?: -1, appState)
         }
 
         composable(
@@ -194,7 +194,7 @@ fun Navigation(navController: NavHostController) {
             }
         ) { nav ->
             EditTodosScreen(color = nav.arguments?.getInt("color") ?: -1) {
-                navController.navigate(it)
+                appState.navController.navigate(it)
             }
         }
 
@@ -208,7 +208,7 @@ fun Navigation(navController: NavHostController) {
             }
         ) {
             SettingsScreen {
-                navController.navigate(it)
+                appState.navController.navigate(it)
             }
         }
     }

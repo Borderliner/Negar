@@ -69,4 +69,16 @@
     <string name="dark">Dark</string>
     <string name="light">Light</string>
     <string name="system">System</string>
+    <string name="more">More</string>
+    <string name="about_text">Negarname is a task organizer app to help you schedule and accomplish your tasks. It aims to provide you with just the right tools so that you can always stay ahead of your plans.</string>
+    <string name="developer_name">Developer: Reza Hajianpour</string>
+    <string name="developer_email">Email: hajianpour.mr@gmail.com</string>
+    <string name="back">Back</string>
+    <string name="about_text_2">If you find this application useful, please consider buying the Pro version for extra security for your schedules!</string>
+    <string name="import_data">Import</string>
+    <string name="export_data">Export</string>
+    <string name="storage_permission">Please allow this app to use phone storage.</string>
+    <string name="allow">Allow</string>
+    <string name="import_export">Import / Export</string>
+    <string name="import_export_desc">You can import or export your data with ease.</string>
 </resources>

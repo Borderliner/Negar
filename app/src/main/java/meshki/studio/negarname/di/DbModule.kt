@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import kotlinx.coroutines.CoroutineScope
 import meshki.studio.negarname.data.local.Database
 import meshki.studio.negarname.data.local.dao.AlarmsDao
+import meshki.studio.negarname.data.local.dao.AppDao
 import meshki.studio.negarname.data.local.dao.NotesDao
 import meshki.studio.negarname.data.local.dao.TodosDao
 import org.koin.android.ext.koin.androidContext
@@ -14,6 +15,7 @@ import org.koin.dsl.module
 const val DbName = "app_database"
 val dbModule = module {
     single { provideRoomDatabase(androidContext(), get()) }
+    single { provideAppDao(get()) }
     single { provideNotesDao(get()) }
     single { provideTodosDao(get()) }
     single { provideAlarmsDao(get()) }
@@ -28,9 +30,14 @@ fun provideRoomDatabase(context: Context, scope: CoroutineScope): Database {
 //                Database.onCreate(scope = scope, database = database)
 //            }
         })
+        .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
         .fallbackToDestructiveMigration()
         .build()
     return database
+}
+
+private fun provideAppDao(db: Database): AppDao {
+    return db.getAppDao()
 }
 
 private fun provideNotesDao(db: Database): NotesDao {

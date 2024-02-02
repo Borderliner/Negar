@@ -63,6 +63,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
@@ -71,30 +72,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat.getString
+import meshki.studio.negarname.AppState
 import meshki.studio.negarname.entity.Tool
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
 
 @Composable
-fun NotesScreen(navController: NavHostController) {
+fun NotesScreen(appState: AppState) {
     val mainViewModel = koinInject<MainViewModel>()
     mainViewModel.setBottomBarVisible(true)
     val viewModel = koinViewModel<NotesViewModel>()
     val snackbar = remember { SnackbarHostState() }
+
     if (mainViewModel.isRtl) {
         LeftToRightLayout {
-            NotesScreenScaffold(navController, snackbar) {
+            NotesScreenScaffold(appState, snackbar) {
                 RightToLeftLayout {
-                    NotesScreenMain(viewModel, navController, snackbar)
+                    NotesScreenMain(viewModel, appState, snackbar)
                 }
             }
         }
     } else {
         RightToLeftLayout {
-            NotesScreenScaffold(navController, snackbar) {
+            NotesScreenScaffold(appState, snackbar) {
                 LeftToRightLayout {
-                    NotesScreenMain(viewModel, navController, snackbar)
+                    NotesScreenMain(viewModel, appState, snackbar)
                 }
             }
         }
@@ -104,13 +107,24 @@ fun NotesScreen(navController: NavHostController) {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun NotesScreenScaffold(
-    navController: NavHostController,
+    appState: AppState,
     snackbar: SnackbarHostState,
     content: @Composable () -> Unit
 ) {
     val mainViewModel = koinInject<MainViewModel>()
+
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = {
+            if (mainViewModel.isRtl) {
+                LeftToRightLayout {
+                    SnackbarHost(snackbar)
+                }
+            } else {
+                RightToLeftLayout {
+                    SnackbarHost(snackbar)
+                }
+            }
+        },
         floatingActionButton = {
             ActionButton(
                 text = stringResource(R.string.write),
@@ -122,7 +136,7 @@ fun NotesScreenScaffold(
                 },
                 modifier = Modifier,
                 onClick = {
-                    navController.navigate(ScreenEntity.EditNotes.route)
+                    appState.navController.navigate(ScreenEntity.EditNotes.route)
                 },
                 isBottomBarVisible = mainViewModel.isBottomBarVisible
             )
@@ -136,15 +150,14 @@ fun NotesScreenScaffold(
 @Composable
 fun NotesScreenMain(
     viewModel: NotesViewModel,
-    navController: NavHostController,
-    snackbar: SnackbarHostState,
+    appState: AppState,
+    snackbar: SnackbarHostState
 ) {
     val mainViewModel = koinInject<MainViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
 
     val orderTool = remember { mutableStateOf(Tool("order")) }
-    val searchTool =  remember { mutableStateOf(Tool("search")) }
+    val searchTool = remember { mutableStateOf(Tool("search")) }
 
     var isRowView by rememberSaveable { mutableStateOf(true) }
 
@@ -152,15 +165,18 @@ fun NotesScreenMain(
 
     LaunchedEffect(searchTool.value.visibility.value, orderTool.value.visibility.value) {
         if (searchTool.value.visibility.value) {
-            offsetAnimation.value.animateTo(100f,
+            offsetAnimation.value.animateTo(
+                100f,
                 tween(280, 0, easing = FastOutSlowInEasing)
             )
         } else if (orderTool.value.visibility.value) {
-            offsetAnimation.value.animateTo(110f,
+            offsetAnimation.value.animateTo(
+                110f,
                 tween(280, 0, easing = FastOutSlowInEasing)
             )
         } else {
-            offsetAnimation.value.animateTo(offsetAnimation.value.lowerBound ?: 0f,
+            offsetAnimation.value.animateTo(
+                offsetAnimation.value.lowerBound ?: 0f,
                 tween(300, 200, easing = FastOutSlowInEasing)
             )
         }
@@ -185,7 +201,7 @@ fun NotesScreenMain(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Transparent)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             modifier = Modifier
@@ -206,7 +222,7 @@ fun NotesScreenMain(
                     IconButton(
                         modifier = Modifier.zIndex(16f),
                         onClick = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 isRowView = !isRowView
                             }
                         },
@@ -226,7 +242,7 @@ fun NotesScreenMain(
                     IconButton(
                         modifier = Modifier.zIndex(16f),
                         onClick = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 //onToolClicked(searchTool)
                                 if (!searchTool.value.visibility.value) {
                                     closeTool(orderTool)
@@ -247,7 +263,7 @@ fun NotesScreenMain(
                     IconButton(
                         modifier = Modifier.zIndex(6f),
                         onClick = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 //onToolClicked(orderTool)
                                 if (!orderTool.value.visibility.value) {
                                     closeTool(searchTool)
@@ -286,7 +302,7 @@ fun NotesScreenMain(
                 val ctx = LocalContext.current
                 if (isRowView) {
                     LazyColumn(
-                        contentPadding = PaddingValues(bottom = 65.dp),
+                        contentPadding = PaddingValues(bottom = 190.dp),
                         modifier = Modifier.offset(
                             0.dp, offsetAnimation.value.value.dp
                         )
@@ -299,16 +315,16 @@ fun NotesScreenMain(
                                     .fillMaxWidth(),
                                 isRtl = mainViewModel.isRtl,
                                 onTap = {
-                                    navController.navigate(
+                                    appState.navController.navigate(
                                         ScreenEntity.EditNotes.route +
                                                 "?id=${note.id}&color=${note.color}"
                                     )
                                 },
                                 onDelete = {
-                                    scope.launch {
+                                    appState.coroutineScope.launch {
                                         viewModel.onEvent(NotesEvent.NoteDeleted(note))
                                         val result =
-                                            snackbar.showSnackbar(
+                                            appState.snackbar.showSnackbar(
                                                 message = getString(ctx, R.string.note_removed),
                                                 actionLabel = getString(ctx, R.string.restore)
                                             )
@@ -319,14 +335,14 @@ fun NotesScreenMain(
                                 },
                                 onPin = {
                                     if (!note.pinned) {
-                                        scope.launch {
-                                            snackbar.showSnackbar(
+                                        appState.coroutineScope.launch {
+                                            appState.snackbar.showSnackbar(
                                                 message = getString(ctx, R.string.restore),
                                             )
                                         }
                                     }
 
-                                    scope.launch {
+                                    appState.coroutineScope.launch {
                                         viewModel.onEvent(NotesEvent.NotePinToggled(note))
                                     }
                                 }
@@ -343,9 +359,11 @@ fun NotesScreenMain(
                         state = lazyGridState,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalItemSpacing = 10.dp,
-                        modifier = Modifier.padding(horizontal = 8.dp).offset(
-                            0.dp, offsetAnimation.value.value.dp
-                        )
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .offset(
+                                0.dp, offsetAnimation.value.value.dp
+                            )
                     ) {
                         itemsIndexed(uiState.notes) { idx, note ->
                             SingleNote(
@@ -353,18 +371,19 @@ fun NotesScreenMain(
                                 modifier = Modifier.fillMaxWidth(),
                                 isRtl = mainViewModel.isRtl,
                                 onTap = {
-                                    navController.navigate(
+                                    appState.navController.navigate(
                                         ScreenEntity.EditNotes.route +
                                                 "?id=${note.id}&color=${note.color}"
                                     )
                                 },
                                 onDelete = {
-                                    scope.launch {
+                                    appState.coroutineScope.launch {
                                         viewModel.onEvent(NotesEvent.NoteDeleted(note))
                                         val result =
-                                            snackbar.showSnackbar(
+                                            appState.snackbar.showSnackbar(
                                                 message = getString(ctx, R.string.note_removed),
-                                                actionLabel = getString(ctx, R.string.restore)
+                                                actionLabel = getString(ctx, R.string.restore),
+                                                duration = SnackbarDuration.Long
                                             )
                                         if (result == SnackbarResult.ActionPerformed) {
                                             viewModel.onEvent(NotesEvent.NoteRestored)
@@ -373,14 +392,15 @@ fun NotesScreenMain(
                                 },
                                 onPin = {
                                     if (!note.pinned) {
-                                        scope.launch {
+                                        appState.coroutineScope.launch {
                                             snackbar.showSnackbar(
                                                 message = getString(ctx, R.string.restore),
+                                                duration = SnackbarDuration.Short
                                             )
                                         }
                                     }
 
-                                    scope.launch {
+                                    appState.coroutineScope.launch {
                                         viewModel.onEvent(NotesEvent.NotePinToggled(note))
                                     }
                                 }
@@ -392,7 +412,9 @@ fun NotesScreenMain(
                 }
             } else {
                 Column(
-                    modifier = Modifier.fillMaxSize().offset(y = (-90).dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .offset(y = (-90).dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
