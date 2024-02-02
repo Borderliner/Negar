@@ -84,12 +84,15 @@ class MainActivity : ComponentActivity() {
                 val mainViewModel = koinInject<MainViewModel>()
                 val appState: AppState = rememberAppState()
 
-                NegarTheme(darkTheme = when (mainViewModel.theme) {
-                    "system" -> isSystemInDarkTheme()
-                    "dark" -> true
-                    "light" -> false
-                    else -> isSystemInDarkTheme()
-                }) {
+                NegarTheme(
+                    darkTheme = when (mainViewModel.theme) {
+                        "system" -> isSystemInDarkTheme()
+                        "dark" -> true
+                        "light" -> false
+                        else -> isSystemInDarkTheme()
+                    },
+                    isRtl = mainViewModel.isRtl
+                ) {
                     Surface(
                         modifier = Modifier
                             .fillMaxSize(),
@@ -164,9 +167,11 @@ fun MainScreenScaffold(appState: AppState) {
                     Text(stringResource(R.string.app_name), modifier = Modifier.padding(16.dp))
                 }
                 Divider()
-                Column(modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 6.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 6.dp)
+                ) {
                     NavigationDrawerItem(
                         label = {
                             Row {
@@ -203,23 +208,27 @@ fun MainScreenScaffold(appState: AppState) {
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    stringResource(when (mainViewModel.theme.lowercase()) {
-                                        "light" -> R.string.light
-                                        "dark" -> R.string.dark
-                                        "system" -> R.string.system
-                                        else -> R.string.off
-                                    })
+                                    stringResource(
+                                        when (mainViewModel.theme.lowercase()) {
+                                            "light" -> R.string.light
+                                            "dark" -> R.string.dark
+                                            "system" -> R.string.system
+                                            else -> R.string.off
+                                        }
+                                    )
                                 )
                             }
                         },
                         badge = {
                             Icon(
-                                painter = painterResource(when (mainViewModel.theme.lowercase()) {
-                                    "light" -> R.drawable.vec_light_mode
-                                    "dark" -> R.drawable.dark_mode
-                                    "system" -> R.drawable.vec_routine
-                                    else -> R.drawable.vec_routine
-                                }),
+                                painter = painterResource(
+                                    when (mainViewModel.theme.lowercase()) {
+                                        "light" -> R.drawable.vec_light_mode
+                                        "dark" -> R.drawable.dark_mode
+                                        "system" -> R.drawable.vec_routine
+                                        else -> R.drawable.vec_routine
+                                    }
+                                ),
                                 contentDescription = stringResource(R.string.theme)
                             )
                         },
@@ -368,7 +377,7 @@ fun MainScreenScaffold(appState: AppState) {
                 .offset(x = with(LocalDensity.current) {
                     max(0.dp, xPos.value.toDp() - 90.dp)
                 })
-                .blur(radius =  with(LocalDensity.current) {
+                .blur(radius = with(LocalDensity.current) {
                     (xPos.value / 500).toDp()
                 }),
             topBar = { TopBar(appState) },

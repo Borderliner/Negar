@@ -45,6 +45,7 @@ fun NegarTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
+    isRtl: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -80,7 +81,7 @@ fun NegarTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = if (isRtl) rtlTypography else defaultTypography,
         content = content
     )
 }
