@@ -91,12 +91,6 @@ internal fun KalendarFireyShamsi(
     kalendarHeaderTextKonfig: KalendarTextKonfig? = null,
     kalendarColors: KalendarColors = KalendarColors.default(),
     events: KalendarEvents = KalendarEvents(),
-    labelFormat: (DayOfWeek) -> String = {
-        it.getDisplayName(
-            TextStyle.SHORT,
-            Locale.getDefault()
-        )
-    },
     kalendarDayKonfig: KalendarDayKonfig = KalendarDayKonfig.default(),
     dayContent: (@Composable (PersianDate) -> Unit)? = null,
     headerContent: (@Composable (Int, Int) -> Unit)? = null,
@@ -104,6 +98,7 @@ internal fun KalendarFireyShamsi(
     onRangeSelected: (KalendarSelectedDayRangeShamsi, List<KalendarEvent>) -> Unit = { _, _ -> },
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
 ) {
+    val persianWeekDays = listOf("ش", "ی", "د", "س", "چ", "پ", "ج")
     val todayShamsi = currentDay ?: PersianDate.today()
     val today = todayShamsi.toLocalDate()
 
@@ -113,21 +108,24 @@ internal fun KalendarFireyShamsi(
     val selectedDateShamsi = remember { mutableStateOf(todayShamsi) }
     val displayedMonthShamsi = remember { mutableStateOf(todayShamsi.shMonth) }
     val displayedYearShamsi = remember { mutableStateOf(todayShamsi.shYear) }
-    val currentMonthShamsi = displayedMonthShamsi.value
+    val currentMonthShamsi = if(displayedMonthShamsi.value.mod(12) == 0) 12 else displayedMonthShamsi.value.mod(12)
     val currentYearShamsi = displayedYearShamsi.value
 
-    val currentMonthIndexShamsi = currentMonthShamsi.minus(1)
+    val currentMonthIndexShamsi = displayedMonthShamsi.value.mod(12)
 
     val defaultHeaderColor = KalendarTextKonfig.default(
         color = kalendarColors.color[currentMonthIndexShamsi].headerTextColor,
     )
     val newHeaderTextKonfig = kalendarHeaderTextKonfig ?: defaultHeaderColor
 
-    val daysInMonth = selectedDateShamsi.value.monthDays
-    val monthValue = currentMonthShamsi.toString().padStart(2, '0')
-    val startDayOfMonth = remember { mutableStateOf(selectedDateShamsi.value.setShDay(1)) }
+    val startDayOfMonth = PersianDate().initJalaliDate(currentYearShamsi, currentMonthShamsi, 1)
+    val daysInMonth = startDayOfMonth.monthDays
+
+    val daysIterator = remember { mutableStateOf((getInitialDayOfMonth(startDayOfMonth.dayOfWeek())..daysInMonth).toList()) }
+    println(daysIterator)
+
     LaunchedEffect(displayedMonthShamsi.value, displayedYearShamsi.value) {
-        startDayOfMonth.value = selectedDateShamsi.value.setShDay(1)
+        daysIterator.value = (getInitialDayOfMonth(startDayOfMonth.dayOfWeek())..daysInMonth).toList()
     }
 
     Column(
@@ -162,20 +160,20 @@ internal fun KalendarFireyShamsi(
             columns = GridCells.Fixed(7),
             content = {
                 if (showLabel) {
-                    items(weekValue.value) { item ->
+                    items(persianWeekDays) { item ->
                         Text(
                             modifier = Modifier,
                             color = kalendarDayKonfig.textColor,
                             fontSize = kalendarDayKonfig.textSize,
-                            text = labelFormat(item.dayOfWeek),
+                            text = item,
                             fontWeight = FontWeight.SemiBold,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
 
-                items((getInitialDayOfMonth(startDayOfMonth.value.dayOfWeek())..daysInMonth).toList()) {
-                    if (it > 0) {
+                items(daysIterator.value) {
+                    if (it in 1..daysInMonth) {
                         val day = PersianDate().initJalaliDate(currentYearShamsi, currentMonthShamsi, it)
                         if (dayContent != null) {
                             dayContent(day)
