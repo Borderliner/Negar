@@ -15,6 +15,7 @@
 package com.himanshoe.kalendar.ui.component.day
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,10 +39,13 @@ import androidx.compose.ui.util.fastForEachIndexed
 import com.himanshoe.kalendar.KalendarEvent
 import com.himanshoe.kalendar.KalendarEvents
 import com.himanshoe.kalendar.color.KalendarColor
+import com.himanshoe.kalendar.ui.component.day.modifier.FULL_ALPHA
+import com.himanshoe.kalendar.ui.component.day.modifier.TOWNED_DOWN_ALPHA
 import com.himanshoe.kalendar.ui.component.day.modifier.circleLayout
 import com.himanshoe.kalendar.ui.component.day.modifier.dayBackgroundColor
 import com.himanshoe.kalendar.ui.component.indicator.KalendarIndicator
 import com.himanshoe.kalendar.ui.firey.KalendarSelectedDayRange
+import com.himanshoe.kalendar.ui.firey.KalendarSelectedDayRangeShamsi
 import com.himanshoe.kalendar.util.MultiplePreviews
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -50,6 +54,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import saman.zamani.persiandate.PersianDate
+import java.time.format.DateTimeFormatter
 
 /**
  * A composable representing a single day in the Kalendar.
@@ -64,28 +70,28 @@ import kotlinx.datetime.todayIn
  * @param kalendarDayKonfig The configuration for the Kalendar day.
  */
 @Composable
-fun KalendarDay(
-    date: LocalDate,
+fun KalendarDayShamsi(
+    date: PersianDate,
     kalendarColors: KalendarColor,
-    onDayClick: (LocalDate, List<KalendarEvent>) -> Unit,
-    selectedRange: KalendarSelectedDayRange?,
+    onDayClick: (PersianDate, List<KalendarEvent>) -> Unit,
+    selectedRange: KalendarSelectedDayRangeShamsi?,
     modifier: Modifier = Modifier,
-    selectedDate: LocalDate = date,
+    selectedDate: PersianDate = date,
     kalendarEvents: KalendarEvents = KalendarEvents(),
     kalendarDayKonfig: KalendarDayKonfig = KalendarDayKonfig.default(),
 ) {
     val selected = selectedDate == date
-    val currentDay = Clock.System.todayIn(TimeZone.currentSystemDefault()) == date
+    val isToday = date.isToday
 
     Column(
         modifier = modifier
             .border(
-                border = getBorder(currentDay, kalendarDayKonfig.borderColor, selected),
+                border = getBorder(isToday, kalendarDayKonfig.borderColor, selected),
                 shape = CircleShape
             )
             .clip(shape = CircleShape)
             .clickable { onDayClick(date, kalendarEvents.events) }
-            .dayBackgroundColor(
+            .dayBackgroundColorShamsi(
                 selected,
                 kalendarColors.dayBackgroundColor,
                 date,
@@ -98,7 +104,7 @@ fun KalendarDay(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = date.dayOfMonth.toString(),
+            text = date.shDay.toString(),
             modifier = Modifier.wrapContentSize(),
             textAlign = TextAlign.Center,
             fontSize = kalendarDayKonfig.textSize,
@@ -107,7 +113,7 @@ fun KalendarDay(
         )
         Row {
             kalendarEvents.events
-                .filter { it.date == date }
+                .filter { it.date.isPersianDateEqual(date) }
                 .take(3)
                 .fastForEachIndexed { index, _ ->
                     Row {
@@ -122,39 +128,19 @@ fun KalendarDay(
         }
     }
 }
-
-/**
- * Returns the border stroke based on the current day, color, and selected state.
- *
- * @param currentDay Whether the day is the current day.
- * @param color The color of the border.
- * @param selected Whether the day is selected.
- *
- * @return The border stroke to be applied.
- */
-fun getBorder(currentDay: Boolean, color: Color, selected: Boolean): BorderStroke {
-    val emptyBorder = BorderStroke(0.dp, Color.Transparent)
-    return if (currentDay && selected.not()) {
-        BorderStroke(1.dp, color)
-    } else {
-        emptyBorder
-    }
-}
-
 @MultiplePreviews
 @Composable
-private fun KalendarDayPreview() {
-    val date = Clock.System.todayIn(TimeZone.currentSystemDefault())
-    val previous =
-        Clock.System.todayIn(TimeZone.currentSystemDefault()).minus(1, DateTimeUnit.DAY)
+private fun KalendarDayShamsiPreview() {
+    val date = PersianDate()
+    val previous = date.subDay()
     val events = (0..5).map {
         KalendarEvent(
-            date = date,
+            date = date.toLocalDate(),
             eventName = it.toString(),
         )
     }
     Row {
-        KalendarDay(
+        KalendarDayShamsi(
             date = date,
             kalendarColors = KalendarColor.previewDefault(),
             onDayClick = { _, _ -> },
@@ -163,8 +149,8 @@ private fun KalendarDayPreview() {
             selectedRange = null
         )
         Spacer(modifier = Modifier.padding(vertical = 8.dp))
-        KalendarDay(
-            date = date.plus(1, DateTimeUnit.DAY),
+        KalendarDayShamsi(
+            date = date.addDay(),
             kalendarColors = KalendarColor.previewDefault(),
             onDayClick = { _, _ -> },
             selectedDate = previous,
@@ -172,7 +158,7 @@ private fun KalendarDayPreview() {
             selectedRange = null
         )
         Spacer(modifier = Modifier.padding(vertical = 8.dp))
-        KalendarDay(
+        KalendarDayShamsi(
             date = date,
             kalendarColors = KalendarColor.previewDefault(),
             onDayClick = { _, _ -> },
@@ -181,4 +167,37 @@ private fun KalendarDayPreview() {
             selectedRange = null
         )
     }
+}
+
+fun Modifier.dayBackgroundColorShamsi(
+    selected: Boolean,
+    color: Color,
+    date: PersianDate,
+    selectedRange: KalendarSelectedDayRangeShamsi?
+): Modifier {
+    val inRange = date == selectedRange?.start || date == selectedRange?.end
+
+    val backgroundColor = when {
+        selected -> color
+        selectedRange != null && date.after(selectedRange.start) && date.before(selectedRange.end) -> {
+            val alpha = if (inRange) FULL_ALPHA else TOWNED_DOWN_ALPHA
+            color.copy(alpha = alpha)
+        }
+
+        else -> Color.Transparent
+    }
+
+    return this.then(
+        background(backgroundColor)
+    )
+}
+
+fun LocalDate.isPersianDateEqual(shamsi: PersianDate): Boolean {
+    return this.year == shamsi.grgYear && this.monthNumber == shamsi.grgMonth && this.dayOfMonth == shamsi.grgDay
+}
+
+fun PersianDate.toLocalDate(): LocalDate {
+    val month = if (this.grgMonth > 9) this.grgMonth else "0" + this.grgMonth
+    val day = if (this.grgDay > 9) this.grgDay else "0" + this.grgDay
+    return LocalDate.parse("${this.grgYear}-$month-$day")
 }

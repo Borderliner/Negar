@@ -9,8 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.himanshoe.kalendar.Kalendar
+import com.himanshoe.kalendar.KalendarShamsi
 import com.himanshoe.kalendar.KalendarType
+import com.himanshoe.kalendar.ui.firey.toPersianDate
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import java.util.Calendar
 
 @Composable
@@ -21,13 +26,8 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val cal = Calendar.getInstance()
-            Kalendar(
-                currentDay = LocalDate(
-                    year = cal.get(Calendar.YEAR),
-                    monthNumber = cal.get(Calendar.MONTH) + 1,
-                    dayOfMonth = cal.get(Calendar.DAY_OF_MONTH)
-                ), kalendarType = KalendarType.Firey
+            KalendarShamsi(
+                currentDay = Clock.System.todayIn(TimeZone.currentSystemDefault()).toPersianDate()
             )
         } else {
             Text(text = "Your Android version is too low.")

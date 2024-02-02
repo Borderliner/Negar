@@ -25,6 +25,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -36,7 +39,9 @@ import com.himanshoe.kalendar.KalendarEvents
 import com.himanshoe.kalendar.color.KalendarColors
 import com.himanshoe.kalendar.ui.component.day.KalendarDay
 import com.himanshoe.kalendar.ui.component.day.KalendarDayKonfig
-import com.himanshoe.kalendar.ui.component.header.KalendarHeader
+import com.himanshoe.kalendar.ui.component.day.KalendarDayShamsi
+import com.himanshoe.kalendar.ui.component.day.toLocalDate
+import com.himanshoe.kalendar.ui.component.header.KalendarHeaderShamsi
 import com.himanshoe.kalendar.ui.component.header.KalendarTextKonfig
 import com.himanshoe.kalendar.ui.oceanic.util.getNext7Dates
 import com.himanshoe.kalendar.ui.oceanic.util.isLeapYear
@@ -79,7 +84,7 @@ import java.util.Locale
  */
 @Composable
 internal fun KalendarFireyShamsi(
-    currentDay: LocalDate?,
+    currentDay: PersianDate?,
     daySelectionMode: DaySelectionMode,
     modifier: Modifier = Modifier,
     showLabel: Boolean = true,
@@ -93,64 +98,61 @@ internal fun KalendarFireyShamsi(
         )
     },
     kalendarDayKonfig: KalendarDayKonfig = KalendarDayKonfig.default(),
-    dayContent: (@Composable (LocalDate) -> Unit)? = null,
-    headerContent: (@Composable (Month, Int) -> Unit)? = null,
-    onDayClick: (LocalDate, List<KalendarEvent>) -> Unit = { _, _ -> },
-    onRangeSelected: (KalendarSelectedDayRange, List<KalendarEvent>) -> Unit = { _, _ -> },
+    dayContent: (@Composable (PersianDate) -> Unit)? = null,
+    headerContent: (@Composable (Int, Int) -> Unit)? = null,
+    onDayClick: (PersianDate, List<KalendarEvent>) -> Unit = { _, _ -> },
+    onRangeSelected: (KalendarSelectedDayRangeShamsi, List<KalendarEvent>) -> Unit = { _, _ -> },
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
 ) {
-    val today = currentDay ?: Clock.System.todayIn(TimeZone.currentSystemDefault())
-    val todayShamsi = today.toPersianDate()
+    val todayShamsi = currentDay ?: PersianDate.today()
+    val today = todayShamsi.toLocalDate()
+
     val weekValue = remember { mutableStateOf(today.getNext7Dates()) }
     val weekValueShamsi = remember { mutableStateOf(weekValue.value.map { it.toPersianDate() }) }
-    val selectedRange = remember { mutableStateOf<KalendarSelectedDayRange?>(null) }
-    val selectedDate = remember { mutableStateOf(today) }
+    val selectedRange = remember { mutableStateOf<KalendarSelectedDayRangeShamsi?>(null) }
     val selectedDateShamsi = remember { mutableStateOf(todayShamsi) }
-    val displayedMonth = remember { mutableStateOf(today.month) }
-    val displayedYear = remember { mutableStateOf(today.year) }
     val displayedMonthShamsi = remember { mutableStateOf(todayShamsi.shMonth) }
     val displayedYearShamsi = remember { mutableStateOf(todayShamsi.shYear) }
-    val currentMonth = displayedMonth.value
-    val currentYear = displayedYear.value
     val currentMonthShamsi = displayedMonthShamsi.value
     val currentYearShamsi = displayedYearShamsi.value
 
-    val currentMonthIndex = currentMonth.value.minus(1)
     val currentMonthIndexShamsi = currentMonthShamsi.minus(1)
 
     val defaultHeaderColor = KalendarTextKonfig.default(
-        color = kalendarColors.color[currentMonthIndex].headerTextColor,
+        color = kalendarColors.color[currentMonthIndexShamsi].headerTextColor,
     )
     val newHeaderTextKonfig = kalendarHeaderTextKonfig ?: defaultHeaderColor
 
-    val daysInMonth = currentMonth.length(currentYear.isLeapYear())
-    val monthValue = currentMonth.value.toString().padStart(2, '0')
-    val startDayOfMonth = "$currentYear-$monthValue-01".toLocalDate()
-    val firstDayOfMonth = startDayOfMonth.dayOfWeek
+    val daysInMonth = selectedDateShamsi.value.monthDays
+    val monthValue = currentMonthShamsi.toString().padStart(2, '0')
+    val startDayOfMonth = remember { mutableStateOf(selectedDateShamsi.value.setShDay(1)) }
+    LaunchedEffect(displayedMonthShamsi.value, displayedYearShamsi.value) {
+        startDayOfMonth.value = selectedDateShamsi.value.setShDay(1)
+    }
 
     Column(
         modifier = modifier
             .background(
-                color = kalendarColors.color[currentMonthIndex].backgroundColor
+                color = kalendarColors.color[currentMonthIndexShamsi].backgroundColor
             )
             .wrapContentHeight()
             .fillMaxWidth()
             .padding(all = 8.dp)
     ) {
         if (headerContent != null) {
-            headerContent(currentMonth, currentYear)
+            headerContent(currentMonthShamsi, currentYearShamsi)
         } else {
-            KalendarHeader(
-                month = currentMonth,
-                year = currentYear,
+            KalendarHeaderShamsi(
+                month = currentMonthShamsi,
+                year = currentYearShamsi,
                 kalendarTextKonfig = newHeaderTextKonfig,
                 onPreviousClick = {
-                    displayedYear.value -= if (currentMonth == Month.JANUARY) 1 else 0
-                    displayedMonth.value -= 1
+                    displayedYearShamsi.value -= if (currentMonthShamsi == 1) 1 else 0
+                    displayedMonthShamsi.value -= 1
                 },
                 onNextClick = {
-                    displayedYear.value += if (currentMonth == Month.DECEMBER) 1 else 0
-                    displayedMonth.value += 1
+                    displayedYearShamsi.value += if (currentMonthShamsi == 12) 1 else 0
+                    displayedMonthShamsi.value += 1
                 },
             )
         }
@@ -172,21 +174,21 @@ internal fun KalendarFireyShamsi(
                     }
                 }
 
-                items((getFirstDayOfMonth(firstDayOfMonth)..daysInMonth).toList()) {
+                items((getInitialDayOfMonth(startDayOfMonth.value.dayOfWeek())..daysInMonth).toList()) {
                     if (it > 0) {
-                        val day = calculateDay(it, currentMonth, currentYear)
+                        val day = PersianDate().initJalaliDate(currentYearShamsi, currentMonthShamsi, it)
                         if (dayContent != null) {
                             dayContent(day)
                         } else {
-                            KalendarDay(
+                            KalendarDayShamsi(
                                 date = day,
-                                selectedDate = selectedDate.value,
-                                kalendarColors = kalendarColors.color[currentMonthIndex],
+                                selectedDate = selectedDateShamsi.value,
+                                kalendarColors = kalendarColors.color[currentMonthIndexShamsi],
                                 kalendarEvents = events,
                                 kalendarDayKonfig = kalendarDayKonfig,
                                 selectedRange = selectedRange.value,
                                 onDayClick = { clickedDate, event ->
-                                    onDayClicked(
+                                    onDayClickedShamsi(
                                         clickedDate,
                                         event,
                                         daySelectionMode,
@@ -199,7 +201,7 @@ internal fun KalendarFireyShamsi(
                                             }
                                         },
                                         onDayClick = { newDate, clickedDateEvent ->
-                                            selectedDate.value = newDate
+                                            selectedDateShamsi.value = newDate
                                             onDayClick(newDate, clickedDateEvent)
                                         }
                                     )
@@ -229,11 +231,6 @@ private fun getFirstDayOfMonth(firstDayOfMonth: DayOfWeek) = -(firstDayOfMonth.v
  * @param currentYear The current year.
  * @return The LocalDate object representing the specified day, month, and year.
  */
-private fun calculateDay(day: Int, currentMonth: Month, currentYear: Int): LocalDate {
-    val monthValue = currentMonth.value.toString().padStart(2, '0')
-    val dayValue = day.toString().padStart(2, '0')
-    return "$currentYear-$monthValue-$dayValue".toLocalDate()
-}
 
 @Composable
 @MultiplePreviews
@@ -247,6 +244,62 @@ private fun KalendarFireyPreview() {
     )
 }
 
-private fun LocalDate.toPersianDate(): PersianDate {
+fun LocalDate.toPersianDate(): PersianDate {
     return PersianDate(this.atStartOfDayIn(TimeZone.currentSystemDefault()).toJavaInstant().toEpochMilli())
+}
+
+private fun getInitialDayOfMonth(firstDayOfMonth: Int) = -(firstDayOfMonth).minus(1)
+
+@Immutable
+data class KalendarSelectedDayRangeShamsi(
+    val start: PersianDate,
+    val end: PersianDate
+) {
+    /**
+     * Checks if the selected day range is empty (start date is after end date).
+     * @return True if the range is empty, false otherwise.
+     */
+    fun isEmpty() = start > end
+
+    /**
+     * Checks if the selected day range contains a single date (start and end dates are the same).
+     * @return True if the range contains a single date, false otherwise.
+     */
+    fun isSingleDate() = start == end
+}
+
+
+internal fun onDayClickedShamsi(
+    date: PersianDate,
+    events: List<KalendarEvent>,
+    daySelectionMode: DaySelectionMode,
+    selectedRange: MutableState<KalendarSelectedDayRangeShamsi?>,
+    onRangeSelected: (KalendarSelectedDayRangeShamsi, List<KalendarEvent>) -> Unit = { _, _ -> },
+    onDayClick: (PersianDate, List<KalendarEvent>) -> Unit = { _, _ -> }
+) {
+    when (daySelectionMode) {
+        DaySelectionMode.Single -> {
+            onDayClick(date, events)
+        }
+
+        DaySelectionMode.Range -> {
+            val range = selectedRange.value
+            selectedRange.value = when {
+                range?.isEmpty() != false -> KalendarSelectedDayRangeShamsi(start = date, end = date)
+                range.isSingleDate() -> KalendarSelectedDayRangeShamsi(start = range.start, end = date)
+                else -> KalendarSelectedDayRangeShamsi(start = date, end = date)
+            }
+
+            selectedRange.value?.let { rangeDates ->
+                val selectedEvents = events
+                    .filter {
+                        val shamsi = it.date.toPersianDate()
+                        shamsi.after(rangeDates.start) && shamsi.before(rangeDates.end)
+                    }
+                    .toList()
+
+                onRangeSelected(rangeDates, selectedEvents)
+            }
+        }
+    }
 }
