@@ -115,7 +115,7 @@ fun KalendarHeaderShamsi(
             ) {
                 KalendarIconButton(
                     modifier = Modifier.wrapContentSize(),
-                    imageVector = Icons.Default.KeyboardArrowLeft,
+                    imageVector = Icons.Default.KeyboardArrowRight,
                     contentDescription = "Previous Month",
                     onClick = {
                         isNext = false
@@ -124,7 +124,7 @@ fun KalendarHeaderShamsi(
                 )
                 KalendarIconButton(
                     modifier = Modifier.wrapContentSize(),
-                    imageVector = Icons.Default.KeyboardArrowRight,
+                    imageVector = Icons.Default.KeyboardArrowLeft,
                     contentDescription = "Next Month",
                     onClick = {
                         isNext = true

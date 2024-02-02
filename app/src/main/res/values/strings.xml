@@ -81,4 +81,6 @@
     <string name="allow">Allow</string>
     <string name="import_export">Import / Export</string>
     <string name="import_export_desc">You can import or export your data with ease.</string>
+    <string name="gregorian">Gregorian</string>
+    <string name="jalali">Jalali</string>
 </resources>

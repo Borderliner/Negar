@@ -82,4 +82,6 @@
     <string name="allow">اجازه بده</string>
     <string name="import_export">تهیه پشتیبان</string>
     <string name="import_export_desc">شما می‌توانید به راحتی از اطلاعات خود پشتیبان تهیه یا بارگذاری کنید.</string>
+    <string name="gregorian">میلادی</string>
+    <string name="jalali">خورشیدی</string>
 </resources>
