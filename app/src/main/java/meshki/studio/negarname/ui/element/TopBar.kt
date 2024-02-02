@@ -173,7 +173,7 @@ fun TopBar(appState: AppState) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)),
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent),
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Gray.copy(alpha = 0.15f)),
         navigationIcon = {
             IconButton(
                 //enabled = !appMenuState.value,

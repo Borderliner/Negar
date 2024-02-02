@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -164,7 +165,7 @@ internal fun KalendarFireyShamsi(
                     items(persianWeekDays) { item ->
                         Text(
                             modifier = Modifier,
-                            color = kalendarDayKonfig.textColor,
+                            color = MaterialTheme.colorScheme.tertiary,
                             fontSize = kalendarDayKonfig.textSize,
                             text = item,
                             fontWeight = FontWeight.SemiBold,

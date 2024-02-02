@@ -394,7 +394,7 @@ fun MainScreenScaffold(appState: AppState) {
                     BottomBar(appState.navController)
                 }
             },
-            containerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
             //modifier = Modifier.navigationBarsPadding()
         ) {
             Box(

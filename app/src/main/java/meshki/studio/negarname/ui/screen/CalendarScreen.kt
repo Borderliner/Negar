@@ -26,11 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.himanshoe.kalendar.Kalendar
 import com.himanshoe.kalendar.KalendarShamsi
 import com.himanshoe.kalendar.KalendarType
+import com.himanshoe.kalendar.color.KalendarColorsShamsi
 import com.himanshoe.kalendar.ui.component.day.toLocalDate
 import com.himanshoe.kalendar.ui.firey.toPersianDate
 import kotlinx.datetime.Clock
@@ -61,6 +63,7 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (mainViewModel.isRtl) {
                 KalendarShamsi(
+                    kalendarColors = KalendarColorsShamsi.transparent(),
                     currentDay = currentDateShamsi.value,
                     onDayClick = { date, _ ->
                         currentDateShamsi.value = date
@@ -80,8 +83,8 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.4f)
-                .size(12.dp)
-                .padding(top = 8.dp)
+                .size(8.dp)
+                .padding(top = 2.dp)
                 .clip(RoundedCornerShape(30.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
         )

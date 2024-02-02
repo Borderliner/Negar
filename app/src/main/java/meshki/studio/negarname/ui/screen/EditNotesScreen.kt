@@ -186,6 +186,7 @@ fun EditNotesScreenScaffold(
     val snackbar = remember { SnackbarHostState() }
     val mainViewModel = koinInject<MainViewModel>()
     Scaffold(
+        containerColor = Color.Transparent,
         snackbarHost = {
             if (mainViewModel.isRtl) {
                 LeftToRightLayout {
@@ -361,7 +362,6 @@ fun EditNotesScreenMain(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             modifier = Modifier

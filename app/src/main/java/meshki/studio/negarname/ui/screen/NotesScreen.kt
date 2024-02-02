@@ -114,6 +114,7 @@ fun NotesScreenScaffold(
     val mainViewModel = koinInject<MainViewModel>()
 
     Scaffold(
+        containerColor = Color.Transparent,
         snackbarHost = {
             if (mainViewModel.isRtl) {
                 LeftToRightLayout {
@@ -201,7 +202,6 @@ fun NotesScreenMain(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             modifier = Modifier

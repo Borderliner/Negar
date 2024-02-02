@@ -129,5 +129,16 @@ data class KalendarColorsShamsi(
             }
             return KalendarColorsShamsi(colors)
         }
+
+        fun transparent(): KalendarColorsShamsi {
+            val colors = List(TOTAL_MONTH) { index ->
+                KalendarColorShamsi(
+                    Color.Transparent,
+                    Color.Transparent,
+                    headerColors[index]
+                )
+            }
+            return KalendarColorsShamsi(colors)
+        }
     }
 }
