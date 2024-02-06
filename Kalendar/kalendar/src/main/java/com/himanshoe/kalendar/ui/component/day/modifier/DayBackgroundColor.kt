@@ -16,7 +16,9 @@ package com.himanshoe.kalendar.ui.component.day.modifier
 
 import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
 import com.himanshoe.kalendar.ui.firey.KalendarSelectedDayRange
 import kotlinx.datetime.LocalDate
 
@@ -36,6 +38,7 @@ const val TOWNED_DOWN_ALPHA = 0.4F
  */
 fun Modifier.dayBackgroundColor(
     selected: Boolean,
+    selectedColors: List<Color>,
     color: Color,
     date: LocalDate,
     selectedRange: KalendarSelectedDayRange?
@@ -43,7 +46,6 @@ fun Modifier.dayBackgroundColor(
     val inRange = date == selectedRange?.start || date == selectedRange?.end
 
     val backgroundColor = when {
-        selected -> color
         selectedRange != null && date in selectedRange.start..selectedRange.end -> {
             val alpha = if (inRange) FULL_ALPHA else TOWNED_DOWN_ALPHA
             color.copy(alpha = alpha)
@@ -52,7 +54,22 @@ fun Modifier.dayBackgroundColor(
         else -> Color.Transparent
     }
 
-    return this.then(
-        background(backgroundColor)
-    )
+    val brush = if (selected) {
+        Brush.linearGradient(
+            selectedColors,
+            tileMode = TileMode.Repeated
+        )
+    } else {
+        null
+    }
+
+    return if (brush == null) {
+        this.then(
+            background(backgroundColor)
+        )
+    } else {
+        this.then(
+            background(brush)
+        )
+    }
 }

@@ -2,6 +2,7 @@ package meshki.studio.negarname.ui.screen
 
 import android.os.Build
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -32,6 +35,9 @@ import androidx.compose.ui.unit.dp
 import com.himanshoe.kalendar.Kalendar
 import com.himanshoe.kalendar.KalendarShamsi
 import com.himanshoe.kalendar.KalendarType
+import com.himanshoe.kalendar.color.KalendarColor
+import com.himanshoe.kalendar.color.KalendarColorShamsi
+import com.himanshoe.kalendar.color.KalendarColors
 import com.himanshoe.kalendar.color.KalendarColorsShamsi
 import com.himanshoe.kalendar.ui.component.day.toLocalDate
 import com.himanshoe.kalendar.ui.firey.toPersianDate
@@ -40,6 +46,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import meshki.studio.negarname.R
+import meshki.studio.negarname.util.isDarkTheme
 import meshki.studio.negarname.vm.MainViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.util.Calendar
@@ -47,21 +54,26 @@ import java.util.Calendar
 @Composable
 fun CalendarScreen(navigateTo: (route: String) -> Unit) {
     val mainViewModel = koinViewModel<MainViewModel>()
+
+    val currentDate = remember {
+        mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault()))
+    }
+    val currentDateShamsi = remember {
+        mutableStateOf(
+            Clock.System.todayIn(TimeZone.currentSystemDefault()).toPersianDate()
+        )
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize(),
         verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val currentDateShamsi = remember {
-            mutableStateOf(
-                Clock.System.todayIn(TimeZone.currentSystemDefault()).toPersianDate()
-            )
-        }
-        val currentDate = remember {
-            mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault()))
-        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (mainViewModel.isRtl) {
+
                 KalendarShamsi(
                     kalendarColors = KalendarColorsShamsi.transparent(),
                     currentDay = currentDateShamsi.value,
@@ -71,10 +83,16 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                     },
                 )
             } else {
-                Kalendar(currentDay = currentDate.value, kalendarType = KalendarType.Firey, onDayClick = { date, _ ->
-                    currentDate.value = date
-                    currentDateShamsi.value = date.toPersianDate()
-                })
+
+                Kalendar(
+                    kalendarColors = KalendarColors.transparent(),
+                    currentDay = currentDate.value,
+                    kalendarType = KalendarType.Firey,
+                    onDayClick = { date, _ ->
+                        currentDate.value = date
+                        currentDateShamsi.value = date.toPersianDate()
+                    },
+                )
             }
         } else {
             Text(text = "Your Android version is too low.")
@@ -83,10 +101,10 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.4f)
-                .size(8.dp)
+                .size(4.dp)
                 .padding(top = 2.dp)
                 .clip(RoundedCornerShape(30.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f))
         )
 
         OutlinedCard(

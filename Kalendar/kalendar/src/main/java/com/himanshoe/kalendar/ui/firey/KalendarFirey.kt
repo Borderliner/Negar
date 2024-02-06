@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,7 @@ import com.himanshoe.kalendar.ui.component.day.KalendarDayKonfig
 import com.himanshoe.kalendar.ui.component.header.KalendarHeader
 import com.himanshoe.kalendar.ui.component.header.KalendarTextKonfig
 import com.himanshoe.kalendar.ui.oceanic.util.getNext7Dates
+import com.himanshoe.kalendar.ui.oceanic.util.getPrevious7Dates
 import com.himanshoe.kalendar.ui.oceanic.util.isLeapYear
 import com.himanshoe.kalendar.util.MultiplePreviews
 import com.himanshoe.kalendar.util.onDayClicked
@@ -47,9 +49,12 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.datetime.toLocalDate
 import kotlinx.datetime.todayIn
 import java.time.format.TextStyle
+import java.time.temporal.WeekFields
 import java.util.Locale
 
 
@@ -90,10 +95,12 @@ internal fun KalendarFirey(
     headerContent: (@Composable (Month, Int) -> Unit)? = null,
     onDayClick: (LocalDate, List<KalendarEvent>) -> Unit = { _, _ -> },
     onRangeSelected: (KalendarSelectedDayRange, List<KalendarEvent>) -> Unit = { _, _ -> },
-    onErrorRangeSelected: (RangeSelectionError) -> Unit = {}
+    onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
+    onNextMonthClick: (Int) -> Unit = { },
+    onPreviousMonthClick: (Int) -> Unit = { }
 ) {
     val today = currentDay ?: Clock.System.todayIn(TimeZone.currentSystemDefault())
-    val weekValue = remember { mutableStateOf(today.getNext7Dates()) }
+    val weekValue = remember { mutableStateOf(today.toJavaLocalDate().with(WeekFields.ISO.dayOfWeek(), 1).toKotlinLocalDate().getNext7Dates()) }
     val selectedRange = remember { mutableStateOf<KalendarSelectedDayRange?>(null) }
     val selectedDate = remember { mutableStateOf(today) }
     val displayedMonth = remember { mutableStateOf(today.month) }
@@ -131,10 +138,12 @@ internal fun KalendarFirey(
                 onPreviousClick = {
                     displayedYear.value -= if (currentMonth == Month.JANUARY) 1 else 0
                     displayedMonth.value -= 1
+                    onPreviousMonthClick(displayedMonth.value.value)
                 },
                 onNextClick = {
                     displayedYear.value += if (currentMonth == Month.DECEMBER) 1 else 0
                     displayedMonth.value += 1
+                    onNextMonthClick(displayedMonth.value.value)
                 },
             )
         }
@@ -147,7 +156,7 @@ internal fun KalendarFirey(
                     items(weekValue.value) { item ->
                         Text(
                             modifier = Modifier,
-                            color = kalendarDayKonfig.textColor,
+                            color = MaterialTheme.colorScheme.tertiary,
                             fontSize = kalendarDayKonfig.textSize,
                             text = labelFormat(item.dayOfWeek),
                             fontWeight = FontWeight.SemiBold,

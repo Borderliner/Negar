@@ -32,7 +32,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -89,14 +91,20 @@ fun KalendarDayShamsi(
     Column(
         modifier = modifier
             .border(
-                border = getBorder(isToday, kalendarDayKonfig.borderColor, selected),
+                border = getBorder(isToday, MaterialTheme.colorScheme.onPrimaryContainer, selected),
                 shape = CircleShape
             )
             .clip(shape = CircleShape)
             .clickable { onDayClick(date, kalendarEvents.events) }
             .dayBackgroundColorShamsi(
                 selected,
-                MaterialTheme.colorScheme.primaryContainer,
+                listOf(
+                    MaterialTheme.colorScheme.inversePrimary,
+                    MaterialTheme.colorScheme.inversePrimary.copy(alpha = 0.7f),
+                    MaterialTheme.colorScheme.inversePrimary.copy(alpha = 0.4f),
+                    MaterialTheme.colorScheme.tertiaryContainer,
+                    MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.2f)
+                ),
                 kalendarColors.dayBackgroundColor,
                 date,
                 selectedRange,
@@ -176,7 +184,7 @@ private fun KalendarDayShamsiPreview() {
 
 fun Modifier.dayBackgroundColorShamsi(
     selected: Boolean,
-    selectedColor: Color,
+    selectedColors: List<Color>,
     color: Color,
     date: PersianDate,
     selectedRange: KalendarSelectedDayRangeShamsi?
@@ -186,7 +194,6 @@ fun Modifier.dayBackgroundColorShamsi(
     } else false
 
     val backgroundColor = when {
-        selected -> selectedColor
         selectedRange != null && date.after(selectedRange.start) && date.before(selectedRange.end) -> {
             val alpha = if (inRange) FULL_ALPHA else TOWNED_DOWN_ALPHA
             color.copy(alpha = alpha)
@@ -195,9 +202,24 @@ fun Modifier.dayBackgroundColorShamsi(
         else -> Color.Transparent
     }
 
-    return this.then(
-        background(backgroundColor)
-    )
+    val brush = if (selected) {
+        Brush.linearGradient(
+            selectedColors,
+            tileMode = TileMode.Repeated
+        )
+    } else {
+        null
+    }
+
+    return if (brush == null) {
+        this.then(
+            background(backgroundColor)
+        )
+    } else {
+        this.then(
+            background(brush)
+        )
+    }
 }
 
 fun LocalDate.isPersianDateEqual(shamsi: PersianDate): Boolean {

@@ -91,7 +91,7 @@ fun KalendarHeader(
                 addAnimation(isNext = isNext).using(
                     SizeTransform(clip = false)
                 )
-            }
+            }, label = "Kalendar Header Anim"
         ) { targetText ->
             Text(
                 modifier = Modifier

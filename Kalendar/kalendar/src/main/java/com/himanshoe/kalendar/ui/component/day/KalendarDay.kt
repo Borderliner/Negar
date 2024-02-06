@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -80,13 +81,20 @@ fun KalendarDay(
     Column(
         modifier = modifier
             .border(
-                border = getBorder(currentDay, kalendarDayKonfig.borderColor, selected),
+                border = getBorder(currentDay, MaterialTheme.colorScheme.inversePrimary, selected),
                 shape = CircleShape
             )
             .clip(shape = CircleShape)
             .clickable { onDayClick(date, kalendarEvents.events) }
             .dayBackgroundColor(
                 selected,
+                listOf(
+                    MaterialTheme.colorScheme.inversePrimary,
+                    MaterialTheme.colorScheme.inversePrimary.copy(alpha = 0.7f),
+                    MaterialTheme.colorScheme.inversePrimary.copy(alpha = 0.4f),
+                    MaterialTheme.colorScheme.tertiaryContainer,
+                    MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.2f)
+                ),
                 kalendarColors.dayBackgroundColor,
                 date,
                 selectedRange
@@ -102,7 +110,7 @@ fun KalendarDay(
             modifier = Modifier.wrapContentSize(),
             textAlign = TextAlign.Center,
             fontSize = kalendarDayKonfig.textSize,
-            color = if (selected) kalendarDayKonfig.selectedTextColor else kalendarDayKonfig.textColor,
+            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onBackground,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold
         )
         Row {
@@ -134,8 +142,8 @@ fun KalendarDay(
  */
 fun getBorder(currentDay: Boolean, color: Color, selected: Boolean): BorderStroke {
     val emptyBorder = BorderStroke(0.dp, Color.Transparent)
-    return if (currentDay && selected.not()) {
-        BorderStroke(1.dp, color)
+    return if (currentDay /* && selected.not()*/) {
+        BorderStroke(1.dp, color.copy(alpha = 0.7f))
     } else {
         emptyBorder
     }

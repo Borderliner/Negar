@@ -111,7 +111,9 @@ fun Kalendar(
     headerContent: (@Composable (Month, Int) -> Unit)? = null,
     onDayClick: (LocalDate, List<KalendarEvent>) -> Unit = { _, _ -> },
     onRangeSelected: (KalendarSelectedDayRange, List<KalendarEvent>) -> Unit = { _, _ -> },
-    onErrorRangeSelected: (RangeSelectionError) -> Unit = {}
+    onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
+    onNextMonthClick: (Int) -> Unit = { },
+    onPreviousMonthClick: (Int) -> Unit = { }
 ) {
     when (kalendarType) {
         KalendarType.Oceanic -> {
@@ -146,7 +148,9 @@ fun Kalendar(
                 headerContent = headerContent,
                 daySelectionMode = daySelectionMode,
                 onRangeSelected = onRangeSelected,
-                onErrorRangeSelected = onErrorRangeSelected
+                onErrorRangeSelected = onErrorRangeSelected,
+                onNextMonthClick = onNextMonthClick,
+                onPreviousMonthClick = onPreviousMonthClick
             )
         }
     }

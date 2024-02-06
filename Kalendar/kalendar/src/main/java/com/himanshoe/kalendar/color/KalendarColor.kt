@@ -123,5 +123,16 @@ data class KalendarColors(
             }
             return KalendarColors(colors)
         }
+
+        fun transparent(): KalendarColors {
+            val colors = List(TOTAL_MONTH) { index ->
+                KalendarColor(
+                    Color.Transparent,
+                    Color.Transparent,
+                    headerColors[index]
+                )
+            }
+            return KalendarColors(colors)
+        }
     }
 }
