@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -73,6 +74,7 @@ fun KalendarHeaderShamsi(
     modifier: Modifier = Modifier,
     onPreviousClick: () -> Unit = {},
     onNextClick: () -> Unit = {},
+    onDayReset: () -> Unit = {},
     arrowShown: Boolean = true
 ) {
     var isNext by remember { mutableStateOf(true) }
@@ -113,6 +115,14 @@ fun KalendarHeaderShamsi(
                     .align(Alignment.CenterVertically),
                 horizontalArrangement = Arrangement.End,
             ) {
+                KalendarIconButton(
+                    modifier = Modifier.wrapContentSize(),
+                    imageVector = Icons.Default.Restore,
+                    contentDescription = "Today",
+                    onClick = {
+                        onDayReset()
+                    }
+                )
                 KalendarIconButton(
                     modifier = Modifier.wrapContentSize(),
                     imageVector = Icons.Default.KeyboardArrowRight,
@@ -164,7 +174,7 @@ private fun addAnimation(duration: Int = 200, isNext: Boolean): ContentTransform
  */
 private fun getTitleText(month: Int, year: Int): String {
     val shamsi = PersianDate().initJalaliDate(year, month, 1)
-    return "${shamsi.monthName} '${shamsi.shYear}"
+    return "${shamsi.monthName} ${shamsi.shYear}"
 }
 
 @MultiplePreviews

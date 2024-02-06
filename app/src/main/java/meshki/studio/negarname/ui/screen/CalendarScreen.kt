@@ -81,9 +81,12 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                         currentDateShamsi.value = date
                         currentDate.value = date.toLocalDate()
                     },
+                    onDayResetClick = {
+                        currentDate.value = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                        currentDateShamsi.value = Clock.System.todayIn(TimeZone.currentSystemDefault()).toPersianDate()
+                    }
                 )
             } else {
-
                 Kalendar(
                     kalendarColors = KalendarColors.transparent(),
                     currentDay = currentDate.value,
@@ -92,6 +95,10 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                         currentDate.value = date
                         currentDateShamsi.value = date.toPersianDate()
                     },
+                    onDayResetClick = {
+                        currentDate.value = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                        currentDateShamsi.value = Clock.System.todayIn(TimeZone.currentSystemDefault()).toPersianDate()
+                    }
                 )
             }
         } else {

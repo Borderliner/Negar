@@ -113,7 +113,8 @@ fun Kalendar(
     onRangeSelected: (KalendarSelectedDayRange, List<KalendarEvent>) -> Unit = { _, _ -> },
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
     onNextMonthClick: (Int) -> Unit = { },
-    onPreviousMonthClick: (Int) -> Unit = { }
+    onPreviousMonthClick: (Int) -> Unit = { },
+    onDayResetClick: () -> Unit = { }
 ) {
     when (kalendarType) {
         KalendarType.Oceanic -> {
@@ -150,7 +151,8 @@ fun Kalendar(
                 onRangeSelected = onRangeSelected,
                 onErrorRangeSelected = onErrorRangeSelected,
                 onNextMonthClick = onNextMonthClick,
-                onPreviousMonthClick = onPreviousMonthClick
+                onPreviousMonthClick = onPreviousMonthClick,
+                onDayResetClick = onDayResetClick
             )
         }
     }

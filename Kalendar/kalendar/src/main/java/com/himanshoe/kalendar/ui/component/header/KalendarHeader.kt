@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -72,6 +73,7 @@ fun KalendarHeader(
     modifier: Modifier = Modifier,
     onPreviousClick: () -> Unit = {},
     onNextClick: () -> Unit = {},
+    onDayReset: () -> Unit = {},
     arrowShown: Boolean = true
 ) {
     var isNext by remember { mutableStateOf(true) }
@@ -112,6 +114,14 @@ fun KalendarHeader(
                     .align(Alignment.CenterVertically),
                 horizontalArrangement = Arrangement.End,
             ) {
+                KalendarIconButton(
+                    modifier = Modifier.wrapContentSize(),
+                    imageVector = Icons.Default.Restore,
+                    contentDescription = "Today",
+                    onClick = {
+                        onDayReset()
+                    }
+                )
                 KalendarIconButton(
                     modifier = Modifier.wrapContentSize(),
                     imageVector = Icons.Default.KeyboardArrowLeft,
@@ -165,8 +175,8 @@ private fun getTitleText(month: Month, year: Int): String {
     val monthDisplayName = month.getDisplayName(TextStyle.FULL, Locale.getDefault())
         .lowercase()
         .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-    val shortYear = year.toString().takeLast(2)
-    return "$monthDisplayName '$shortYear"
+    val shortYear = year.toString()
+    return "$monthDisplayName $shortYear"
 }
 
 @MultiplePreviews

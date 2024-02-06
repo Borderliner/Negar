@@ -26,8 +26,11 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -97,9 +100,10 @@ internal fun KalendarFirey(
     onRangeSelected: (KalendarSelectedDayRange, List<KalendarEvent>) -> Unit = { _, _ -> },
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
     onNextMonthClick: (Int) -> Unit = { },
-    onPreviousMonthClick: (Int) -> Unit = { }
+    onPreviousMonthClick: (Int) -> Unit = { },
+    onDayResetClick: () -> Unit = { }
 ) {
-    val today = currentDay ?: Clock.System.todayIn(TimeZone.currentSystemDefault())
+    var today by remember { mutableStateOf(currentDay ?: Clock.System.todayIn(TimeZone.currentSystemDefault())) }
     val weekValue = remember { mutableStateOf(today.toJavaLocalDate().with(WeekFields.ISO.dayOfWeek(), 1).toKotlinLocalDate().getNext7Dates()) }
     val selectedRange = remember { mutableStateOf<KalendarSelectedDayRange?>(null) }
     val selectedDate = remember { mutableStateOf(today) }
@@ -118,6 +122,13 @@ internal fun KalendarFirey(
     val monthValue = currentMonth.value.toString().padStart(2, '0')
     val startDayOfMonth = "$currentYear-$monthValue-01".toLocalDate()
     val firstDayOfMonth = startDayOfMonth.dayOfWeek
+
+    LaunchedEffect(currentDay) {
+        today = currentDay ?: Clock.System.todayIn(TimeZone.currentSystemDefault())
+        displayedMonth.value = today.month
+        displayedYear.value = today.year
+        selectedDate.value = today
+    }
 
     Column(
         modifier = modifier
@@ -145,6 +156,12 @@ internal fun KalendarFirey(
                     displayedMonth.value += 1
                     onNextMonthClick(displayedMonth.value.value)
                 },
+                onDayReset = {
+                    displayedMonth.value = today.month
+                    displayedYear.value = today.year
+                    selectedDate.value = today
+                    onDayResetClick()
+                }
             )
         }
         Spacer(modifier = Modifier.padding(vertical = 4.dp))

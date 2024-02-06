@@ -63,7 +63,8 @@ fun KalendarShamsi(
     onRangeSelected: (KalendarSelectedDayRangeShamsi, List<KalendarEvent>) -> Unit = { _, _ -> },
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
     onNextMonthClick: (Int) -> Unit = { },
-    onPreviousMonthClick: (Int) -> Unit = { }
+    onPreviousMonthClick: (Int) -> Unit = { },
+    onDayResetClick: () -> Unit = { }
 ) {
     KalendarFireyShamsi(
         currentDay = currentDay,
@@ -80,6 +81,7 @@ fun KalendarShamsi(
         onRangeSelected = onRangeSelected,
         onErrorRangeSelected = onErrorRangeSelected,
         onNextMonthClick = onNextMonthClick,
-        onPreviousMonthClick = onPreviousMonthClick
+        onPreviousMonthClick = onPreviousMonthClick,
+        onDayResetClick = onDayResetClick
     )
 }
