@@ -123,12 +123,13 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             ) {
+                val spacing = 6.dp
                 Column(
-                    modifier = Modifier.fillMaxSize().offset(x = 24.dp, y = 12.dp),
+                    modifier = Modifier.fillMaxSize().offset(x = 24.dp, y = 16.dp),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Top
                 ) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(spacing))
                     Row {
                         Text(text = "✝\uFE0F ")
                         Text(text = stringResource(R.string.gregorian))
@@ -136,15 +137,19 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                         Text(text = "${currentDateShamsi.value.grgMonthName} / ")
                         Text(text = "${currentDateShamsi.value.grgYear}")
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(spacing))
                     Row {
                         Text(text = "☀\uFE0F ")
                         Text(text = stringResource(R.string.jalali))
                         Text(text = ": ${currentDateShamsi.value.shDay} / ")
-                        Text(text = "${currentDateShamsi.value.monthName} / ")
+                        if (mainViewModel.isRtl) {
+                            Text(text = "${currentDateShamsi.value.monthName} / ")
+                        } else {
+                            Text(text = "${currentDateShamsi.value.FinglishMonthName()} / ")
+                        }
                         Text(text = "${currentDateShamsi.value.shYear}")
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(spacing))
                     Row {
                         Text(text = "\uD83D\uDD2E ")
                         Text(text = stringResource(R.string.zodiac))
@@ -152,19 +157,20 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                         if (mainViewModel.isRtl) {
                             Text(text = ": ${Zodiac.calculateZodiacPersian(currentDate.value.monthNumber, currentDate.value.dayOfMonth)} ")
                         } else {
-                            Text(text = ": ${Zodiac.calculateZodiac(currentDate.value.monthNumber, currentDate.value.dayOfMonth).capitalize(
-                                Locale.ROOT)} ")
+                            Text(text = ": ${Zodiac.calculateZodiac(currentDate.value.monthNumber, currentDate.value.dayOfMonth)
+                                .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} ")
                         }
                         Text(text = Zodiac.zodiacToEmoji(Zodiac.calculateZodiac(currentDate.value.monthNumber, currentDate.value.dayOfMonth)))
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(spacing))
                     Row {
                         Text(text = "\uD83C\uDC04 ")
                         Text(text = stringResource(R.string.chinese_year))
                         if (mainViewModel.isRtl) {
                             Text(text = ": ${Zodiac.calculateChineseYearPersian(currentDate.value.year)} ")
                         } else {
-                            Text(text = ": ${Zodiac.calculateChineseYear(currentDate.value.year)} ")
+                            Text(text = ": ${Zodiac.calculateChineseYear(currentDate.value.year)
+                                .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} ")
                         }
                         Text(text = Zodiac.chineseYearToEmoji(currentDate.value.year))
                     }

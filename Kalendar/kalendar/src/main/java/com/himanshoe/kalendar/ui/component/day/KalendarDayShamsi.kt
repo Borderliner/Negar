@@ -120,7 +120,9 @@ fun KalendarDayShamsi(
             modifier = Modifier.wrapContentSize(),
             textAlign = TextAlign.Center,
             fontSize = kalendarDayKonfig.textSize,
-            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onBackground,
+            color = if (date.dayOfWeek() == 6) MaterialTheme.colorScheme.error else {
+                if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onBackground
+            },
             fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold
         )
         Row {
