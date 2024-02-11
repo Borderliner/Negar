@@ -156,7 +156,12 @@ internal fun KalendarFireyShamsi(
                     displayedMonthShamsi.value += 1
                     onNextMonthClick(displayedMonthShamsi.value)
                 },
-                onDayReset = { onDayResetClick() }
+                onDayReset = {
+                    selectedDateShamsi.value = PersianDate.today()
+                    displayedMonthShamsi.value = selectedDateShamsi.value.shMonth
+                    displayedYearShamsi.value = selectedDateShamsi.value.shYear
+                    onDayResetClick()
+                }
             )
         }
         Spacer(modifier = Modifier.padding(vertical = 4.dp))

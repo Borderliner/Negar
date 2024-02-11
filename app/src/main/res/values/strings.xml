@@ -84,4 +84,6 @@
     <string name="gregorian">Gregorian</string>
     <string name="jalali">Jalali</string>
     <string name="android_version_low">Your Android version is too low.</string>
+    <string name="zodiac">Zodiac</string>
+    <string name="chinese_year">Chinese Year</string>
 </resources>

@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.unit.dp
 import com.himanshoe.kalendar.Kalendar
 import com.himanshoe.kalendar.KalendarShamsi
@@ -47,10 +48,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import meshki.studio.negarname.R
+import meshki.studio.negarname.util.Zodiac
 import meshki.studio.negarname.util.isDarkTheme
 import meshki.studio.negarname.vm.MainViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun CalendarScreen(navigateTo: (route: String) -> Unit) {
@@ -81,7 +84,7 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                     },
                     onDayResetClick = {
                         currentDate.value = Clock.System.todayIn(TimeZone.currentSystemDefault())
-                        currentDateShamsi.value = Clock.System.todayIn(TimeZone.currentSystemDefault()).toPersianDate()
+                        currentDateShamsi.value = currentDate.value.toPersianDate()
                     }
                 )
             } else {
@@ -121,12 +124,13 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                 )
             ) {
                 Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxSize().offset(x = 24.dp, y = 12.dp),
+                    horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Top
                 ) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Row {
+                        Text(text = "✝\uFE0F ")
                         Text(text = stringResource(R.string.gregorian))
                         Text(text = ": ${currentDateShamsi.value.grgDay} / ")
                         Text(text = "${currentDateShamsi.value.grgMonthName} / ")
@@ -134,16 +138,43 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                     }
                     Spacer(modifier = Modifier.height(2.dp))
                     Row {
+                        Text(text = "☀\uFE0F ")
                         Text(text = stringResource(R.string.jalali))
                         Text(text = ": ${currentDateShamsi.value.shDay} / ")
                         Text(text = "${currentDateShamsi.value.monthName} / ")
                         Text(text = "${currentDateShamsi.value.shYear}")
                     }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row {
+                        Text(text = "\uD83D\uDD2E ")
+                        Text(text = stringResource(R.string.zodiac))
+
+                        if (mainViewModel.isRtl) {
+                            Text(text = ": ${Zodiac.calculateZodiacPersian(currentDate.value.monthNumber, currentDate.value.dayOfMonth)} ")
+                        } else {
+                            Text(text = ": ${Zodiac.calculateZodiac(currentDate.value.monthNumber, currentDate.value.dayOfMonth).capitalize(
+                                Locale.ROOT)} ")
+                        }
+                        Text(text = Zodiac.zodiacToEmoji(Zodiac.calculateZodiac(currentDate.value.monthNumber, currentDate.value.dayOfMonth)))
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row {
+                        Text(text = "\uD83C\uDC04 ")
+                        Text(text = stringResource(R.string.chinese_year))
+                        if (mainViewModel.isRtl) {
+                            Text(text = ": ${Zodiac.calculateChineseYearPersian(currentDate.value.year)} ")
+                        } else {
+                            Text(text = ": ${Zodiac.calculateChineseYear(currentDate.value.year)} ")
+                        }
+                        Text(text = Zodiac.chineseYearToEmoji(currentDate.value.year))
+                    }
                 }
             }
         } else {
             Column(
-                modifier = Modifier.fillMaxSize().offset(y = 300.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(y = 300.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {

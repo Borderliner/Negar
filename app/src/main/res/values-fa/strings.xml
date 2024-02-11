@@ -85,4 +85,6 @@
     <string name="gregorian">میلادی</string>
     <string name="jalali">خورشیدی</string>
     <string name="android_version_low">نسخه‌ی اندروید شما بسیار پایین است.</string>
+    <string name="zodiac">برج فلکی</string>
+    <string name="chinese_year">سال چینی</string>
 </resources>
