@@ -68,10 +68,10 @@ fun NegarTheme(
             window.statusBarColor = Color.Transparent.toArgb()
             window.navigationBarColor = Color.Transparent.toArgb()
 
-            @RequiresApi(Build.VERSION_CODES.Q)
-            window.isNavigationBarContrastEnforced = false
-            @RequiresApi(Build.VERSION_CODES.Q)
-            window.isStatusBarContrastEnforced = false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                window.isNavigationBarContrastEnforced = false
+                window.isStatusBarContrastEnforced = false
+            }
 
             val insets = WindowCompat.getInsetsController(window, view)
             insets.isAppearanceLightStatusBars = true

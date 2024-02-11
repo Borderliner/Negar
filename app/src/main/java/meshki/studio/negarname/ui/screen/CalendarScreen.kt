@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -53,17 +54,6 @@ import java.util.Calendar
 
 @Composable
 fun CalendarScreen(navigateTo: (route: String) -> Unit) {
-    val mainViewModel = koinViewModel<MainViewModel>()
-
-    val currentDate = remember {
-        mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault()))
-    }
-    val currentDateShamsi = remember {
-        mutableStateOf(
-            Clock.System.todayIn(TimeZone.currentSystemDefault()).toPersianDate()
-        )
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -72,8 +62,16 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
     ) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val currentDate = remember {
+                mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault()))
+            }
+            val currentDateShamsi = remember {
+                mutableStateOf(
+                    Clock.System.todayIn(TimeZone.currentSystemDefault()).toPersianDate()
+                )
+            }
+            val mainViewModel = koinViewModel<MainViewModel>()
             if (mainViewModel.isRtl) {
-
                 KalendarShamsi(
                     kalendarColors = KalendarColorsShamsi.transparent(),
                     currentDay = currentDateShamsi.value,
@@ -101,49 +99,55 @@ fun CalendarScreen(navigateTo: (route: String) -> Unit) {
                     }
                 )
             }
-        } else {
-            Text(text = "Your Android version is too low.")
-        }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.4f)
-                .size(4.dp)
-                .padding(top = 2.dp)
-                .clip(RoundedCornerShape(30.dp))
-                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f))
-        )
-
-        OutlinedCard(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = 16.dp, end = 16.dp)
-                .padding(bottom = 125.dp, top = 8.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.4f)
+                    .size(4.dp)
+                    .padding(top = 2.dp)
+                    .clip(RoundedCornerShape(30.dp))
+                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f))
             )
-        ) {
+
+            OutlinedCard(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = 16.dp, end = 16.dp)
+                    .padding(bottom = 125.dp, top = 8.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row {
+                        Text(text = stringResource(R.string.gregorian))
+                        Text(text = ": ${currentDateShamsi.value.grgDay} / ")
+                        Text(text = "${currentDateShamsi.value.grgMonthName} / ")
+                        Text(text = "${currentDateShamsi.value.grgYear}")
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row {
+                        Text(text = stringResource(R.string.jalali))
+                        Text(text = ": ${currentDateShamsi.value.shDay} / ")
+                        Text(text = "${currentDateShamsi.value.monthName} / ")
+                        Text(text = "${currentDateShamsi.value.shYear}")
+                    }
+                }
+            }
+        } else {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().offset(y = 300.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row {
-                    Text(text = stringResource(R.string.gregorian))
-                    Text(text = ": ${currentDateShamsi.value.grgDay} / ")
-                    Text(text = "${currentDateShamsi.value.grgMonthName} / ")
-                    Text(text = "${currentDateShamsi.value.grgYear}")
-                }
-                Spacer(modifier = Modifier.height(2.dp))
-                Row {
-                    Text(text = stringResource(R.string.jalali))
-                    Text(text = ": ${currentDateShamsi.value.shDay} / ")
-                    Text(text = "${currentDateShamsi.value.monthName} / ")
-                    Text(text = "${currentDateShamsi.value.shYear}")
-                }
+                Text(text = stringResource(R.string.android_version_low))
             }
         }
     }

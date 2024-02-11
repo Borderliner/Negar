@@ -84,4 +84,5 @@
     <string name="import_export_desc">شما می‌توانید به راحتی از اطلاعات خود پشتیبان تهیه یا بارگذاری کنید.</string>
     <string name="gregorian">میلادی</string>
     <string name="jalali">خورشیدی</string>
+    <string name="android_version_low">نسخه‌ی اندروید شما بسیار پایین است.</string>
 </resources>
