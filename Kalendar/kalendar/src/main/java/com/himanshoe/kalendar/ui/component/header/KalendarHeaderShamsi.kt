@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -75,6 +76,7 @@ fun KalendarHeaderShamsi(
     onPreviousClick: () -> Unit = {},
     onNextClick: () -> Unit = {},
     onDayReset: () -> Unit = {},
+    onGoToDay: () -> Unit = {},
     arrowShown: Boolean = true
 ) {
     var isNext by remember { mutableStateOf(true) }
@@ -115,6 +117,14 @@ fun KalendarHeaderShamsi(
                     .align(Alignment.CenterVertically),
                 horizontalArrangement = Arrangement.End,
             ) {
+                KalendarIconButton(
+                    modifier = Modifier.wrapContentSize(),
+                    imageVector = Icons.Default.MyLocation,
+                    contentDescription = "Go To",
+                    onClick = {
+                        onGoToDay()
+                    }
+                )
                 KalendarIconButton(
                     modifier = Modifier.wrapContentSize(),
                     imageVector = Icons.Default.Restore,

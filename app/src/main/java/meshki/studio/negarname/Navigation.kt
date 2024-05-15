@@ -40,9 +40,7 @@ fun Navigation(appState: AppState) {
                 }
             }
         ) {
-            CalendarScreen {
-                appState.navController.navigate(it)
-            }
+            CalendarScreen()
         }
 
         composable(

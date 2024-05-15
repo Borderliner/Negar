@@ -82,8 +82,9 @@
     <string name="import_export">Import / Export</string>
     <string name="import_export_desc">You can import or export your data with ease.</string>
     <string name="gregorian">Gregorian</string>
-    <string name="jalali">Jalali</string>
+    <string name="solar">Solar</string>
     <string name="android_version_low">Your Android version is too low.</string>
     <string name="zodiac">Zodiac</string>
     <string name="chinese_year">Chinese Year</string>
+    <string name="go_to_date">Go to Date</string>
 </resources>

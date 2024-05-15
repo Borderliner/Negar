@@ -1,5 +1,6 @@
 package meshki.studio.negarname.di
 
+import meshki.studio.negarname.vm.CalendarViewModel
 import meshki.studio.negarname.vm.EditNotesViewModel
 import meshki.studio.negarname.vm.MainViewModel
 import meshki.studio.negarname.vm.NotesViewModel
@@ -12,4 +13,5 @@ val viewModelModule = module {
     }
     viewModel { NotesViewModel(get()) }
     viewModel { EditNotesViewModel(get(), get(), get(), get()) }
+    viewModel { CalendarViewModel() }
 }

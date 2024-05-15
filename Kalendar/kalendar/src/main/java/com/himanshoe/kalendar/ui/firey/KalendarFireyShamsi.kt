@@ -101,7 +101,7 @@ internal fun KalendarFireyShamsi(
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
     onNextMonthClick: (Int) -> Unit = { },
     onPreviousMonthClick: (Int) -> Unit = { },
-    onDayResetClick: () -> Unit = { }
+    onDayResetClick: () -> Unit = { },
 ) {
     val persianWeekDays = listOf("ش", "ی", "د", "س", "چ", "پ", "ج")
     val todayShamsi = currentDay ?: PersianDate.today()
