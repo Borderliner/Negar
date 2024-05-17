@@ -7,146 +7,124 @@ import meshki.studio.negarname.data.local.dao.TodosDao
 import meshki.studio.negarname.entities.OrderBy
 import meshki.studio.negarname.entities.OrderType
 import meshki.studio.negarname.ui.todos.TodoEntity
-import meshki.studio.negarname.entities.UiStates
+import meshki.studio.negarname.entities.UiState
 import meshki.studio.negarname.ui.util.handleTryCatch
 
-interface TodosRepository {
-    suspend fun addTodo(todoEntity: TodoEntity): UiStates<Boolean>
-    suspend fun updateTodo(todoEntity: TodoEntity): UiStates<Boolean>
-    suspend fun getTodos(): UiStates<List<TodoEntity>>
-    suspend fun getTodosOrdered(orderBy: OrderBy = OrderBy.Date(OrderType.Descending)): UiStates<List<TodoEntity>>
-    suspend fun getTodoById(id: Long): UiStates<TodoEntity>
-    suspend fun deleteTodo(todoEntity: TodoEntity): UiStates<Boolean>
-    suspend fun findTodos(query: String): UiStates<List<TodoEntity>>
-    suspend fun findTodosOrdered(
-        query: String,
-        orderBy: OrderBy = OrderBy.Date(OrderType.Descending)
-    ): UiStates<List<TodoEntity>>
-
-    suspend fun pinTodo(todoEntity: TodoEntity): UiStates<Boolean>
-    suspend fun unpinTodo(todoEntity: TodoEntity): UiStates<Boolean>
-    suspend fun togglePinTodo(todoEntity: TodoEntity): UiStates<Boolean>
-    suspend fun checkTodo(todoEntity: TodoEntity): UiStates<Boolean>
-    suspend fun uncheckTodo(todoEntity: TodoEntity): UiStates<Boolean>
-    suspend fun toggleCheckTodo(todoEntity: TodoEntity): UiStates<Boolean>
-}
-
-class TodosRepoImpl(
+class TodosRepository(
     private val todosDao: TodosDao,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) : TodosRepository {
-    override suspend fun addTodo(todoEntity: TodoEntity): UiStates<Boolean> {
+) {
+    suspend fun addTodo(todoEntity: TodoEntity): UiState<Boolean> {
         return withContext(dispatcher) {
             if (todoEntity.text.isBlank()) {
-                return@withContext UiStates.Error("Todo title is needed")
+                return@withContext UiState.Error("Todo title is needed")
             }
 
             handleTryCatch {
                 todosDao.insert(todoEntity)
-                UiStates.Success(true)
+                UiState.Success(true)
             }
         }
     }
 
-    override suspend fun getTodos(): UiStates<List<TodoEntity>> {
-        return withContext(Dispatchers.IO) {
+    suspend fun getTodos(): UiState<List<TodoEntity>> {
+        return withContext(dispatcher) {
             handleTryCatch {
-                UiStates.Success(data = todosDao.getAll())
+                UiState.Success(data = todosDao.getAll())
             }
         }
     }
 
-    override suspend fun getTodoById(id: Long): UiStates<TodoEntity> {
-        return withContext(Dispatchers.IO) {
+    suspend fun getTodoById(id: Long): UiState<TodoEntity> {
+        return withContext(dispatcher) {
             handleTryCatch {
-                UiStates.Success(data = todosDao.getById(id))
+                UiState.Success(data = todosDao.getById(id))
             }
         }
     }
 
-    override suspend fun findTodos(query: String): UiStates<List<TodoEntity>> {
-        return withContext(Dispatchers.IO) {
+    suspend fun findTodos(query: String): UiState<List<TodoEntity>> {
+        return withContext(dispatcher) {
             handleTryCatch {
-                UiStates.Success(data = todosDao.find(query))
+                UiState.Success(data = todosDao.find(query))
             }
         }
     }
 
-    override suspend fun updateTodo(todoEntity: TodoEntity): UiStates<Boolean> {
-        return withContext(Dispatchers.IO) {
+    suspend fun updateTodo(todoEntity: TodoEntity): UiState<Boolean> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 todosDao.update(todoEntity)
-                UiStates.Success(true)
+                UiState.Success(true)
             }
         }
     }
 
-    override suspend fun deleteTodo(todoEntity: TodoEntity): UiStates<Boolean> {
-        return withContext(Dispatchers.IO) {
+    suspend fun deleteTodo(todoEntity: TodoEntity): UiState<Boolean> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 todosDao.delete(todoEntity)
-                UiStates.Success(true)
+                UiState.Success(true)
             }
         }
     }
 
-    override suspend fun pinTodo(todoEntity: TodoEntity): UiStates<Boolean> {
-        return withContext(Dispatchers.IO) {
+    suspend fun pinTodo(todoEntity: TodoEntity): UiState<Boolean> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 todosDao.update(todoEntity.copy(pinned = true))
-                UiStates.Success(true)
+                UiState.Success(true)
             }
         }
     }
 
-    override suspend fun unpinTodo(todoEntity: TodoEntity): UiStates<Boolean> {
-        return withContext(Dispatchers.IO) {
+    suspend fun unpinTodo(todoEntity: TodoEntity): UiState<Boolean> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 todosDao.update(todoEntity.copy(pinned = false))
-                UiStates.Success(true)
+                UiState.Success(true)
             }
         }
     }
 
-    override suspend fun togglePinTodo(todoEntity: TodoEntity): UiStates<Boolean> {
-        return withContext(Dispatchers.IO) {
+    suspend fun togglePinTodo(todoEntity: TodoEntity): UiState<Boolean> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 todosDao.update(todoEntity.copy(pinned = !todoEntity.pinned))
-                UiStates.Success(true)
+                UiState.Success(true)
             }
         }
     }
 
-    override suspend fun checkTodo(todoEntity: TodoEntity): UiStates<Boolean> {
-        return withContext(Dispatchers.IO) {
+    suspend fun checkTodo(todoEntity: TodoEntity): UiState<Boolean> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 todosDao.update(todoEntity.copy(isCompleted = true))
-                UiStates.Success(true)
+                UiState.Success(true)
             }
         }
     }
 
-    override suspend fun uncheckTodo(todoEntity: TodoEntity): UiStates<Boolean> {
-        return withContext(Dispatchers.IO) {
+    suspend fun uncheckTodo(todoEntity: TodoEntity): UiState<Boolean> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 todosDao.update(todoEntity.copy(isCompleted = false))
-                UiStates.Success(true)
+                UiState.Success(true)
             }
         }
     }
 
-    override suspend fun toggleCheckTodo(todoEntity: TodoEntity): UiStates<Boolean> {
-        return withContext(Dispatchers.IO) {
+    suspend fun toggleCheckTodo(todoEntity: TodoEntity): UiState<Boolean> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 todosDao.update(todoEntity.copy(isCompleted = !todoEntity.isCompleted))
-                UiStates.Success(true)
+                UiState.Success(true)
             }
         }
     }
 
-
-    override suspend fun getTodosOrdered(orderBy: OrderBy): UiStates<List<TodoEntity>> {
-        return withContext(Dispatchers.IO) {
+    suspend fun getTodosOrdered(orderBy: OrderBy): UiState<List<TodoEntity>> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 val todoEntities: List<TodoEntity> = todosDao.getAll()
                 if (orderBy.orderType == OrderType.Ascending) {
@@ -164,16 +142,16 @@ class TodosRepoImpl(
                         is OrderBy.Completed -> todoEntities.sortedByDescending { it.isCompleted }
                     }
                 }
-                UiStates.Success(todoEntities)
+                UiState.Success(todoEntities)
             }
         }
     }
 
-    override suspend fun findTodosOrdered(
+    suspend fun findTodosOrdered(
         query: String,
         orderBy: OrderBy,
-    ): UiStates<List<TodoEntity>> {
-        return withContext(Dispatchers.IO) {
+    ): UiState<List<TodoEntity>> {
+        return withContext(dispatcher) {
             handleTryCatch {
                 val todoEntities: List<TodoEntity> = todosDao.find(query)
                 if (orderBy.orderType == OrderType.Ascending) {
@@ -191,7 +169,7 @@ class TodosRepoImpl(
                         is OrderBy.Completed -> todoEntities.sortedBy { it.isCompleted }
                     }
                 }
-                UiStates.Success(todoEntities)
+                UiState.Success(todoEntities)
             }
         }
     }

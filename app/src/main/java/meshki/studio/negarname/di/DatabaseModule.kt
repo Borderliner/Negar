@@ -12,8 +12,8 @@ import meshki.studio.negarname.data.local.dao.TodosDao
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
-const val DbName = "app_database"
-val dbModule = module {
+const val DATABASE_NAME = "app_database"
+val databaseModule = module {
     single { provideRoomDatabase(androidContext(), get()) }
     single { provideAppDao(get()) }
     single { provideNotesDao(get()) }
@@ -23,7 +23,7 @@ val dbModule = module {
 
 fun provideRoomDatabase(context: Context, scope: CoroutineScope): Database {
     val database: Database?
-    database = Room.databaseBuilder(context, Database::class.java, DbName)
+    database = Room.databaseBuilder(context, Database::class.java, DATABASE_NAME)
         .addCallback(object : RoomDatabase.Callback() {
 //            override fun onCreate(db: SupportSQLiteDatabase) {
 //                super.onCreate(db)

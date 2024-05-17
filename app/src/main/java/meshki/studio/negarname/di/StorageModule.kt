@@ -5,7 +5,7 @@ import meshki.studio.negarname.data.storage.PersistentStorage
 import meshki.studio.negarname.data.storage.Storage
 import org.koin.dsl.module
 
-val dataStoreModule = module {
+val storageModule = module {
 
     single<Storage> {
         PersistentStorage(context = get())

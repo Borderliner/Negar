@@ -24,7 +24,7 @@ import linc.com.amplituda.callback.AmplitudaErrorListener
 import meshki.studio.negarname.data.repository.NotesRepository
 import meshki.studio.negarname.services.alarm.AlarmEntity
 import meshki.studio.negarname.entities.UiEvent
-import meshki.studio.negarname.entities.UiStates
+import meshki.studio.negarname.entities.UiState
 import meshki.studio.negarname.services.alarm.AlarmData
 import meshki.studio.negarname.services.voice_recorder.VoiceRecorder
 import meshki.studio.negarname.services.alarm.setAlarm
@@ -153,7 +153,7 @@ class EditNotesViewModel(
         )
     }
 
-    suspend fun readVoiceToState(path: String, coroutineContext: CoroutineContext): UiStates<Flow<VoiceState>> {
+    suspend fun readVoiceToState(path: String, coroutineContext: CoroutineContext): UiState<Flow<VoiceState>> {
         return withContext(coroutineContext) {
             handleTryCatch {
                 val duration = VoiceRecorder.getAudioFileDuration(
@@ -169,7 +169,7 @@ class EditNotesViewModel(
                     .amplitudesAsList()
 
                 if (duration > 0 && amps.size > 0) {
-                    UiStates.Success(flow {
+                    UiState.Success(flow {
                         emit(
                             VoiceState(
                                 duration,
@@ -178,7 +178,7 @@ class EditNotesViewModel(
                         )
                     })
                 } else {
-                    UiStates.Success(emptyFlow())
+                    UiState.Success(emptyFlow())
                 }
             }
         }

@@ -3,10 +3,10 @@ package meshki.studio.negarname
 import android.app.Application
 import io.embrace.android.embracesdk.Embrace
 import meshki.studio.negarname.di.appModule
-import meshki.studio.negarname.di.dataStoreModule
-import meshki.studio.negarname.di.dbModule
+import meshki.studio.negarname.di.storageModule
+import meshki.studio.negarname.di.databaseModule
 import meshki.studio.negarname.di.repositoryModule
-import meshki.studio.negarname.di.systemModule
+import meshki.studio.negarname.di.serviceModule
 import meshki.studio.negarname.di.viewModelModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -29,12 +29,12 @@ class Application : Application() {
             androidContext(this@Application)
             modules(
                 listOf(
-                    systemModule,
-                    dataStoreModule,
-                    dbModule,
+                    appModule,
+                    serviceModule,
+                    storageModule,
+                    databaseModule,
                     repositoryModule,
                     viewModelModule,
-                    appModule,
                 )
             )
         }

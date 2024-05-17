@@ -6,31 +6,26 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import meshki.studio.negarname.data.local.Database
 import meshki.studio.negarname.data.local.dao.AppDao
-import meshki.studio.negarname.entities.UiStates
+import meshki.studio.negarname.entities.UiState
 import meshki.studio.negarname.ui.util.handleTryCatch
 
-interface AppRepository {
-    suspend fun checkpoint(): UiStates<Int>
-    suspend fun getDatabaseFilePath(): UiStates<String>
-}
-
-class AppRepositoryImpl(
+class AppRepository(
     private val database: Database,
     private val appDao: AppDao,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-): AppRepository {
-    override suspend fun checkpoint(): UiStates<Int> {
+) {
+    suspend fun checkpoint(): UiState<Int> {
         return withContext(dispatcher) {
             handleTryCatch {
-                UiStates.Success(appDao.checkpoint(SimpleSQLiteQuery("pragma wal_checkpoint(full)")))
+                UiState.Success(appDao.checkpoint(SimpleSQLiteQuery("pragma wal_checkpoint(full)")))
             }
         }
     }
 
-    override suspend fun getDatabaseFilePath(): UiStates<String> {
+    suspend fun getDatabaseFilePath(): UiState<String> {
         return withContext(dispatcher) {
             handleTryCatch {
-                UiStates.Success(database.openHelper.writableDatabase.path)
+                UiState.Success(database.openHelper.writableDatabase.path)
             }
         }
     }

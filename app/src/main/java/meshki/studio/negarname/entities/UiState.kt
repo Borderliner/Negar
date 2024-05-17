@@ -1,13 +1,12 @@
 package meshki.studio.negarname.entities
 
-sealed class UiStates<T>(
+sealed class UiState<T>(
     val data: T? = null,
-    val message: String? = null,
-    val isLoading: Boolean = false
+    val errorMessage: String? = null,
+    val loading: Boolean = false
 ) {
-    class Success<T>(data: T?) : UiStates<T>(data = data, isLoading = false)
-    class Error<T>(message: String?) : UiStates<T>(message = message, isLoading = false)
-    class Loading<T>(isLoading: Boolean = true) : UiStates<T>(isLoading = isLoading)
-
-    class None<T>() : UiStates<T>()
+    class None<T>() : UiState<T>()
+    class Loading<T>(loading: Boolean = true) : UiState<T>(loading = loading)
+    class Success<T>(data: T?) : UiState<T>(data = data, loading = false)
+    class Error<T>(errorMessage: String?) : UiState<T>(errorMessage = errorMessage, loading = false)
 }
