@@ -6,8 +6,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import meshki.studio.negarname.data.local.Database
 import meshki.studio.negarname.data.local.dao.AppDao
-import meshki.studio.negarname.entity.UiStates
-import meshki.studio.negarname.util.handleTryCatch
+import meshki.studio.negarname.entities.UiStates
+import meshki.studio.negarname.ui.util.handleTryCatch
 
 interface AppRepository {
     suspend fun checkpoint(): UiStates<Int>

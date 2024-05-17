@@ -10,19 +10,19 @@ import meshki.studio.negarname.data.local.dao.AlarmsDao
 import meshki.studio.negarname.data.local.dao.AppDao
 import meshki.studio.negarname.data.local.dao.NotesDao
 import meshki.studio.negarname.data.local.dao.TodosDao
-import meshki.studio.negarname.entity.Alarm
-import meshki.studio.negarname.entity.Note
-import meshki.studio.negarname.entity.NotesAlarmsCrossRef
-import meshki.studio.negarname.entity.Todo
+import meshki.studio.negarname.services.alarm.AlarmEntity
+import meshki.studio.negarname.ui.notes.NoteEntity
+import meshki.studio.negarname.ui.notes.NotesAlarmsCrossRef
+import meshki.studio.negarname.ui.todos.TodoEntity
 
 @Database(
     entities = [
-        Note::class,
-        Todo::class,
-        Alarm::class,
+        NoteEntity::class,
+        TodoEntity::class,
+        AlarmEntity::class,
         NotesAlarmsCrossRef::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = false
 )
 

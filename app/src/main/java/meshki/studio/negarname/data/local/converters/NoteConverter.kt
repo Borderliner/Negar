@@ -3,19 +3,19 @@ package meshki.studio.negarname.data.local.converters
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import meshki.studio.negarname.entity.Note
+import meshki.studio.negarname.ui.notes.NoteEntity
 
 class NoteConverter {
     private val gson = Gson()
-    private val type = object : TypeToken<Note>() {}.type
+    private val type = object : TypeToken<NoteEntity>() {}.type
 
     @TypeConverter
-    fun noteToString(note: Note): String? {
-        return gson.toJson(note, type)
+    fun noteToString(noteEntity: NoteEntity): String? {
+        return gson.toJson(noteEntity, type)
     }
 
     @TypeConverter
-    fun stringToNote(str: String?): Note? {
+    fun stringToNote(str: String?): NoteEntity? {
         return gson.fromJson(str, type)
     }
 }

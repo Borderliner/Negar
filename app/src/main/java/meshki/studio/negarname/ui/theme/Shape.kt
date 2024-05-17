@@ -15,20 +15,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
-class NoteShape(
-    private val cutCornerRadius: Float,
-    private val isRtl: Boolean
-) : Shape {
-    override fun createOutline(
-        size: Size,
-        layoutDirection: LayoutDirection,
-        density: Density
-    ): Outline {
-        val path = notePath(size, 30f, cutCornerRadius, isRtl)
-        return Outline.Generic(path = path)
-    }
-}
-
 class TriangleShape : Shape {
     override fun createOutline(
         size: Size,

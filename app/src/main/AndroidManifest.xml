@@ -14,7 +14,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
-        android:name=".MainApplication"
+        android:name=".Application"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
@@ -27,7 +27,7 @@
         android:windowSoftInputMode="adjustResize"
         tools:ignore="UnusedAttribute">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.app.AppActivity"
             android:exported="true"
             android:theme="@style/Theme.Negarname">
             <intent-filter>
@@ -44,12 +44,12 @@
                 android:value="true" />
         </service>
         <service
-            android:name="meshki.studio.negarname.service.NotificationService"
+            android:name="meshki.studio.negarname.services.notification.NotificationService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false">
         </service>
         <receiver
-            android:name="meshki.studio.negarname.service.AlarmReceiver"
+            android:name="meshki.studio.negarname.services.alarm.AlarmReceiver"
             android:enabled="true"
             android:exported="false"
             android:process=":remote" />

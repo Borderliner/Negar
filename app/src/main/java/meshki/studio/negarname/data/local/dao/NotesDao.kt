@@ -2,24 +2,23 @@ package meshki.studio.negarname.data.local.dao
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
-import meshki.studio.negarname.entity.Alarm
-import meshki.studio.negarname.entity.Note
-import meshki.studio.negarname.entity.NoteAndAlarm
-import meshki.studio.negarname.entity.NotesAlarmsCrossRef
+import meshki.studio.negarname.ui.notes.NoteEntity
+import meshki.studio.negarname.ui.notes.NoteAndAlarm
+import meshki.studio.negarname.ui.notes.NotesAlarmsCrossRef
 
 @Dao
-interface NotesDao : BaseDao<Note> {
+interface NotesDao : BaseDao<NoteEntity> {
     @Query("SELECT * FROM notes ORDER BY note_id DESC")
-    fun getAll(): Flow<List<Note>>
+    fun getAll(): Flow<List<NoteEntity>>
 
     @Query("SELECT * FROM notes WHERE note_id = :id ORDER BY note_id DESC")
-    fun getById(id: Long): Flow<Note>
+    fun getById(id: Long): Flow<NoteEntity>
 
     @Query("SELECT * " +
             "FROM notes " +
             "WHERE instr(LOWER(title), LOWER(:query)) > 0 OR instr(LOWER(text), LOWER(:query)) > 0 " +
             "ORDER BY note_id DESC")
-    fun find(query: String): Flow<List<Note>>
+    fun find(query: String): Flow<List<NoteEntity>>
 
     @Transaction
     @Query("SELECT * FROM notes")

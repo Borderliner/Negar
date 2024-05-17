@@ -1,8 +1,6 @@
 package meshki.studio.negarname.ui.theme
 
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathOperation
 
 fun roundedRect(
     left: Float, top: Float, right: Float, bottom: Float, rx: Float, ry: Float,
@@ -46,42 +44,4 @@ fun roundedRect(
     path.relativeLineTo(0f, -heightMinusCorners)
     path.close() //Given close, last lineto can be removed.
     return path
-}
-
-fun notePath(size: Size, cornerRadius: Float, cutCornerRadius: Float, isRtl: Boolean): Path {
-    val roundedPath = roundedRect(
-        0f, 0f, size.width, size.height, cornerRadius, cornerRadius,
-        tl = true,
-        tr = true,
-        br = true,
-        bl = true
-    )
-
-    val path: Path = if (isRtl) {
-        Path().apply {
-            moveTo(0f, 0f)
-            lineTo(size.width - cutCornerRadius, 0f)
-            lineTo(size.width, cutCornerRadius)
-            lineTo(size.width, size.height)
-            lineTo(0f, size.height)
-            lineTo(0f, 0f)
-            close()
-        }
-    } else {
-        Path().apply {
-            moveTo(cutCornerRadius, 0f)
-            lineTo(size.width, 0f)
-            lineTo(size.width, size.height)
-            lineTo(0f, size.height)
-            lineTo(0f, cutCornerRadius)
-            lineTo(cutCornerRadius, 0f)
-            close()
-        }
-    }
-
-    val finalPath = Path().apply {
-        op(roundedPath, path, PathOperation.Intersect)
-    }
-
-    return finalPath
 }

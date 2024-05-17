@@ -19,9 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
--keep class meshki.studio.negarname.entity.* { *; }
+-keep class meshki.studio.negarname.entities.* { *; }
 -keep class meshki.studio.negarname.vm.* { *; }
--keep class meshki.studio.negarname.service.* { *; }
+-keep class meshki.studio.negarname.services.* { *; }
 -keep class meshki.studio.negarname.data.repository.* { *; }
 -keep class meshki.studio.negarname.data.local.dao.* { *; }
 
