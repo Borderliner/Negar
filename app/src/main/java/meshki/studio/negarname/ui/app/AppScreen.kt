@@ -260,7 +260,7 @@ fun AppScreen(appState: AppState) {
                         onClick = {
                             appState.coroutineScope.launch {
                                 val activity = (ctx as? Activity)
-                                activity?.finish()
+                                activity?.finishAndRemoveTask()
                             }
                         }
                     )
