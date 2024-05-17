@@ -56,6 +56,7 @@ import com.sd.lib.compose.wheel_picker.FVerticalWheelPicker
 import com.sd.lib.compose.wheel_picker.rememberFWheelPickerState
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Month
+import meshki.studio.negarname.AppState
 import meshki.studio.negarname.R
 import meshki.studio.negarname.entity.Tool
 import meshki.studio.negarname.ui.element.PopupSection
@@ -68,10 +69,9 @@ import saman.zamani.persiandate.PersianDate
 import timber.log.Timber
 
 @Composable
-fun CalendarScreen() {
+fun CalendarScreen(appState: AppState) {
     val mainViewModel = koinViewModel<MainViewModel>()
     val vm = koinViewModel<CalendarViewModel>()
-    val scope = rememberCoroutineScope()
     val goToDateTool = remember { mutableStateOf(Tool("goto")) }
 
     var displayedMonthSolar by remember { mutableIntStateOf(vm.selectedSolar.value.shMonth) }
@@ -80,21 +80,21 @@ fun CalendarScreen() {
     var displayedMonthGreg by remember { mutableIntStateOf(vm.selectedSolar.value.grgMonth) }
     var displayedYearGreg by remember { mutableIntStateOf(vm.selectedSolar.value.grgYear) }
 
-    val headerMonthSolar by remember { derivedStateOf {
-        if (displayedMonthSolar.mod(12) == 0)
-            12
-        else
-            displayedMonthSolar.mod(12)
-    }}
-    val headerMonthGreg by remember { derivedStateOf {
-        if (displayedMonthGreg.mod(12) == 0)
-            12
-        else
-            displayedMonthGreg.mod(12)
-    }}
-
     val headerMonthIndexSolar by remember { derivedStateOf { displayedMonthSolar.mod(12) } }
     val headerMonthIndexGreg by remember { derivedStateOf { displayedMonthGreg.mod(12) } }
+
+    val headerMonthSolar by remember { derivedStateOf {
+        if (headerMonthIndexSolar == 0)
+            12
+        else
+            headerMonthIndexSolar
+    }}
+    val headerMonthGreg by remember { derivedStateOf {
+        if (headerMonthIndexGreg == 0)
+            12
+        else
+            headerMonthIndexGreg
+    }}
 
     suspend fun openTool(tool: MutableState<Tool>, delay: Int = 0) {
         tool.value.visibility.value = true
@@ -129,23 +129,31 @@ fun CalendarScreen() {
                         month = headerMonthSolar,
                         year = displayedYearSolar,
                         onPreviousClick = {
-                            scope.launch { closeTool(goToDateTool) }
-                            displayedYearSolar -= if (headerMonthSolar == 1) 1 else 0
-                            displayedMonthSolar -= 1
+                            appState.coroutineScope.launch { closeTool(goToDateTool) }
+                            if (displayedMonthSolar == 1) {
+                                displayedYearSolar =- 1
+                                displayedMonthSolar = 12
+                            } else {
+                                displayedMonthSolar -= 1
+                            }
                         },
                         onNextClick = {
-                            scope.launch { closeTool(goToDateTool) }
-                            displayedYearSolar += if (headerMonthSolar == 12) 1 else 0
-                            displayedMonthSolar += 1
+                            appState.coroutineScope.launch { closeTool(goToDateTool) }
+                            if (displayedMonthSolar == 12) {
+                                displayedYearSolar += 1
+                                displayedMonthSolar = 1
+                            } else {
+                                displayedMonthSolar += 1
+                            }
                         },
                         onDayReset = {
-                            scope.launch { closeTool(goToDateTool) }
+                            appState.coroutineScope.launch { closeTool(goToDateTool) }
                             vm.setSolar(vm.todaySolar)
                             displayedMonthSolar = vm.selectedSolar.value.shMonth
                             displayedYearSolar = vm.selectedSolar.value.shYear
                         },
                         onGoToDay = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 if (goToDateTool.value.visibility.value) {
                                     closeTool(goToDateTool)
                                 } else {
@@ -158,7 +166,7 @@ fun CalendarScreen() {
                 kalendarColors = KalendarColorsShamsi.transparent(),
                 currentDay = vm.selectedSolar.value,
                 onDayClick = { date, _ ->
-                    scope.launch { closeTool(goToDateTool) }
+                    appState.coroutineScope.launch { closeTool(goToDateTool) }
                     vm.setSolar(date)
                     Timber.tag("Calendar").i(date.toString())
                 },
@@ -174,23 +182,31 @@ fun CalendarScreen() {
                         month = Month(headerMonthGreg),
                         year = displayedYearGreg,
                         onPreviousClick = {
-                            scope.launch { closeTool(goToDateTool) }
-                            displayedYearGreg -= if (headerMonthGreg == 1) 1 else 0
-                            displayedMonthGreg -= 1
+                            appState.coroutineScope.launch { closeTool(goToDateTool) }
+                            if (displayedMonthGreg == 1) {
+                                displayedYearGreg =- 1
+                                displayedMonthGreg = 12
+                            } else {
+                                displayedMonthGreg -= 1
+                            }
                         },
                         onNextClick = {
-                            scope.launch { closeTool(goToDateTool) }
-                            displayedYearGreg += if (headerMonthGreg == 12) 1 else 0
-                            displayedMonthGreg += 1
+                            appState.coroutineScope.launch { closeTool(goToDateTool) }
+                            if (displayedMonthGreg == 12) {
+                                displayedYearGreg += 1
+                                displayedMonthGreg = 1
+                            } else {
+                                displayedMonthGreg += 1
+                            }
                         },
                         onDayReset = {
-                            scope.launch { closeTool(goToDateTool) }
+                            appState.coroutineScope.launch { closeTool(goToDateTool) }
                             vm.setSolar(vm.todaySolar)
                             displayedMonthGreg = vm.selectedSolar.value.grgMonth
                             displayedYearGreg = vm.selectedSolar.value.grgYear
                         },
                         onGoToDay = {
-                            scope.launch {
+                            appState.coroutineScope.launch {
                                 if (goToDateTool.value.visibility.value) {
                                     closeTool(goToDateTool)
                                 } else {
@@ -204,7 +220,9 @@ fun CalendarScreen() {
                 currentDay = vm.selectedSolar.value.toLocalDate(),
                 kalendarType = KalendarType.Firey,
                 onDayClick = { date, _ ->
+                    appState.coroutineScope.launch { closeTool(goToDateTool) }
                     vm.setGreg(date)
+                    Timber.tag("Calendar").i(date.toString())
                 },
                 onDayResetClick = {
                     vm.setGreg(vm.todayGreg)
@@ -372,7 +390,7 @@ fun CalendarScreen() {
                         ),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         onClick = {
-                            scope.launch { closeTool(goToDateTool) }
+                            appState.coroutineScope.launch { closeTool(goToDateTool) }
                             vm.setSolarByValue(
                                 yearWheelState.currentIndex + startYear,
                                 monthWheelState.currentIndex + 1,
@@ -457,7 +475,7 @@ fun CalendarScreen() {
                         ),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         onClick = {
-                            scope.launch { closeTool(goToDateTool) }
+                            appState.coroutineScope.launch { closeTool(goToDateTool) }
                             vm.setGregByValue(
                                 yearWheelState.currentIndex + startYear,
                                 monthWheelState.currentIndex + 1,
