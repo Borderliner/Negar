@@ -127,7 +127,7 @@ fun KalendarDayShamsi(
         )
         Row {
             kalendarEvents.events
-                .filter { it.date.isPersianDateEqual(date) }
+                .filter { it.date.isEqualTo(date) }
                 .take(3)
                 .fastForEachIndexed { index, _ ->
                     Row {
@@ -150,7 +150,7 @@ private fun KalendarDayShamsiPreview() {
     val previous = date.subDay()
     val events = (0..5).map {
         KalendarEvent(
-            date = date.toLocalDate(),
+            date = date,
             eventName = it.toString(),
         )
     }

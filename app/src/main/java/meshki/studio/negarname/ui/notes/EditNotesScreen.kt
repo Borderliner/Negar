@@ -902,9 +902,8 @@ fun EditNotesScreenMain(
                                             viewModel.recorder.value.stopRecording()
                                             appState.coroutineScope.launch {
                                                 viewModel.readVoiceToState(
-                                                    "records/${noteState.value.id}.aac",
-                                                    appState.coroutineScope.coroutineContext
-                                                ).data?.collectLatest {
+                                                    "records/${noteState.value.id}.aac"
+                                                ).collectLatest {
                                                     viewModel.setVoiceState(it)
                                                     Timber.tag("Edit Screen").i(it.toString())
                                                 }

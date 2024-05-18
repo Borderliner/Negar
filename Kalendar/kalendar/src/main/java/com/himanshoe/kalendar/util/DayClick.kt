@@ -19,6 +19,7 @@ import com.himanshoe.kalendar.KalendarEvent
 import com.himanshoe.kalendar.ui.firey.DaySelectionMode
 import com.himanshoe.kalendar.ui.firey.KalendarSelectedDayRange
 import kotlinx.datetime.LocalDate
+import saman.zamani.persiandate.PersianDate
 
 /**
  * Internal function invoked when a day is clicked.
@@ -31,12 +32,12 @@ import kotlinx.datetime.LocalDate
  * @param onDayClick Callback invoked when a day is clicked.
  */
 internal fun onDayClicked(
-    date: LocalDate,
+    date: PersianDate,
     events: List<KalendarEvent>,
     daySelectionMode: DaySelectionMode,
     selectedRange: MutableState<KalendarSelectedDayRange?>,
     onRangeSelected: (KalendarSelectedDayRange, List<KalendarEvent>) -> Unit = { _, _ -> },
-    onDayClick: (LocalDate, List<KalendarEvent>) -> Unit = { _, _ -> }
+    onDayClick: (PersianDate, List<KalendarEvent>) -> Unit = { _, _ -> }
 ) {
     when (daySelectionMode) {
         DaySelectionMode.Single -> {
@@ -53,7 +54,7 @@ internal fun onDayClicked(
 
             selectedRange.value?.let { rangeDates ->
                 val selectedEvents = events
-                    .filter { it.date in (rangeDates.start..rangeDates.end) }
+                    .filter { it.date.after(rangeDates.start) && it.date.before(rangeDates.end) }
                     .toList()
 
                 onRangeSelected(rangeDates, selectedEvents)

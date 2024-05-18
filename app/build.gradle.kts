@@ -66,7 +66,7 @@ swazzler {
 
 dependencies {
     implementation(project(":Kalendar:kalendar"))
-    implementation(project(":Kalendar:kalendar-endlos"))
+    // implementation(project(":Kalendar:kalendar-endlos"))
     implementation(libs.kotlin.serialization)
     implementation(libs.kotlin.datetime)
     implementation(libs.core.ktx)

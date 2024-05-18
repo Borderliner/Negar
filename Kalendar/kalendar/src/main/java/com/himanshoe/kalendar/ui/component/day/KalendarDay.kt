@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +52,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import saman.zamani.persiandate.PersianDate
 
 /**
  * A composable representing a single day in the Kalendar.
@@ -66,17 +68,17 @@ import kotlinx.datetime.todayIn
  */
 @Composable
 fun KalendarDay(
-    date: LocalDate,
+    date: PersianDate,
     kalendarColors: KalendarColor,
-    onDayClick: (LocalDate, List<KalendarEvent>) -> Unit,
+    onDayClick: (PersianDate, List<KalendarEvent>) -> Unit,
     selectedRange: KalendarSelectedDayRange?,
     modifier: Modifier = Modifier,
-    selectedDate: LocalDate = date,
+    selectedDate: PersianDate = date,
     kalendarEvents: KalendarEvents = KalendarEvents(),
     kalendarDayKonfig: KalendarDayKonfig = KalendarDayKonfig.default(),
 ) {
     val selected = selectedDate == date
-    val currentDay = Clock.System.todayIn(TimeZone.currentSystemDefault()) == date
+    val currentDay = PersianDate() == date
 
     Column(
         modifier = modifier
@@ -106,11 +108,11 @@ fun KalendarDay(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = date.dayOfMonth.toString(),
+            text = date.grgDay.toString(),
             modifier = Modifier.wrapContentSize(),
             textAlign = TextAlign.Center,
             fontSize = kalendarDayKonfig.textSize,
-            color = if (date.dayOfWeek.value == 6 || date.dayOfWeek.value == 7) MaterialTheme.colorScheme.error else {
+            color = if (date.dayOfWeek() == 6 || date.dayOfWeek() == 7) MaterialTheme.colorScheme.error else {
                 if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onBackground
             },
             fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold
@@ -154,9 +156,8 @@ fun getBorder(currentDay: Boolean, color: Color, selected: Boolean): BorderStrok
 @MultiplePreviews
 @Composable
 private fun KalendarDayPreview() {
-    val date = Clock.System.todayIn(TimeZone.currentSystemDefault())
-    val previous =
-        Clock.System.todayIn(TimeZone.currentSystemDefault()).minus(1, DateTimeUnit.DAY)
+    val date = PersianDate()
+    val previous = date.subDay()
     val events = (0..5).map {
         KalendarEvent(
             date = date,
@@ -174,7 +175,7 @@ private fun KalendarDayPreview() {
         )
         Spacer(modifier = Modifier.padding(vertical = 8.dp))
         KalendarDay(
-            date = date.plus(1, DateTimeUnit.DAY),
+            date = date.addDay(),
             kalendarColors = KalendarColor.previewDefault(),
             onDayClick = { _, _ -> },
             selectedDate = previous,

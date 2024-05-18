@@ -14,6 +14,8 @@
 
 package com.himanshoe.kalendar.ui.component.header
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -51,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import com.himanshoe.kalendar.ui.component.button.KalendarIconButton
 import com.himanshoe.kalendar.util.MultiplePreviews
 import kotlinx.datetime.Month
+import saman.zamani.persiandate.PersianDate
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -68,7 +71,7 @@ import java.util.Locale
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun KalendarHeader(
-    month: Month,
+    month: Int,
     year: Int,
     kalendarTextKonfig: KalendarTextKonfig,
     modifier: Modifier = Modifier,
@@ -87,7 +90,7 @@ fun KalendarHeader(
             .padding(all = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        val titleText = remember(month, year) { getTitleText(month, year) }
+        val titleText = remember(month, year) { getPersianDateTitleText(month, year) }
 
         AnimatedContent(
             targetState = titleText,
@@ -181,6 +184,7 @@ private fun addAnimation(duration: Int = 200, isNext: Boolean): ContentTransform
  * @param year The current year.
  * @return The formatted title text.
  */
+@RequiresApi(Build.VERSION_CODES.O)
 private fun getTitleText(month: Month, year: Int): String {
     val monthDisplayName = month.getDisplayName(TextStyle.FULL, Locale.getDefault())
         .lowercase()
@@ -189,11 +193,16 @@ private fun getTitleText(month: Month, year: Int): String {
     return "$monthDisplayName $shortYear"
 }
 
+private fun getPersianDateTitleText(month: Int, year: Int): String {
+    val date = PersianDate().initGrgDate(year, month, 1)
+    return "${date.grgMonthName} ${date.grgYear}"
+}
+
 @MultiplePreviews
 @Composable
 fun KalendarHeaderPreview() {
     KalendarHeader(
-        month = java.time.Month.APRIL,
+        month = 4,
         year = 2023,
         kalendarTextKonfig = KalendarTextKonfig.previewDefault()
     )

@@ -132,7 +132,7 @@ fun AppTopBar(appState: AppState) {
                                         appViewModel.database.close()
                                         appViewModel.appRepository.checkpoint()
                                         val path =
-                                            appViewModel.appRepository.getDatabaseFilePath().data
+                                            appViewModel.appRepository.getDatabaseFilePath()
                                         if (path != null) {
                                             val sourceFile = File(path)
                                             Timber.tag("Import/Export").i("Export source file: $path")

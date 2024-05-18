@@ -16,20 +16,14 @@ package com.himanshoe.kalendar
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.himanshoe.kalendar.color.KalendarColors
 import com.himanshoe.kalendar.color.KalendarColorsShamsi
 import com.himanshoe.kalendar.ui.component.day.KalendarDayKonfig
 import com.himanshoe.kalendar.ui.component.header.KalendarTextKonfig
 import com.himanshoe.kalendar.ui.firey.DaySelectionMode
-import com.himanshoe.kalendar.ui.firey.KalendarFirey
 import com.himanshoe.kalendar.ui.firey.KalendarFireyShamsi
-import com.himanshoe.kalendar.ui.firey.KalendarSelectedDayRange
 import com.himanshoe.kalendar.ui.firey.KalendarSelectedDayRangeShamsi
 import com.himanshoe.kalendar.ui.firey.RangeSelectionError
-import com.himanshoe.kalendar.ui.oceanic.KalendarOceanic
-import kotlinx.datetime.LocalDate
 import saman.zamani.persiandate.PersianDate
-import java.time.Month
 
 /**
  * Composable function that represents a calendar component.
@@ -50,7 +44,9 @@ import java.time.Month
  */
 @Composable
 fun KalendarShamsi(
-    currentDay: PersianDate?,
+    currentDay: PersianDate,
+    displayedYear: Int,
+    displayedMonth: Int,
     modifier: Modifier = Modifier,
     showLabel: Boolean = true,
     kalendarHeaderTextKonfig: KalendarTextKonfig? = null,
@@ -64,10 +60,12 @@ fun KalendarShamsi(
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
     onNextMonthClick: (Int) -> Unit = { },
     onPreviousMonthClick: (Int) -> Unit = { },
-    onDayResetClick: () -> Unit = { }
+    onDayResetClick: (PersianDate) -> Unit = { }
 ) {
     KalendarFireyShamsi(
         currentDay = currentDay,
+        displayedYear = displayedYear,
+        displayedMonth = displayedMonth,
         modifier = modifier,
         showLabel = showLabel,
         kalendarHeaderTextKonfig = kalendarHeaderTextKonfig,

@@ -143,5 +143,3 @@ data class NotesState(
             )
         }
 }
-
-class InvalidNoteException(message: String) : Exception(message)

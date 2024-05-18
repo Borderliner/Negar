@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import com.himanshoe.kalendar.ui.firey.KalendarSelectedDayRange
 import kotlinx.datetime.LocalDate
+import saman.zamani.persiandate.PersianDate
 
 const val FULL_ALPHA = 1f
 const val TOWNED_DOWN_ALPHA = 0.4F
@@ -40,13 +41,13 @@ fun Modifier.dayBackgroundColor(
     selected: Boolean,
     selectedColors: List<Color>,
     color: Color,
-    date: LocalDate,
+    date: PersianDate,
     selectedRange: KalendarSelectedDayRange?
 ): Modifier {
     val inRange = date == selectedRange?.start || date == selectedRange?.end
 
     val backgroundColor = when {
-        selectedRange != null && date in selectedRange.start..selectedRange.end -> {
+        selectedRange != null && date.after(selectedRange.start) && date.before(selectedRange.end) -> {
             val alpha = if (inRange) FULL_ALPHA else TOWNED_DOWN_ALPHA
             color.copy(alpha = alpha)
         }

@@ -8,168 +8,97 @@ import meshki.studio.negarname.entities.OrderBy
 import meshki.studio.negarname.entities.OrderType
 import meshki.studio.negarname.ui.todos.TodoEntity
 import meshki.studio.negarname.entities.UiState
+import meshki.studio.negarname.ui.todos.InvalidTodoException
 import meshki.studio.negarname.ui.util.handleTryCatch
 
 class TodosRepository(
     private val todosDao: TodosDao,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
-    suspend fun addTodo(todoEntity: TodoEntity): UiState<Boolean> {
-        return withContext(dispatcher) {
-            if (todoEntity.text.isBlank()) {
-                return@withContext UiState.Error("Todo title is needed")
-            }
+    fun addTodo(todoEntity: TodoEntity): Long {
+        if (todoEntity.text.isBlank()) {
+            throw InvalidTodoException("Todo title is needed")
+        }
+        return todosDao.insert(todoEntity)
+    }
 
-            handleTryCatch {
-                todosDao.insert(todoEntity)
-                UiState.Success(true)
+    fun getTodos(): List<TodoEntity> {
+        return todosDao.getAll()
+    }
+
+    fun getTodoById(id: Long): TodoEntity {
+        return todosDao.getById(id)
+    }
+
+    fun findTodos(query: String): List<TodoEntity> {
+        return todosDao.find(query)
+    }
+
+    fun updateTodo(todoEntity: TodoEntity) {
+        return todosDao.update(todoEntity)
+    }
+
+    fun deleteTodo(todoEntity: TodoEntity) {
+        return todosDao.delete(todoEntity)
+    }
+
+    fun pinTodo(todoEntity: TodoEntity) {
+        return todosDao.update(todoEntity.copy(pinned = true))
+    }
+
+    fun unpinTodo(todoEntity: TodoEntity) {
+        return todosDao.update(todoEntity.copy(pinned = false))
+    }
+
+    fun togglePinTodo(todoEntity: TodoEntity) {
+        return todosDao.update(todoEntity.copy(pinned = !todoEntity.pinned))
+    }
+
+    fun checkTodo(todoEntity: TodoEntity) {
+        return todosDao.update(todoEntity.copy(isCompleted = true))
+    }
+
+    fun uncheckTodo(todoEntity: TodoEntity) {
+        return todosDao.update(todoEntity.copy(isCompleted = false))
+    }
+
+    fun toggleCheckTodo(todoEntity: TodoEntity) {
+        return todosDao.update(todoEntity.copy(isCompleted = !todoEntity.isCompleted))
+    }
+
+    fun getTodosOrdered(orderBy: OrderBy): List<TodoEntity> {
+        val todoEntities: List<TodoEntity> = todosDao.getAll()
+        return if (orderBy.orderType == OrderType.Ascending) {
+            when (orderBy.getType()) {
+                is OrderBy.Title -> todoEntities.sortedBy { it.text.lowercase() }
+                is OrderBy.Date -> todoEntities.sortedBy { it.dateModified }
+                is OrderBy.Color -> todoEntities.sortedBy { it.color }
+                is OrderBy.Completed -> todoEntities.sortedBy { it.isCompleted }
+            }
+        } else {
+            when (orderBy.getType()) {
+                is OrderBy.Title -> todoEntities.sortedByDescending { it.text.lowercase() }
+                is OrderBy.Date -> todoEntities.sortedByDescending { it.dateModified }
+                is OrderBy.Color -> todoEntities.sortedByDescending { it.color }
+                is OrderBy.Completed -> todoEntities.sortedByDescending { it.isCompleted }
             }
         }
     }
 
-    suspend fun getTodos(): UiState<List<TodoEntity>> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                UiState.Success(data = todosDao.getAll())
+    fun findTodosOrdered(query: String, orderBy: OrderBy): List<TodoEntity> {
+        val todoEntities: List<TodoEntity> = todosDao.find(query)
+        return if (orderBy.orderType == OrderType.Ascending) {
+            when (orderBy.getType()) {
+                is OrderBy.Title -> todoEntities.sortedBy { it.text.lowercase() }
+                is OrderBy.Date -> todoEntities.sortedBy { it.dateModified }
+                is OrderBy.Color -> todoEntities.sortedBy { it.color }
+                is OrderBy.Completed -> todoEntities.sortedBy { it.isCompleted }
             }
-        }
-    }
-
-    suspend fun getTodoById(id: Long): UiState<TodoEntity> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                UiState.Success(data = todosDao.getById(id))
-            }
-        }
-    }
-
-    suspend fun findTodos(query: String): UiState<List<TodoEntity>> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                UiState.Success(data = todosDao.find(query))
-            }
-        }
-    }
-
-    suspend fun updateTodo(todoEntity: TodoEntity): UiState<Boolean> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                todosDao.update(todoEntity)
-                UiState.Success(true)
-            }
-        }
-    }
-
-    suspend fun deleteTodo(todoEntity: TodoEntity): UiState<Boolean> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                todosDao.delete(todoEntity)
-                UiState.Success(true)
-            }
-        }
-    }
-
-    suspend fun pinTodo(todoEntity: TodoEntity): UiState<Boolean> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                todosDao.update(todoEntity.copy(pinned = true))
-                UiState.Success(true)
-            }
-        }
-    }
-
-    suspend fun unpinTodo(todoEntity: TodoEntity): UiState<Boolean> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                todosDao.update(todoEntity.copy(pinned = false))
-                UiState.Success(true)
-            }
-        }
-    }
-
-    suspend fun togglePinTodo(todoEntity: TodoEntity): UiState<Boolean> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                todosDao.update(todoEntity.copy(pinned = !todoEntity.pinned))
-                UiState.Success(true)
-            }
-        }
-    }
-
-    suspend fun checkTodo(todoEntity: TodoEntity): UiState<Boolean> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                todosDao.update(todoEntity.copy(isCompleted = true))
-                UiState.Success(true)
-            }
-        }
-    }
-
-    suspend fun uncheckTodo(todoEntity: TodoEntity): UiState<Boolean> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                todosDao.update(todoEntity.copy(isCompleted = false))
-                UiState.Success(true)
-            }
-        }
-    }
-
-    suspend fun toggleCheckTodo(todoEntity: TodoEntity): UiState<Boolean> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                todosDao.update(todoEntity.copy(isCompleted = !todoEntity.isCompleted))
-                UiState.Success(true)
-            }
-        }
-    }
-
-    suspend fun getTodosOrdered(orderBy: OrderBy): UiState<List<TodoEntity>> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                val todoEntities: List<TodoEntity> = todosDao.getAll()
-                if (orderBy.orderType == OrderType.Ascending) {
-                    when (orderBy.getType()) {
-                        is OrderBy.Title -> todoEntities.sortedBy { it.text.lowercase() }
-                        is OrderBy.Date -> todoEntities.sortedBy { it.dateModified }
-                        is OrderBy.Color -> todoEntities.sortedBy { it.color }
-                        is OrderBy.Completed -> todoEntities.sortedBy { it.isCompleted }
-                    }
-                } else {
-                    when (orderBy.getType()) {
-                        is OrderBy.Title -> todoEntities.sortedByDescending { it.text.lowercase() }
-                        is OrderBy.Date -> todoEntities.sortedByDescending { it.dateModified }
-                        is OrderBy.Color -> todoEntities.sortedByDescending { it.color }
-                        is OrderBy.Completed -> todoEntities.sortedByDescending { it.isCompleted }
-                    }
-                }
-                UiState.Success(todoEntities)
-            }
-        }
-    }
-
-    suspend fun findTodosOrdered(
-        query: String,
-        orderBy: OrderBy,
-    ): UiState<List<TodoEntity>> {
-        return withContext(dispatcher) {
-            handleTryCatch {
-                val todoEntities: List<TodoEntity> = todosDao.find(query)
-                if (orderBy.orderType == OrderType.Ascending) {
-                    when (orderBy.getType()) {
-                        is OrderBy.Title -> todoEntities.sortedBy { it.text.lowercase() }
-                        is OrderBy.Date -> todoEntities.sortedBy { it.dateModified }
-                        is OrderBy.Color -> todoEntities.sortedBy { it.color }
-                        is OrderBy.Completed -> todoEntities.sortedBy { it.isCompleted }
-                    }
-                } else {
-                    when (orderBy.getType()) {
-                        is OrderBy.Title -> todoEntities.sortedByDescending { it.text.lowercase() }
-                        is OrderBy.Date -> todoEntities.sortedByDescending { it.dateModified }
-                        is OrderBy.Color -> todoEntities.sortedByDescending { it.color }
-                        is OrderBy.Completed -> todoEntities.sortedBy { it.isCompleted }
-                    }
-                }
-                UiState.Success(todoEntities)
+        } else {
+            when (orderBy.getType()) {
+                is OrderBy.Title -> todoEntities.sortedByDescending { it.text.lowercase() }
+                is OrderBy.Date -> todoEntities.sortedByDescending { it.dateModified }
+                is OrderBy.Color -> todoEntities.sortedByDescending { it.color }
+                is OrderBy.Completed -> todoEntities.sortedBy { it.isCompleted }
             }
         }
     }

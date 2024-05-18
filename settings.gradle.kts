@@ -20,4 +20,4 @@ dependencyResolutionManagement {
 rootProject.name = "Negarname"
 include(":app")
 include(":Kalendar:kalendar")
-include(":Kalendar:kalendar-endlos")
+// include(":Kalendar:kalendar-endlos")

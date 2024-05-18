@@ -27,10 +27,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,23 +43,12 @@ import com.himanshoe.kalendar.ui.component.day.KalendarDay
 import com.himanshoe.kalendar.ui.component.day.KalendarDayKonfig
 import com.himanshoe.kalendar.ui.component.header.KalendarHeader
 import com.himanshoe.kalendar.ui.component.header.KalendarTextKonfig
-import com.himanshoe.kalendar.ui.oceanic.util.getNext7Dates
-import com.himanshoe.kalendar.ui.oceanic.util.getPrevious7Dates
-import com.himanshoe.kalendar.ui.oceanic.util.isLeapYear
 import com.himanshoe.kalendar.util.MultiplePreviews
 import com.himanshoe.kalendar.util.onDayClicked
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toJavaLocalDate
-import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.datetime.toLocalDate
-import kotlinx.datetime.todayIn
-import java.time.format.TextStyle
-import java.time.temporal.WeekFields
-import java.util.Locale
+import saman.zamani.persiandate.PersianDate
+import timber.log.Timber
 
 
 /**
@@ -79,88 +69,76 @@ import java.util.Locale
  * @param onErrorRangeSelected Callback invoked when an error occurs during range selection.
  */
 @Composable
-internal fun KalendarFirey(
-    currentDay: LocalDate?,
+fun KalendarFirey(
+    currentDay: PersianDate,
+    displayedMonth: Int,
+    displayedYear: Int,
     daySelectionMode: DaySelectionMode,
     modifier: Modifier = Modifier,
     showLabel: Boolean = true,
     kalendarHeaderTextKonfig: KalendarTextKonfig? = null,
     kalendarColors: KalendarColors = KalendarColors.default(),
     events: KalendarEvents = KalendarEvents(),
-    labelFormat: (DayOfWeek) -> String = {
-        it.getDisplayName(
-            TextStyle.SHORT,
-            Locale.getDefault()
-        )
-    },
+    labelFormat: (PersianDate) -> String = { it.grgMonthName },
     kalendarDayKonfig: KalendarDayKonfig = KalendarDayKonfig.default(),
-    dayContent: (@Composable (LocalDate) -> Unit)? = null,
-    headerContent: (@Composable (Month, Int) -> Unit)? = null,
-    onDayClick: (LocalDate, List<KalendarEvent>) -> Unit = { _, _ -> },
+    dayContent: (@Composable (PersianDate) -> Unit)? = null,
+    headerContent: (@Composable (Int, Int) -> Unit)? = null,
+    onDayClick: (PersianDate, List<KalendarEvent>) -> Unit = { _, _ -> },
+    onDayLongClick: (PersianDate, List<KalendarEvent>) -> Unit = { _, _ -> },
     onRangeSelected: (KalendarSelectedDayRange, List<KalendarEvent>) -> Unit = { _, _ -> },
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
     onNextMonthClick: (Int) -> Unit = { },
     onPreviousMonthClick: (Int) -> Unit = { },
-    onDayResetClick: () -> Unit = { }
+    onDayResetClick: (PersianDate) -> Unit = { }
 ) {
-    var today by remember { mutableStateOf(currentDay ?: Clock.System.todayIn(TimeZone.currentSystemDefault())) }
-    val weekValue = remember { mutableStateOf(today.toJavaLocalDate().with(WeekFields.ISO.dayOfWeek(), 1).toKotlinLocalDate().getNext7Dates()) }
+    val today by remember { mutableStateOf(PersianDate()) }
+    val weekValue = remember { mutableStateOf(today.week) }
     val selectedRange = remember { mutableStateOf<KalendarSelectedDayRange?>(null) }
-    val selectedDate = remember { mutableStateOf(today) }
-    val displayedMonth = remember { mutableStateOf(today.month) }
-    val displayedYear = remember { mutableStateOf(today.year) }
-    val currentMonth = displayedMonth.value
-    val currentYear = displayedYear.value
-    val currentMonthIndex = currentMonth.value.minus(1)
+    val headerColorIndex = remember { derivedStateOf { displayedMonth - 1 } }
 
-    val defaultHeaderColor = KalendarTextKonfig.default(
-        color = kalendarColors.color[currentMonthIndex].headerTextColor,
-    )
-    val newHeaderTextKonfig = kalendarHeaderTextKonfig ?: defaultHeaderColor
+    val defaultHeaderColor = remember { derivedStateOf {
+        KalendarTextKonfig.default(
+            color = kalendarColors.color[headerColorIndex.value].headerTextColor,
+        )
+    } }
+    val newHeaderTextKonfig = kalendarHeaderTextKonfig ?: defaultHeaderColor.value
 
-    val daysInMonth = currentMonth.length(currentYear.isLeapYear())
-    val monthValue = currentMonth.value.toString().padStart(2, '0')
-    val startDayOfMonth = "$currentYear-$monthValue-01".toLocalDate()
-    val firstDayOfMonth = startDayOfMonth.dayOfWeek
+    val startDayOfMonth = remember { mutableStateOf(PersianDate().initGrgDate(displayedYear, displayedMonth, 1)) }
+    val daysInMonth = remember { mutableIntStateOf(PersianDate().initJalaliDate(displayedYear, displayedMonth, 1).grgMonthLength) }
+    val daysIterator = remember { mutableStateOf((getFirstDayOfMonth(startDayOfMonth.value.grgDay)..daysInMonth.intValue).toList()) }
 
-    LaunchedEffect(currentDay) {
-        today = currentDay ?: Clock.System.todayIn(TimeZone.currentSystemDefault())
-        displayedMonth.value = today.month
-        displayedYear.value = today.year
-        selectedDate.value = today
+    LaunchedEffect(displayedMonth, displayedYear) {
+        startDayOfMonth.value = PersianDate().initGrgDate(displayedYear, displayedMonth, 1)
+        daysInMonth.intValue = startDayOfMonth.value.grgMonthLength
+        daysIterator.value = (getFirstDayOfMonth(startDayOfMonth.value.dayOfWeek())..daysInMonth.intValue).toList()
+        Timber.tag("KalendarFirey").i("Number of Days: %s", daysInMonth.intValue)
+        Timber.tag("KalendarFirey").i("Days: %s", daysIterator.value)
     }
 
     Column(
         modifier = modifier
             .background(
-                color = kalendarColors.color[currentMonthIndex].backgroundColor
+                color = kalendarColors.color[headerColorIndex.value].backgroundColor
             )
             .wrapContentHeight()
             .fillMaxWidth()
             .padding(all = 8.dp)
     ) {
         if (headerContent != null) {
-            headerContent(currentMonth, currentYear)
+            headerContent(displayedMonth, displayedYear)
         } else {
             KalendarHeader(
-                month = currentMonth,
-                year = currentYear,
+                month = displayedMonth,
+                year = displayedYear,
                 kalendarTextKonfig = newHeaderTextKonfig,
                 onPreviousClick = {
-                    displayedYear.value -= if (currentMonth == Month.JANUARY) 1 else 0
-                    displayedMonth.value -= 1
-                    onPreviousMonthClick(displayedMonth.value.value)
+                    onPreviousMonthClick(displayedMonth)
                 },
                 onNextClick = {
-                    displayedYear.value += if (currentMonth == Month.DECEMBER) 1 else 0
-                    displayedMonth.value += 1
-                    onNextMonthClick(displayedMonth.value.value)
+                    onNextMonthClick(displayedMonth)
                 },
                 onDayReset = {
-                    displayedMonth.value = today.month
-                    displayedYear.value = today.year
-                    selectedDate.value = today
-                    onDayResetClick()
+                    onDayResetClick(PersianDate())
                 }
             )
         }
@@ -175,23 +153,24 @@ internal fun KalendarFirey(
                             modifier = Modifier,
                             color = MaterialTheme.colorScheme.tertiary,
                             fontSize = kalendarDayKonfig.textSize,
-                            text = labelFormat(item.dayOfWeek),
+                            text = item.dayEnglishName().slice(IntRange(0, 1)),
                             fontWeight = FontWeight.SemiBold,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
 
-                items((getFirstDayOfMonth(firstDayOfMonth)..daysInMonth).toList()) {
-                    if (it > 0) {
-                        val day = calculateDay(it, currentMonth, currentYear)
+                items(daysIterator.value) {
+                    val maxDays = PersianDate().initGrgDate(displayedYear, displayedMonth, 1).grgMonthLength
+                    if (it in 1..maxDays) {
+                        val day = PersianDate().initGrgDate(displayedYear, displayedMonth, it)
                         if (dayContent != null) {
                             dayContent(day)
                         } else {
                             KalendarDay(
                                 date = day,
-                                selectedDate = selectedDate.value,
-                                kalendarColors = kalendarColors.color[currentMonthIndex],
+                                selectedDate = currentDay,
+                                kalendarColors = kalendarColors.color[headerColorIndex.value],
                                 kalendarEvents = events,
                                 kalendarDayKonfig = kalendarDayKonfig,
                                 selectedRange = selectedRange.value,
@@ -209,7 +188,6 @@ internal fun KalendarFirey(
                                             }
                                         },
                                         onDayClick = { newDate, clickedDateEvent ->
-                                            selectedDate.value = newDate
                                             onDayClick(newDate, clickedDateEvent)
                                         }
                                     )
@@ -229,7 +207,7 @@ internal fun KalendarFirey(
  * @param firstDayOfMonth The first day of the month.
  * @return The offset value representing the first day of the month.
  */
-private fun getFirstDayOfMonth(firstDayOfMonth: DayOfWeek) = -(firstDayOfMonth.value).minus(2)
+private fun getFirstDayOfMonth(firstDayOfMonth: Int) = -(firstDayOfMonth).minus(1)
 
 /**
  * Calculates a LocalDate object based on the provided day, current month, and current year.
@@ -239,8 +217,8 @@ private fun getFirstDayOfMonth(firstDayOfMonth: DayOfWeek) = -(firstDayOfMonth.v
  * @param currentYear The current year.
  * @return The LocalDate object representing the specified day, month, and year.
  */
-private fun calculateDay(day: Int, currentMonth: Month, currentYear: Int): LocalDate {
-    val monthValue = currentMonth.value.toString().padStart(2, '0')
+private fun calculateDay(day: Int, currentMonth: Int, currentYear: Int): LocalDate {
+    val monthValue = currentMonth.toString().padStart(2, '0')
     val dayValue = day.toString().padStart(2, '0')
     return "$currentYear-$monthValue-$dayValue".toLocalDate()
 }
@@ -249,10 +227,10 @@ private fun calculateDay(day: Int, currentMonth: Month, currentYear: Int): Local
 @MultiplePreviews
 private fun KalendarFireyPreview() {
     KalendarFirey(
-        currentDay = Clock.System.todayIn(
-            TimeZone.currentSystemDefault()
-        ),
+        currentDay = PersianDate(),
+        displayedYear = PersianDate().grgYear,
+        displayedMonth = PersianDate().grgMonth,
         kalendarHeaderTextKonfig = KalendarTextKonfig.previewDefault(),
-        daySelectionMode = DaySelectionMode.Range
+        daySelectionMode = DaySelectionMode.Range,
     )
 }

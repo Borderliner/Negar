@@ -23,9 +23,7 @@ import com.himanshoe.kalendar.ui.firey.DaySelectionMode
 import com.himanshoe.kalendar.ui.firey.KalendarFirey
 import com.himanshoe.kalendar.ui.firey.KalendarSelectedDayRange
 import com.himanshoe.kalendar.ui.firey.RangeSelectionError
-import com.himanshoe.kalendar.ui.oceanic.KalendarOceanic
-import kotlinx.datetime.LocalDate
-import java.time.Month
+import saman.zamani.persiandate.PersianDate
 
 /**
  * Composable function that represents a calendar component.
@@ -46,17 +44,17 @@ import java.time.Month
  */
 @Composable
 fun Kalendar(
-    currentDay: LocalDate?,
+    currentDay: PersianDate,
     kalendarType: KalendarType,
     modifier: Modifier = Modifier,
     showLabel: Boolean = true,
     kalendarHeaderTextKonfig: KalendarTextKonfig? = null,
     kalendarColors: KalendarColors = KalendarColors.default(),
     kalendarDayKonfig: KalendarDayKonfig = KalendarDayKonfig.default(),
-    dayContent: (@Composable (LocalDate) -> Unit)? = null,
+    dayContent: (@Composable (PersianDate) -> Unit)? = null,
     daySelectionMode: DaySelectionMode = DaySelectionMode.Single,
-    headerContent: (@Composable (Month, Int) -> Unit)? = null,
-    onDayClick: (LocalDate, List<KalendarEvent>) -> Unit = { _, _ -> },
+    headerContent: (@Composable (Int, Int) -> Unit)? = null,
+    onDayClick: (PersianDate, List<KalendarEvent>) -> Unit = { _, _ -> },
     onRangeSelected: (KalendarSelectedDayRange, List<KalendarEvent>) -> Unit = { _, _ -> },
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {}
 ) {
@@ -98,7 +96,7 @@ fun Kalendar(
  */
 @Composable
 fun Kalendar(
-    currentDay: LocalDate?,
+    currentDay: PersianDate,
     kalendarType: KalendarType,
     modifier: Modifier = Modifier,
     showLabel: Boolean = true,
@@ -107,37 +105,39 @@ fun Kalendar(
     kalendarColors: KalendarColors = KalendarColors.default(),
     kalendarDayKonfig: KalendarDayKonfig = KalendarDayKonfig.default(),
     daySelectionMode: DaySelectionMode = DaySelectionMode.Single,
-    dayContent: (@Composable (LocalDate) -> Unit)? = null,
-    headerContent: (@Composable (Month, Int) -> Unit)? = null,
-    onDayClick: (LocalDate, List<KalendarEvent>) -> Unit = { _, _ -> },
+    dayContent: (@Composable (PersianDate) -> Unit)? = null,
+    headerContent: (@Composable (Int, Int) -> Unit)? = null,
+    onDayClick: (PersianDate, List<KalendarEvent>) -> Unit = { _, _ -> },
     onRangeSelected: (KalendarSelectedDayRange, List<KalendarEvent>) -> Unit = { _, _ -> },
     onErrorRangeSelected: (RangeSelectionError) -> Unit = {},
     onNextMonthClick: (Int) -> Unit = { },
     onPreviousMonthClick: (Int) -> Unit = { },
-    onDayResetClick: () -> Unit = { }
+    onDayResetClick: (PersianDate) -> Unit = { }
 ) {
     when (kalendarType) {
-        KalendarType.Oceanic -> {
-            KalendarOceanic(
-                currentDay = currentDay,
-                modifier = modifier,
-                showLabel = showLabel,
-                kalendarHeaderTextKonfig = kalendarHeaderTextKonfig,
-                kalendarColors = kalendarColors,
-                events = events,
-                kalendarDayKonfig = kalendarDayKonfig,
-                onDayClick = onDayClick,
-                dayContent = dayContent,
-                headerContent = headerContent,
-                daySelectionMode = daySelectionMode,
-                onRangeSelected = onRangeSelected,
-                onErrorRangeSelected = onErrorRangeSelected
-            )
-        }
+//        KalendarType.Oceanic -> {
+//            KalendarOceanic(
+//                currentDay = currentDay,
+//                modifier = modifier,
+//                showLabel = showLabel,
+//                kalendarHeaderTextKonfig = kalendarHeaderTextKonfig,
+//                kalendarColors = kalendarColors,
+//                events = events,
+//                kalendarDayKonfig = kalendarDayKonfig,
+//                onDayClick = onDayClick,
+//                dayContent = dayContent,
+//                headerContent = headerContent,
+//                daySelectionMode = daySelectionMode,
+//                onRangeSelected = onRangeSelected,
+//                onErrorRangeSelected = onErrorRangeSelected
+//            )
+//        }
 
         KalendarType.Firey -> {
             KalendarFirey(
                 currentDay = currentDay,
+                displayedYear = currentDay.grgYear,
+                displayedMonth = currentDay.grgMonth,
                 modifier = modifier,
                 showLabel = showLabel,
                 kalendarHeaderTextKonfig = kalendarHeaderTextKonfig,
@@ -155,5 +155,7 @@ fun Kalendar(
                 onDayResetClick = onDayResetClick
             )
         }
+
+        KalendarType.Oceanic -> TODO()
     }
 }

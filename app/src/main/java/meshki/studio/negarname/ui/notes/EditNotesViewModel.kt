@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -105,16 +106,16 @@ class EditNotesViewModel(
             if (noteId > 0) {
                 Timber.tag("EditViewModel").i("BEGIN")
                 viewModelScope.launch {
-                    notesRepository.getNoteById(noteId).data?.collectLatest { note ->
+                    notesRepository.getNoteById(noteId).collectLatest { note ->
                         Timber.tag("EditViewModel").i("$note")
                         _noteEntityState.value = note
                         isTitleHintVisible = note.title.isEmpty()
                         isTextHintVisible = note.title.isEmpty()
-                        notesRepository.getNoteAlarmsById(note.id).data?.collectLatest { noteAlarms ->
+                        notesRepository.getNoteAlarmsById(note.id).collectLatest { noteAlarms ->
                             alarmEntities.addAll(noteAlarms)
                             Timber.tag("EditViewModel").i("Alarms added: $noteAlarms")
                             recorder.value.setPath(note.id.toString())
-                            readVoiceToState("records/${note.id}.aac", this.coroutineContext).data?.collectLatest {
+                            readVoiceToState("records/${note.id}.aac").collectLatest {
                                 Timber.tag("EditViewModel").i("Voice added: $it")
                                 setVoiceState(it)
                             }
@@ -125,9 +126,9 @@ class EditNotesViewModel(
         }
     }
 
-    suspend fun getAlarms(): Flow<List<AlarmEntity>> {
+    fun getAlarms(): Flow<List<AlarmEntity>> {
         return try {
-            notesRepository.getNoteAlarms(noteEntityState.value).data!!
+            notesRepository.getNoteAlarms(noteEntityState.value)
         } catch (e: Exception) {
             Timber.tag("EditViewModel:Alarms").e(e)
             return emptyFlow()
@@ -153,9 +154,8 @@ class EditNotesViewModel(
         )
     }
 
-    suspend fun readVoiceToState(path: String, coroutineContext: CoroutineContext): UiState<Flow<VoiceState>> {
-        return withContext(coroutineContext) {
-            handleTryCatch {
+    suspend fun readVoiceToState(path: String): Flow<VoiceState> {
+        return withContext(Dispatchers.IO) {
                 val duration = VoiceRecorder.getAudioFileDuration(
                     path,
                     ctx.get()!!
@@ -169,18 +169,17 @@ class EditNotesViewModel(
                     .amplitudesAsList()
 
                 if (duration > 0 && amps.size > 0) {
-                    UiState.Success(flow {
+                    flow {
                         emit(
                             VoiceState(
                                 duration,
                                 amps
                             )
                         )
-                    })
+                    }
                 } else {
-                    UiState.Success(emptyFlow())
+                    emptyFlow()
                 }
-            }
         }
     }
 
@@ -287,12 +286,12 @@ class EditNotesViewModel(
                                         critical = event.alarmData.critical
                                     )
 
-                                    val idx: Long? =
-                                        notesRepository.addAlarm(noteEntityState.value.id, alarmEntity).data
+                                    val idx: Long =
+                                        notesRepository.addAlarm(noteEntityState.value.id, alarmEntity)
                                     Timber.tag("EditNotesViewModel")
                                         .i("Alarm set: ${cal.get(Calendar.DAY_OF_WEEK)}")
 
-                                    if (idx != null && idx > 0) {
+                                    if (idx > 0) {
                                         val alarmData = event.alarmData.copy(
                                             id = idx,
                                             time = cal.timeInMillis
@@ -308,9 +307,9 @@ class EditNotesViewModel(
                                 text = event.alarmData.text,
                                 critical = event.alarmData.critical
                             )
-                            val idx: Long? =
-                                notesRepository.addAlarm(noteEntityState.value.id, alarmEntity).data
-                            if (idx != null && idx > 0) {
+                            val idx: Long =
+                                notesRepository.addAlarm(noteEntityState.value.id, alarmEntity)
+                            if (idx > 0) {
                                 val alarmData = event.alarmData.copy(
                                     id = idx,
                                 )

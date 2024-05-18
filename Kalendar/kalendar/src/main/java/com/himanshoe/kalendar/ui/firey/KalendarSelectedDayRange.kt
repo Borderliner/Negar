@@ -16,6 +16,7 @@ package com.himanshoe.kalendar.ui.firey
 
 import androidx.compose.runtime.Immutable
 import kotlinx.datetime.LocalDate
+import saman.zamani.persiandate.PersianDate
 
 /**
  * Data class representing a selected day range in the Kalendar.
@@ -24,8 +25,8 @@ import kotlinx.datetime.LocalDate
  */
 @Immutable
 data class KalendarSelectedDayRange(
-    val start: LocalDate,
-    val end: LocalDate
+    val start: PersianDate,
+    val end: PersianDate
 ) {
     /**
      * Checks if the selected day range is empty (start date is after end date).

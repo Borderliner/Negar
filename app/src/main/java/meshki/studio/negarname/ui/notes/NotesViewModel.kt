@@ -28,8 +28,7 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
         }
     }
 
-    suspend fun onEvent(event: NotesEvent) {
-        println(event)
+    fun onEvent(event: NotesEvent) {
         when (event) {
             is NotesEvent.NotesOrdered -> {
                 if (state.value.orderBy::class == event.orderBy::class &&
@@ -91,25 +90,25 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
         }
     }
 
-    private suspend fun findNotesOrdered(query: String, orderBy: OrderBy) {
+    private fun findNotesOrdered(query: String, orderBy: OrderBy) {
         noteJob?.cancel()
         noteJob = notesRepository.findNotesOrdered(
             query,
             orderBy
-        ).data?.onEach { notes ->
+        ).onEach { notes ->
             state.update {
                 it.copy(noteEntities = notes, orderBy = orderBy)
             }
-        }?.launchIn(viewModelScope)
+        }.launchIn(viewModelScope)
     }
 
-    private suspend fun getNotesOrdered(orderBy: OrderBy) {
+    private fun getNotesOrdered(orderBy: OrderBy) {
         noteJob?.cancel()
-        noteJob = notesRepository.getNotesOrdered(orderBy).data?.onEach { notes ->
+        noteJob = notesRepository.getNotesOrdered(orderBy).onEach { notes ->
             println("Notes ordered: $notes")
             state.update {
                 it.copy(noteEntities = notes, orderBy = orderBy)
             }
-        }?.launchIn(viewModelScope)
+        }.launchIn(viewModelScope)
     }
 }

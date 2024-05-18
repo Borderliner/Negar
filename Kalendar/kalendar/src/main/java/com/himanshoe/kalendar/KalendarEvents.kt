@@ -16,6 +16,7 @@ package com.himanshoe.kalendar
 
 import androidx.compose.runtime.Immutable
 import kotlinx.datetime.LocalDate
+import saman.zamani.persiandate.PersianDate
 
 /**
  * Represents a calendar event.
@@ -26,7 +27,7 @@ import kotlinx.datetime.LocalDate
  */
 @Immutable
 data class KalendarEvent(
-    val date: LocalDate,
+    val date: PersianDate,
     val eventName: String,
     val eventDescription: String? = null
 )
