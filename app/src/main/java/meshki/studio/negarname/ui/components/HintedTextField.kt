@@ -30,6 +30,7 @@ fun HintedTextField(
     isHintVisible: Boolean,
     textStyle: TextStyle = TextStyle(),
     singleLine: Boolean = false,
+    maxLines: Int = 3,
     expanded: Boolean = false,
     onValueChange: (String) -> Unit,
     keyboardOptions: KeyboardOptions,
@@ -53,6 +54,7 @@ fun HintedTextField(
                 value = text,
                 onValueChange = onValueChange,
                 singleLine = singleLine,
+                maxLines = maxLines,
                 textStyle = textStyle.copy(MaterialTheme.colorScheme.onBackground),
                 modifier = if (icon > 0) {
                     mod.padding(top = 4.dp, start = 30.dp)

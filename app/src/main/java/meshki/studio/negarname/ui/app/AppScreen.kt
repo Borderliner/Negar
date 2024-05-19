@@ -332,7 +332,7 @@ fun AppScreen(appState: AppState) {
             ) {
                 Divider(color = Color.Gray.copy(0.4f), thickness = 1.dp)
                 if (appViewModel.isReady) {
-                    AppNavigation(appState)
+                    AppNavigation(appState, appViewModel)
                 } else {
                     Column(
                         modifier = Modifier.fillMaxSize(),

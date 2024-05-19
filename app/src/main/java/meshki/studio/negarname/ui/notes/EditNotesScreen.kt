@@ -64,14 +64,19 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
@@ -80,6 +85,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -94,9 +101,11 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.consumeDownChange
 import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.gson.Gson
 import com.linc.audiowaveform.AudioWaveform
 import com.linc.audiowaveform.infiniteLinearGradient
@@ -134,6 +143,7 @@ import meshki.studio.negarname.ui.util.dragMotionEvent
 import meshki.studio.negarname.ui.app.AppViewModel
 import meshki.studio.negarname.ui.notes.entities.EditNotesEvent
 import meshki.studio.negarname.ui.notes.entities.NoteEntity
+import meshki.studio.negarname.ui.notes.entities.NoteTextFieldState
 import meshki.studio.negarname.ui.notes.vm.EditNotesViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -142,8 +152,7 @@ import java.text.NumberFormat
 import java.util.Calendar
 
 @Composable
-fun EditNotesScreen(color: Int, appState: AppState) {
-    val appViewModel = koinInject<AppViewModel>()
+fun EditNotesScreen(color: Int, appState: AppState, appViewModel: AppViewModel) {
     appViewModel.setBottomBarVisible(false)
     val viewModel = koinViewModel<EditNotesViewModel>()
 
@@ -156,17 +165,17 @@ fun EditNotesScreen(color: Int, appState: AppState) {
     }
     if (appViewModel.isRtl) {
         LeftToRightLayout {
-            EditNotesScreenScaffold(viewModel, appState) {
+            EditNotesScreenScaffold(viewModel, appState, appViewModel) {
                 RightToLeftLayout {
-                    EditNotesScreenMain(viewModel, appState)
+                    EditNotesScreenMain(viewModel, appState, appViewModel)
                 }
             }
         }
     } else {
         RightToLeftLayout {
-            EditNotesScreenScaffold(viewModel, appState) {
+            EditNotesScreenScaffold(viewModel, appState, appViewModel) {
                 LeftToRightLayout {
-                    EditNotesScreenMain(viewModel, appState)
+                    EditNotesScreenMain(viewModel, appState, appViewModel)
                 }
             }
         }
@@ -178,10 +187,10 @@ fun EditNotesScreen(color: Int, appState: AppState) {
 fun EditNotesScreenScaffold(
     viewModel: EditNotesViewModel,
     appState: AppState,
+    appViewModel: AppViewModel,
     content: @Composable () -> Unit
 ) {
     val snackbar = remember { SnackbarHostState() }
-    val appViewModel = koinInject<AppViewModel>()
     Scaffold(
         containerColor = Color.Transparent,
         snackbarHost = {
@@ -225,7 +234,8 @@ fun EditNotesScreenScaffold(
 @Composable
 fun EditNotesScreenMain(
     viewModel: EditNotesViewModel,
-    appState: AppState
+    appState: AppState,
+    appViewModel: AppViewModel
 ) {
     val scope = rememberCoroutineScope()
     val noteState = viewModel.noteEntityState
@@ -241,6 +251,9 @@ fun EditNotesScreenMain(
     val drawingTool = remember { mutableStateOf(Tool("drawing")) }
     val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
     val ctx = LocalContext.current
+
+    val titleState = viewModel.noteTitleState
+    val textState = viewModel.noteTextState
 
     suspend fun openTool(tool: MutableState<Tool>, delay: Int = 0) {
         tool.value.visibility.value = true
@@ -258,36 +271,8 @@ fun EditNotesScreenMain(
         )
     }
 
-//    LaunchedEffect(
-//        colorTool.value.visibility.value,
-//        recorderTool.value.visibility.value,
-//        alarmTool.value.visibility.value
-//    ) {
-//        if (colorTool.value.visibility.value) {
-//            offsetAnimation.value.animateTo(
-//                80f,
-//                tween(280, 0, easing = FastOutSlowInEasing)
-//            )
-//        } else if (recorderTool.value.visibility.value) {
-//            offsetAnimation.value.animateTo(
-//                110f,
-//                tween(280, 0, easing = FastOutSlowInEasing)
-//            )
-//        } else if (alarmTool.value.visibility.value) {
-//            offsetAnimation.value.animateTo(
-//                240f,
-//                tween(280, 0, easing = FastOutSlowInEasing)
-//            )
-//        } else {
-//            offsetAnimation.value.animateTo(
-//                offsetAnimation.value.lowerBound ?: 0f,
-//                tween(300, 200, easing = FastOutSlowInEasing)
-//            )
-//        }
-//    }
-
     BackPressHandler {
-        if ((noteState.value.title.isNotEmpty() || noteState.value.text.isNotEmpty()) && viewModel.isNoteModified.value) {
+        if ((titleState.value.text.isNotEmpty() || textState.value.text.isNotEmpty()) && viewModel.isNoteModified.value) {
             workInProgressAlertVisible = true
         } else {
             appState.navController.navigateUp()
@@ -295,78 +280,41 @@ fun EditNotesScreenMain(
     }
 
     if (workInProgressAlertVisible) {
-        AlertDialog(
-            icon = {
-                Icon(
-                    Icons.Filled.Warning,
-                    contentDescription = stringResource(R.string.warning)
-                )
-            },
-
-            title = {
-                Text(
-                    text = stringResource(R.string.incomplete_note_title),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    style = MaterialTheme.typography.titleLarge,
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.incomplete_note_text),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            },
+        IncompleteNoteAlert(
             onDismissRequest = { workInProgressAlertVisible = false },
-            confirmButton = {
-                TextButton(
-                    modifier = Modifier.padding(horizontal = 2.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PastelGreen,
-                        contentColor = Color.Black
-                    ),
-                    onClick = {
-                        workInProgressAlertVisible = false
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.continue_job),
-                        fontSize = 14.sp,
-                        color = Color.Black
-                    )
-                }
+            onCancel = {
+                workInProgressAlertVisible = false
+                appState.navController.navigateUp()
             },
-            dismissButton = {
-                TextButton(
-                    modifier = Modifier.padding(horizontal = 2.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PastelRed,
-                        contentColor = Color.Black
-                    ),
-                    onClick = {
-                        workInProgressAlertVisible = false
-                        appState.navController.navigateUp()
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.return_job),
-                        fontSize = 14.sp,
-                        color = Color.Black
-                    )
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.background,
-            textContentColor = MaterialTheme.colorScheme.onBackground
+            onConfirm = {
+                workInProgressAlertVisible = false
+            }
         )
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(
+                Color(noteState.value.color)
+                    .copy(
+                        alpha =
+                        if (
+                            (appViewModel.theme == "system" && isSystemInDarkTheme()) || appViewModel.theme == "dark"
+                        ) 0.125f
+                        else 0.25f
+                    )
+            )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 12.dp),
+                .padding(
+                    top = 16.dp,
+                    end = 12.dp,
+                    bottom = 0.dp,
+                    start = 12.dp
+                ),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -377,7 +325,7 @@ fun EditNotesScreenMain(
                     .clip(CircleShape)
                     .background(Color(noteState.value.color))
                     .clickable {
-                        appState.coroutineScope.launch {
+                        scope.launch {
                             if (!colorTool.value.visibility.value) {
                                 closeTool(recorderTool)
                                 closeTool(alarmTool)
@@ -417,7 +365,7 @@ fun EditNotesScreenMain(
                         }
                     )
                     .clickable {
-                        appState.coroutineScope.launch {
+                        scope.launch {
                             if (!alarmTool.value.visibility.value) {
                                 closeTool(colorTool)
                                 closeTool(recorderTool)
@@ -459,7 +407,7 @@ fun EditNotesScreenMain(
                         }
                     )
                     .clickable {
-                        appState.coroutineScope.launch {
+                        scope.launch {
                             if (!recorderTool.value.visibility.value) {
                                 closeTool(colorTool)
                                 closeTool(alarmTool)
@@ -499,7 +447,7 @@ fun EditNotesScreenMain(
                         }
                     )
                     .clickable {
-                        appState.coroutineScope.launch {
+                        scope.launch {
                             if (!drawingTool.value.visibility.value) {
                                 closeTool(colorTool)
                                 closeTool(alarmTool)
@@ -531,19 +479,13 @@ fun EditNotesScreenMain(
 
         Column(
             modifier = Modifier
-                .padding(8.dp)
+                .padding(horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
             //.offset(0.dp, offsetAnimation.value.value.dp)
         ) {
             HintedTextField(
-                modifier = Modifier
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.onBackground.copy(0.6f),
-                        RoundedShapes.large
-                    )
-                    .padding(8.dp)
-                    .padding(bottom = 4.dp),
-                text = noteState.value.title,
+                modifier = Modifier.padding(8.dp),
+                text = titleState.value.text,
                 hint = stringResource(R.string.title),
                 color = Color(noteState.value.color),
                 hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
@@ -557,15 +499,23 @@ fun EditNotesScreenMain(
                         viewModel.onEvent(EditNotesEvent.TitleFocusChanged(it))
                     }
                 },
-                isHintVisible = viewModel.noteTitleState.value.isHintVisible,
-                singleLine = true,
+                isHintVisible = titleState.value.isHintVisible,
+                singleLine = false,
+                maxLines = 3,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
                 ),
-                textStyle = MaterialTheme.typography.titleSmall.copy(MaterialTheme.colorScheme.onBackground)
+                textStyle = MaterialTheme.typography.titleLarge.copy(MaterialTheme.colorScheme.onBackground)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+
+            Divider (
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier
+                    .height(1.dp)
+                    .fillMaxWidth(0.97f)
+            )
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
 
 //            RichTextEditor(
 //                state = contentState,
@@ -589,7 +539,7 @@ fun EditNotesScreenMain(
                     .fillMaxSize()
                     .defaultMinSize(minHeight = 100.dp)
                     .padding(horizontal = 8.dp),
-                text = noteState.value.text,
+                text = textState.value.text,
                 hint = stringResource(R.string.note_text_hint),
                 color = Color(noteState.value.color),
                 hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
@@ -605,12 +555,13 @@ fun EditNotesScreenMain(
                 },
                 expanded = true,
                 singleLine = false,
-                isHintVisible = viewModel.noteTextState.value.isHintVisible,
+                maxLines = Int.MAX_VALUE,
+                isHintVisible = textState.value.isHintVisible,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.None
                 ),
-                textStyle = MaterialTheme.typography.bodyMedium.copy(MaterialTheme.colorScheme.onBackground),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(MaterialTheme.colorScheme.onBackground),
             )
         }
     }
@@ -628,7 +579,7 @@ fun EditNotesScreenMain(
             color = MaterialTheme.colorScheme.secondaryContainer,
         ) {
             LaunchedEffect(noteState.value.color) {
-                appState.coroutineScope.launch {
+                scope.launch {
                     delay(500)
                     if (noteState.value.color != 0) {
                         colorPaletteState.animateScrollToItem(noteEntityColorsArgb.indexOf(noteState.value.color))
@@ -716,7 +667,8 @@ fun EditNotesScreenMain(
                 ) {
                     val formatter = NumberFormat.getInstance()
                     Text(
-                        fontSize = 22.sp,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        fontSize = 28.sp,
                         text = "${
                             if (viewModel.voiceState.value.duration / 1000 / 60 < 10) formatter.format(
                                 0
@@ -783,7 +735,8 @@ fun EditNotesScreenMain(
                             AlertDialog(
                                 icon = {
                                     Icon(
-                                        Icons.Filled.Warning,
+                                        Icons.Filled.ExitToApp,
+                                        modifier = Modifier.size(48.dp),
                                         contentDescription = stringResource(R.string.record)
                                     )
                                 },
@@ -791,7 +744,7 @@ fun EditNotesScreenMain(
                                     Text(text = stringResource(R.string.voice_replace_title), style = MaterialTheme.typography.titleLarge)
                                 },
                                 text = {
-                                    Text(text = stringResource(R.string.voice_replace_text))
+                                    Text(text = stringResource(R.string.voice_replace_text), style = MaterialTheme.typography.bodyLarge)
                                 },
                                 onDismissRequest = {
                                     replaceRecordAlert = false
@@ -799,9 +752,9 @@ fun EditNotesScreenMain(
                                 confirmButton = {
                                     TextButton(
                                         modifier = Modifier.padding(horizontal = 2.dp),
-                                        colors = ButtonDefaults.textButtonColors(
-                                            PastelRed,
-                                            Color.Black
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = PastelRed,
+                                            contentColor = Color.Black
                                         ),
                                         onClick = {
                                             replaceRecordAlert = false
@@ -815,9 +768,9 @@ fun EditNotesScreenMain(
                                 dismissButton = {
                                     TextButton(
                                         modifier = Modifier.padding(horizontal = 2.dp),
-                                        colors = ButtonDefaults.textButtonColors(
-                                            PastelGreen,
-                                            Color.Black
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = PastelGreen,
+                                            contentColor = Color.Black
                                         ),
                                         onClick = {
                                             replaceRecordAlert = false
@@ -833,24 +786,25 @@ fun EditNotesScreenMain(
                             AlertDialog(
                                 icon = {
                                     Icon(
-                                        Icons.Filled.Warning,
+                                        Icons.Filled.Delete,
+                                        modifier = Modifier.size(48.dp),
                                         contentDescription = stringResource(R.string.record)
                                     )
                                 },
                                 title = {
-                                    Text(text = stringResource(R.string.voice_delete_title))
+                                    Text(text = stringResource(R.string.voice_delete_title), style = MaterialTheme.typography.titleLarge)
                                 },
                                 text = {
-                                    Text(text = stringResource(R.string.voice_delete_text))
+                                    Text(text = stringResource(R.string.voice_delete_text), style = MaterialTheme.typography.bodyLarge)
                                 },
                                 onDismissRequest = {
                                     deleteRecordAlert = false
                                 },
                                 confirmButton = {
                                     TextButton(
-                                        colors = ButtonDefaults.textButtonColors(
-                                            MaterialTheme.colorScheme.errorContainer,
-                                            MaterialTheme.colorScheme.error
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = PastelRed,
+                                            contentColor = Color.Black
                                         ),
                                         onClick = {
                                             scope.launch {
@@ -864,9 +818,9 @@ fun EditNotesScreenMain(
                                 },
                                 dismissButton = {
                                     TextButton(
-                                        colors = ButtonDefaults.textButtonColors(
-                                            PastelGreen,
-                                            MaterialTheme.colorScheme.onBackground
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = PastelGreen,
+                                            contentColor = Color.Black
                                         ),
                                         onClick = {
                                             deleteRecordAlert = false
@@ -878,104 +832,115 @@ fun EditNotesScreenMain(
                             )
                         }
 
-                        ElevatedButton(
-                            colors = ButtonDefaults.elevatedButtonColors(
-                                PastelOrange,
-                                Color.Black.copy(0.9f)
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(4.dp),
-                            onClick = { deleteRecordAlert = true }) {
-                            Icon(
-                                painterResource(R.drawable.vec_delete),
-                                //modifier = Modifier.background(Color.Black),
-                                contentDescription = stringResource(R.string.delete),
-                                tint = Color.Black.copy(0.9f)
-                            )
-                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            ElevatedButton(
+                                colors = ButtonDefaults.elevatedButtonColors(
+                                    PastelOrange,
+                                    Color.Black.copy(0.9f)
+                                ),
+                                enabled = viewModel.voiceState.value.duration > 0,
+                                elevation = ButtonDefaults.buttonElevation(4.dp),
+                                onClick = { deleteRecordAlert = true }) {
+                                Icon(
+                                    painterResource(R.drawable.vec_delete),
+                                    //modifier = Modifier.background(Color.Black),
+                                    contentDescription = stringResource(R.string.delete),
+                                    tint = Color.Black.copy(0.9f)
+                                )
+                                Text(
+                                    text = stringResource(R.string.delete)
+                                )
+                            }
 
-                        Spacer(modifier = Modifier.weight(1f))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                ElevatedButton(
+                                    colors = ButtonDefaults.elevatedButtonColors(
+                                        if (isRecording) PastelOrange else PastelRed,
+                                        Color.Black.copy(0.9f)
+                                    ),
+                                    elevation = ButtonDefaults.buttonElevation(4.dp),
+                                    onClick = {
+                                        scope.launch {
+                                            checkPermission(
+                                                ctx,
+                                                Manifest.permission.RECORD_AUDIO,
+                                                voicePermissionLauncher
+                                            ) {
 
-                        ElevatedButton(
-                            colors = ButtonDefaults.elevatedButtonColors(
-                                if (isRecording) PastelOrange else PastelRed,
-                                Color.Black.copy(0.9f)
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(4.dp),
-                            onClick = {
-                                appState.coroutineScope.launch {
-                                    checkPermission(
-                                        ctx,
-                                        Manifest.permission.RECORD_AUDIO,
-                                        voicePermissionLauncher
-                                    ) {
-
-                                        if (!viewModel.recorder.value.isRecording()) {
-                                            if (viewModel.voiceState.value.duration > 0) {
-                                                replaceRecordAlert = true
-                                            } else {
-                                                viewModel.recorder.value.startRecording()
-                                            }
-                                        } else {
-                                            viewModel.recorder.value.stopRecording()
-                                            appState.coroutineScope.launch {
-                                                viewModel.readVoiceToState(
-                                                    "records/${noteState.value.id}.aac"
-                                                ).collectLatest {
-                                                    viewModel.setVoiceState(it)
-                                                    Timber.tag("Edit Screen").i(it.toString())
+                                                if (!viewModel.recorder.value.isRecording()) {
+                                                    if (viewModel.voiceState.value.duration > 0) {
+                                                        replaceRecordAlert = true
+                                                    } else {
+                                                        viewModel.recorder.value.startRecording()
+                                                    }
+                                                } else {
+                                                    viewModel.recorder.value.stopRecording()
+                                                    scope.launch {
+                                                        viewModel.readVoiceToState(
+                                                            "records/${noteState.value.id}.aac"
+                                                        ).collectLatest {
+                                                            viewModel.setVoiceState(it)
+                                                            Timber.tag("Edit Screen").i(it.toString())
+                                                        }
+                                                    }
                                                 }
+
+                                                isRecording = viewModel.recorder.value.isRecording()
                                             }
                                         }
-
-                                        isRecording = viewModel.recorder.value.isRecording()
-                                    }
+                                    }) {
+                                    Icon(
+                                        painterResource(if (isRecording) R.drawable.stop else R.drawable.mic),
+                                        //modifier = Modifier.background(Color.Black),
+                                        contentDescription = "",
+                                        tint = Color.Black.copy(0.9f)
+                                    )
+                                    Text(
+                                        text = if (isRecording) stringResource(R.string.stop) else stringResource(
+                                            R.string.record
+                                        )
+                                    )
                                 }
-                            }) {
-                            Icon(
-                                painterResource(if (isRecording) R.drawable.stop else R.drawable.mic),
-                                //modifier = Modifier.background(Color.Black),
-                                contentDescription = "",
-                                tint = Color.Black.copy(0.9f)
-                            )
-                            Text(
-                                modifier = Modifier.padding(horizontal = 6.dp),
-                                text = if (isRecording) stringResource(R.string.stop) else stringResource(
-                                    R.string.record
-                                )
-                            )
-                        }
 
-                        var isPlaying by remember { mutableStateOf(false) }
-                        ElevatedButton(
-                            colors = ButtonDefaults.elevatedButtonColors(
-                                PastelGreen,
-                                Color.Black.copy(0.9f)
-                            ),
-                            enabled = viewModel.voiceState.value.duration > 0,
-                            elevation = ButtonDefaults.buttonElevation(4.dp),
-                            onClick = {
-                                appState.coroutineScope.launch {
-                                    val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
-                                    if (!recorder.isPlaying()) {
-                                        recorder.startPlaying()
-                                    } else {
-                                        !recorder.stopPlaying()
-                                    }
-                                    isPlaying = recorder.isPlaying()
+                                var isPlaying by remember { mutableStateOf(false) }
+                                ElevatedButton(
+                                    colors = ButtonDefaults.elevatedButtonColors(
+                                        PastelGreen,
+                                        Color.Black.copy(0.9f)
+                                    ),
+                                    enabled = viewModel.voiceState.value.duration > 0,
+                                    elevation = ButtonDefaults.buttonElevation(4.dp),
+                                    onClick = {
+                                        scope.launch {
+                                            val recorder = VoiceRecorder(ctx, noteState.value.id.toString())
+                                            if (!recorder.isPlaying()) {
+                                                recorder.startPlaying()
+                                            } else {
+                                                !recorder.stopPlaying()
+                                            }
+                                            isPlaying = recorder.isPlaying()
+                                        }
+                                    }) {
+                                    Icon(
+                                        painterResource(if (isPlaying) R.drawable.stop else R.drawable.play_arrow),
+                                        //modifier = Modifier.background(Color.Black),
+                                        contentDescription = "",
+                                        tint = Color.Black.copy(0.9f)
+                                    )
+                                    Text(
+                                        text = if (isPlaying) stringResource(R.string.stop) else stringResource(
+                                            R.string.play
+                                        )
+                                    )
                                 }
-                            }) {
-                            Icon(
-                                painterResource(if (isPlaying) R.drawable.stop else R.drawable.play_arrow),
-                                //modifier = Modifier.background(Color.Black),
-                                contentDescription = "",
-                                tint = Color.Black.copy(0.9f)
-                            )
-                            Text(
-                                modifier = Modifier.padding(horizontal = 6.dp),
-                                text = if (isPlaying) stringResource(R.string.stop) else stringResource(
-                                    R.string.play
-                                )
-                            )
+                            }
                         }
                     }
                 }
@@ -1079,23 +1044,28 @@ fun EditNotesScreenMain(
                     AnimatedVisibility(
                         visible = repeating,
                         enter = fadeIn() + slideInVertically(initialOffsetY = {
-                            it / 8
+                            -it / 8
                         }),
                         exit = fadeOut() + slideOutVertically(targetOffsetY = {
-                            it / 8
+                            -it / 8
                         }),
                     ) {
                         Row(
                             modifier = Modifier.padding(top = 5.dp),
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
+                            val sliceRange = remember {
+                                if (appViewModel.isRtl) mutableStateOf(IntRange(0, 0))
+                                else mutableStateOf(IntRange(0, 2))
+                            }
+
                             week.list.forEachIndexed { idx, item ->
                                 var checked by remember { mutableStateOf(week.list[idx].value) }
                                 Column(
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Text(item.name)
+                                    Text(item.name.slice(sliceRange.value))
                                     //Text(DateFormatSymbols().getDayOfWeek(firstDayOfWeekIndex % 6))
                                     Checkbox(
                                         checked = checked,
@@ -1274,11 +1244,14 @@ fun EditNotesScreenMain(
                     var currentPath by remember { mutableStateOf(CustomPath()) }
                     var currentPathProperty by remember { mutableStateOf(PathProperties()) }
 
+                    val configuration = LocalConfiguration.current
+                    val screenHeight = configuration.screenHeightDp.dp
+
                     val drawModifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp)
                         .shadow(1.dp)
-                        .height(375.dp)
+                        .height(screenHeight / 1.9f)
                         .clipToBounds()
                         .background(Color.White)
                         .dragMotionEvent(
@@ -1432,10 +1405,11 @@ fun EditNotesScreenMain(
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
-                                appState.coroutineScope.launch {
+                                scope.launch {
                                     val serialized = Gson().toJson(paths.toList())
                                     println("PATH: $serialized")
                                     viewModel.onEvent(EditNotesEvent.DrawingSaved(serialized))
+                                    closeTool(drawingTool)
                                 }
                             }) {
                             Icon(
@@ -1455,7 +1429,7 @@ fun EditNotesScreenMain(
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
-                                appState.coroutineScope.launch {
+                                scope.launch {
                                     if (paths.isNotEmpty()) {
                                         paths.clear()
                                         viewModel.onEvent(EditNotesEvent.DrawingRemoved)
@@ -1477,7 +1451,7 @@ fun EditNotesScreenMain(
                             ),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                             onClick = {
-                                appState.coroutineScope.launch {
+                                scope.launch {
                                     if (paths.isNotEmpty()) {
 
                                         val lastItem = paths.last()

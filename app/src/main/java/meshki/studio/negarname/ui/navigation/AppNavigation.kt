@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import meshki.studio.negarname.ui.app.AppState
+import meshki.studio.negarname.ui.app.AppViewModel
 
 import meshki.studio.negarname.ui.calendar.CalendarScreen
 import meshki.studio.negarname.ui.notes.EditNotesScreen
@@ -17,7 +18,7 @@ import meshki.studio.negarname.ui.settings.SettingsScreen
 import meshki.studio.negarname.ui.todos.TodosScreen
 
 @Composable
-fun AppNavigation(appState: AppState) {
+fun AppNavigation(appState: AppState, appViewModel: AppViewModel) {
     val navigationSpeed = 450
     val pageSpeed = 300
 
@@ -157,7 +158,7 @@ fun AppNavigation(appState: AppState) {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(pageSpeed))
             }
         ) { nav ->
-            EditNotesScreen(color = nav.arguments?.getInt("color") ?: -1, appState)
+            EditNotesScreen(color = nav.arguments?.getInt("color") ?: -1, appState, appViewModel)
         }
 
         composable(

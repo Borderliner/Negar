@@ -46,7 +46,7 @@
     <string name="note_pinned">یادداشت سوزن شد.</string>
     <string name="duration">مدت</string>
     <string name="voice_delete_title">حذف صدا؟</string>
-    <string name="voice_replace_title">صدا وجود دارد</string>
+    <string name="voice_replace_title">جایگزین کردن صدا؟</string>
     <string name="voice_replace_text">آیا می‌خواهید که ضبط قبلی را حذف کرده و دوباره ضبط کنید؟ این کار بازگشت پذیر نیست!</string>
     <string name="no">خیر</string>
     <string name="yes">بله</string>
@@ -60,7 +60,7 @@
     <string name="off">خاموش</string>
     <string name="pro_version">نسخه حرفه‌ای</string>
     <string name="incomplete_note_title">یادداشتِ ناقص</string>
-    <string name="incomplete_note_text">یادداشت شما ناقص مانده است. آیا واقعا می‌خواهید یادداشت را فراموش کرده و بازگردید؟</string>
+    <string name="incomplete_note_text">یادداشت شما ناقص مانده است. آیا واقعا می‌خواهید یادداشت را فراموش کرده و به صفحه اصلی بازگردید؟</string>
     <string name="continue_job">ادامه</string>
     <string name="return_job">بازگشت</string>
     <string name="warning">اخطار</string>

@@ -11,7 +11,7 @@
     <string name="save">Save</string>
     <string name="title">Title</string>
     <string name="delete">Delete</string>
-    <string name="note_text_hint">Your text...</string>
+    <string name="note_text_hint">Your note goes here…</string>
     <string name="date">Date</string>
     <string name="color">Color</string>
     <string name="ascending">Ascending</string>
@@ -44,8 +44,8 @@
     <string name="restore">Restore?</string>
     <string name="note_pinned">Note pinned.</string>
     <string name="duration">Duration</string>
-    <string name="voice_replace_title">Voice exists</string>
-    <string name="voice_replace_text">Are you sure you want to replace your old voice? This cannot be undone!</string>
+    <string name="voice_replace_title">Replace voice?</string>
+    <string name="voice_replace_text">A recording already exists. Are you sure you want to replace your old voice? This cannot be undone!</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="voice_delete_title">Delete voice?</string>

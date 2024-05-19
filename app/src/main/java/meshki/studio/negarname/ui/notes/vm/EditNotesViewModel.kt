@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -12,10 +13,13 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import linc.com.amplituda.Amplituda
@@ -45,25 +49,25 @@ class EditNotesViewModel(
     savedStateHandle: SavedStateHandle,
     context: Context
 ) : ViewModel() {
+    private val ctx = WeakReference(context)
+
     private val _noteEntityState = mutableStateOf(
         NoteEntity(color = NoteEntity.colors.random().toArgb(), title = "", text = "", drawing = "", voice = "")
     )
     val noteEntityState: State<NoteEntity> = _noteEntityState
 
-    val _noteTitleState = mutableStateOf(NoteTextFieldState(_noteEntityState.value.title, context.getString(R.string.title)))
+    val _noteTitleState = mutableStateOf(NoteTextFieldState(hint = ctx.get()!!.getString(R.string.title)))
     val noteTitleState: State<NoteTextFieldState> = _noteTitleState
 
-    val _noteTextState = mutableStateOf(NoteTextFieldState(_noteEntityState.value.text, context.getString(R.string.note_text_hint)))
+    val _noteTextState = mutableStateOf(NoteTextFieldState(hint = ctx.get()!!.getString(R.string.note_text_hint)))
     val noteTextState: State<NoteTextFieldState> = _noteTextState
+
+    private val _isNoteModified = mutableStateOf(false)
+    val isNoteModified: State<Boolean> = _isNoteModified
 
     val alarmEntities = mutableStateListOf<AlarmEntity>()
     private val _voiceState = mutableStateOf(VoiceState())
     val voiceState: State<VoiceState> = _voiceState
-
-    private val ctx = WeakReference(context)
-
-    private val _isNoteModified = mutableStateOf(false)
-    var isNoteModified: State<Boolean> = _isNoteModified
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -95,15 +99,14 @@ class EditNotesViewModel(
                             text = note.text,
                             isHintVisible = false
                         )
-                        viewModelScope.launch {
-                            notesRepository.getNoteAlarmsById(note.id).collectLatest { noteAlarms ->
-                                alarmEntities.addAll(noteAlarms)
-                                Timber.tag("EditViewModel").i("Alarms added: $noteAlarms")
-                                recorder.value.setPath(note.id.toString())
-                                readVoiceToState("records/${note.id}.aac").collectLatest {
-                                    Timber.tag("EditViewModel").i("Voice added: $it")
-                                    setVoiceState(it)
-                                }
+
+                        notesRepository.getNoteAlarmsById(note.id).collectLatest { noteAlarms ->
+                            alarmEntities.addAll(noteAlarms)
+                            Timber.tag("EditViewModel").i("Alarms added: $noteAlarms")
+                            recorder.value.setPath(note.id.toString())
+                            readVoiceToState("records/${note.id}.aac").collectLatest {
+                                Timber.tag("EditViewModel").i("Voice added: $it")
+                                setVoiceState(it)
                             }
                         }
                     }
@@ -204,26 +207,42 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.TitleEntered -> {
-                _noteEntityState.value = _noteEntityState.value.copy(
-                    title = event.value
-                )
+                if (event.value.isNotEmpty()) {
+                    _noteTitleState.value = _noteTitleState.value.copy(
+                        text = event.value,
+                        isHintVisible = false
+                    )
+                } else {
+                    _noteTitleState.value = _noteTitleState.value.copy(
+                        text = "",
+                        isHintVisible = true
+                    )
+                }
             }
 
             is EditNotesEvent.TitleFocusChanged -> {
-                _noteTitleState.value = noteTitleState.value.copy(
-                    isHintVisible = !event.focusState.isFocused && noteTitleState.value.text.isBlank()
+                _noteTitleState.value = _noteTitleState.value.copy(
+                    isHintVisible = !event.focusState.isFocused && _noteTitleState.value.text.isBlank()
                 )
             }
 
             is EditNotesEvent.TextEntered -> {
-                _noteEntityState.value = _noteEntityState.value.copy(
-                    text = event.value
-                )
+                if (event.value.isNotEmpty()) {
+                    _noteTextState.value = _noteTextState.value.copy(
+                        text = event.value,
+                        isHintVisible = false
+                    )
+                } else {
+                    _noteTextState.value = _noteTextState.value.copy(
+                        text = "",
+                        isHintVisible = true
+                    )
+                }
             }
 
             is EditNotesEvent.TextFocusChanged -> {
-                _noteTextState.value = noteTextState.value.copy(
-                    isHintVisible = !event.focusState.isFocused && noteTextState.value.text.isBlank()
+                _noteTextState.value = _noteTextState.value.copy(
+                    isHintVisible = !event.focusState.isFocused && _noteTextState.value.text.isBlank()
                 )
             }
 
@@ -234,7 +253,7 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.NoteSaved -> {
-                viewModelScope.launch(coroutineContext) {
+                viewModelScope.launch {
                     try {
                         notesRepository.addNote(
                             NoteEntity(
@@ -260,7 +279,7 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.SetAlarm -> {
-                viewModelScope.launch(coroutineContext) {
+                viewModelScope.launch {
                     try {
                         val week = event.alarmData.week
                         var result = true
