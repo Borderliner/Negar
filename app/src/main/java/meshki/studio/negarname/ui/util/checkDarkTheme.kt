@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun isDarkTheme(theme: String): Boolean {
-    return theme == "dark" || (theme == "system") && isSystemInDarkTheme()
+    return theme == "dark" || ((theme == "system") && isSystemInDarkTheme())
 }

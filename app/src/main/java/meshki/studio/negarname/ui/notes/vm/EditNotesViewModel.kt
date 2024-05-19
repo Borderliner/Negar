@@ -41,13 +41,13 @@ import java.lang.ref.WeakReference
 import java.util.Calendar
 import java.util.Date
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 class EditNotesViewModel(
     private val notesRepository: NotesRepository,
     val alarmService: AlarmManager?,
     savedStateHandle: SavedStateHandle,
-    context: Context
+    context: Context,
+    private val coroutineContext: CoroutineContext = Dispatchers.IO,
 ) : ViewModel() {
     private val ctx = WeakReference(context)
 
@@ -253,20 +253,21 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.NoteSaved -> {
-                viewModelScope.launch {
+                viewModelScope.launch(coroutineContext) {
                     try {
                         notesRepository.addNote(
                             NoteEntity(
                                 id = if (noteEntityState.value.id >= 0) noteEntityState.value.id else 0,
                                 color = noteEntityState.value.color,
-                                title = noteEntityState.value.title,
-                                text = noteEntityState.value.text,
+                                title = noteTitleState.value.text,
+                                text = noteTextState.value.text,
                                 dateCreated = Date(),
                                 dateModified = Date(),
                                 drawing = noteEntityState.value.drawing,
                                 voice = noteEntityState.value.voice.ifEmpty { "" }
                             )
                         )
+                        setNoteModified(false)
                         _eventFlow.emit(UiEvent.NoteSaved)
                     } catch (e: Exception) {
                         _eventFlow.emit(

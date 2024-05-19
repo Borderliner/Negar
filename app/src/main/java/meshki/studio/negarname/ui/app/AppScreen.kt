@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -60,6 +61,7 @@ import meshki.studio.negarname.ui.theme.PastelRed
 import meshki.studio.negarname.ui.util.LeftToRightLayout
 import meshki.studio.negarname.ui.util.RightToLeftLayout
 import meshki.studio.negarname.ui.util.getAppVersion
+import meshki.studio.negarname.ui.util.isDarkTheme
 import org.koin.compose.koinInject
 import java.text.DecimalFormat
 import kotlin.math.abs
@@ -76,11 +78,14 @@ fun AppScreen(appState: AppState) {
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color.Black.copy(alpha = 0.1f),
+                        MaterialTheme.colorScheme.primary.copy(
+                            alpha = if (isDarkTheme(theme = appViewModel.theme)) 1f else 0.755f
+                        ),
                         Color.Transparent
                     )
                 )
-            ),
+            )
+            .blur(0.dp),
         drawerState = appViewModel.drawerState,
         drawerContent = {
             ModalDrawerSheet(
@@ -188,6 +193,30 @@ fun AppScreen(appState: AppState) {
                             Icon(
                                 painter = painterResource(R.drawable.vec_verified),
                                 contentDescription = stringResource(R.string.buy)
+                            )
+                        },
+                        selected = false,
+                        onClick = {
+                            appState.coroutineScope.launch {
+                                //
+                            }
+                        }
+                    )
+                    NavigationDrawerItem(
+                        label = {
+                            Row {
+                                Text(
+                                    text = stringResource(R.string.create_restore) + " ",
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(text = stringResource(R.string.backup))
+                            }
+                        },
+                        badge = {
+                            Icon(
+                                painter = painterResource(R.drawable.vec_create_backup),
+                                contentDescription = stringResource(R.string.create_restore)
+                                        + " " + stringResource(R.string.backup)
                             )
                         },
                         selected = false,
@@ -308,7 +337,8 @@ fun AppScreen(appState: AppState) {
                 })
                 .blur(radius = with(LocalDensity.current) {
                     (xPos.value / 500).toDp()
-                }),
+                })
+                .clip(RoundedCornerShape(30.dp)),
             topBar = { AppTopBar(appState) },
             bottomBar = {
                 AnimatedVisibility(

@@ -1,6 +1,7 @@
 package meshki.studio.negarname.ui.notes
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -29,7 +30,8 @@ fun IncompleteNoteAlert(
         icon = {
             Icon(
                 Icons.Filled.Warning,
-                contentDescription = stringResource(R.string.warning)
+                contentDescription = stringResource(R.string.warning),
+                modifier = Modifier.size(48.dp)
             )
         },
 
@@ -43,7 +45,8 @@ fun IncompleteNoteAlert(
         text = {
             Text(
                 text = stringResource(R.string.incomplete_note_text),
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.bodyLarge
             )
         },
         onDismissRequest = { onDismissRequest() },

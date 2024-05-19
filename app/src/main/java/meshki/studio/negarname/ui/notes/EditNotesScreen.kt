@@ -1,14 +1,25 @@
 package meshki.studio.negarname.ui.notes
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,132 +32,115 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import android.Manifest
-import android.os.Build
-import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.consumeDownChange
 import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.linc.audiowaveform.AudioWaveform
 import com.linc.audiowaveform.infiniteLinearGradient
 import com.linc.audiowaveform.model.AmplitudeType
 import com.linc.audiowaveform.model.WaveformAlignment
-import meshki.studio.negarname.ui.app.AppState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import meshki.studio.negarname.R
 import meshki.studio.negarname.entities.CustomPath
 import meshki.studio.negarname.entities.DrawMode
 import meshki.studio.negarname.entities.DrawingPath
 import meshki.studio.negarname.entities.MotionEvent
-import meshki.studio.negarname.ui.util.BackPressHandler
 import meshki.studio.negarname.entities.PathProperties
 import meshki.studio.negarname.entities.Tool
-import meshki.studio.negarname.ui.calendar.Week
 import meshki.studio.negarname.services.alarm.AlarmData
 import meshki.studio.negarname.services.voice_recorder.VoiceRecorder
+import meshki.studio.negarname.ui.app.AppState
+import meshki.studio.negarname.ui.app.AppViewModel
+import meshki.studio.negarname.ui.calendar.Week
 import meshki.studio.negarname.ui.components.ActionButton
 import meshki.studio.negarname.ui.components.HintedTextField
 import meshki.studio.negarname.ui.components.PopupSection
 import meshki.studio.negarname.ui.components.Toolbox
+import meshki.studio.negarname.ui.notes.entities.EditNotesEvent
+import meshki.studio.negarname.ui.notes.entities.NoteEntity
+import meshki.studio.negarname.ui.notes.vm.EditNotesViewModel
 import meshki.studio.negarname.ui.theme.PastelGreen
 import meshki.studio.negarname.ui.theme.PastelLavender
 import meshki.studio.negarname.ui.theme.PastelLime
 import meshki.studio.negarname.ui.theme.PastelOrange
 import meshki.studio.negarname.ui.theme.PastelPink
 import meshki.studio.negarname.ui.theme.PastelRed
-import meshki.studio.negarname.ui.theme.RoundedShapes
+import meshki.studio.negarname.ui.util.BackPressHandler
 import meshki.studio.negarname.ui.util.LeftToRightLayout
 import meshki.studio.negarname.ui.util.RightToLeftLayout
 import meshki.studio.negarname.ui.util.checkAlarmsPermission
 import meshki.studio.negarname.ui.util.checkPermission
 import meshki.studio.negarname.ui.util.checkPermissions
 import meshki.studio.negarname.ui.util.dragMotionEvent
-import meshki.studio.negarname.ui.app.AppViewModel
-import meshki.studio.negarname.ui.notes.entities.EditNotesEvent
-import meshki.studio.negarname.ui.notes.entities.NoteEntity
-import meshki.studio.negarname.ui.notes.entities.NoteTextFieldState
-import meshki.studio.negarname.ui.notes.vm.EditNotesViewModel
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.koinInject
+import saman.zamani.persiandate.PersianDate
 import timber.log.Timber
 import java.text.NumberFormat
 import java.util.Calendar
@@ -315,165 +309,186 @@ fun EditNotesScreenMain(
                     bottom = 0.dp,
                     start = 12.dp
                 ),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(45.dp)
-                    .shadow(6.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(Color(noteState.value.color))
-                    .clickable {
-                        scope.launch {
-                            if (!colorTool.value.visibility.value) {
-                                closeTool(recorderTool)
-                                closeTool(alarmTool)
-                                closeTool(drawingTool)
-                                openTool(colorTool)
-                            } else {
-                                closeTool(colorTool)
-                                closeTool(recorderTool)
-                                closeTool(alarmTool)
-                                closeTool(drawingTool)
-                            }
-                        }
-                    },
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                Box(
+                    modifier = Modifier
+                        .size(45.dp)
+                        .shadow(6.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(Color(noteState.value.color))
+                        .clickable {
+                            scope.launch {
+                                if (!colorTool.value.visibility.value) {
+                                    closeTool(recorderTool)
+                                    closeTool(alarmTool)
+                                    closeTool(drawingTool)
+                                    openTool(colorTool)
+                                } else {
+                                    closeTool(colorTool)
+                                    closeTool(recorderTool)
+                                    closeTool(alarmTool)
+                                    closeTool(drawingTool)
+                                }
+                            }
+                        },
                 ) {
-                    Icon(
-                        painterResource(R.drawable.water_drop),
-                        //modifier = Modifier.background(Color.Black),
-                        contentDescription = "",
-                        tint = Color.Black.copy(0.9f)
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.water_drop),
+                            //modifier = Modifier.background(Color.Black),
+                            contentDescription = "",
+                            tint = Color.Black.copy(0.9f)
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(45.dp)
+                        .shadow(6.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(
+                            if (viewModel.alarmEntities.size > 0) PastelLavender else {
+                                if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
+                            }
+                        )
+                        .clickable {
+                            scope.launch {
+                                if (!alarmTool.value.visibility.value) {
+                                    closeTool(colorTool)
+                                    closeTool(recorderTool)
+                                    closeTool(drawingTool)
+                                    openTool(alarmTool)
+                                } else {
+                                    closeTool(alarmTool)
+                                    closeTool(colorTool)
+                                    closeTool(drawingTool)
+                                    closeTool(recorderTool)
+                                }
+                            }
+                        },
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.alarm),
+                            //modifier = Modifier.background(Color.Black),
+                            contentDescription = "",
+                            tint = Color.Black.copy(0.9f)
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(45.dp)
+                        .shadow(6.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(
+                            if (viewModel.voiceState.value.duration > 0)
+                                PastelPink
+                            else {
+                                if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
+                            }
+                        )
+                        .clickable {
+                            scope.launch {
+                                if (!recorderTool.value.visibility.value) {
+                                    closeTool(colorTool)
+                                    closeTool(alarmTool)
+                                    closeTool(drawingTool)
+                                    openTool(recorderTool)
+                                } else {
+                                    closeTool(recorderTool)
+                                    closeTool(colorTool)
+                                    closeTool(drawingTool)
+                                    closeTool(alarmTool)
+                                }
+                            }
+                        },
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.mic),
+                            //modifier = Modifier.background(Color.Black),
+                            contentDescription = "",
+                            tint = Color.Black.copy(0.9f)
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(45.dp)
+                        .shadow(6.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(
+                            if (noteState.value.drawing.isNotEmpty()) PastelLime else {
+                                if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
+                            }
+                        )
+                        .clickable {
+                            scope.launch {
+                                if (!drawingTool.value.visibility.value) {
+                                    closeTool(colorTool)
+                                    closeTool(alarmTool)
+                                    closeTool(recorderTool)
+                                    openTool(drawingTool)
+                                } else {
+                                    closeTool(drawingTool)
+                                    closeTool(recorderTool)
+                                    closeTool(colorTool)
+                                    closeTool(alarmTool)
+                                }
+                            }
+                        },
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.stylus_note),
+                            //modifier = Modifier.background(Color.Black),
+                            contentDescription = "",
+                            tint = Color.Black.copy(0.9f)
+                        )
+                    }
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .size(45.dp)
-                    .shadow(6.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(
-                        if (viewModel.alarmEntities.size > 0) PastelLavender else {
-                            if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
-                        }
-                    )
-                    .clickable {
-                        scope.launch {
-                            if (!alarmTool.value.visibility.value) {
-                                closeTool(colorTool)
-                                closeTool(recorderTool)
-                                closeTool(drawingTool)
-                                openTool(alarmTool)
-                            } else {
-                                closeTool(alarmTool)
-                                closeTool(colorTool)
-                                closeTool(drawingTool)
-                                closeTool(recorderTool)
-                            }
-                        }
-                    },
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painterResource(R.drawable.alarm),
-                        //modifier = Modifier.background(Color.Black),
-                        contentDescription = "",
-                        tint = Color.Black.copy(0.9f)
-                    )
-                }
-            }
+            Row {
+                val dateModified = remember { derivedStateOf {
+                    val pDate = PersianDate(noteState.value.dateModified)
+                    if (appViewModel.isRtl) {
+                        "${pDate.dayName()}، ${pDate.hour.toString().padStart(2, '0')}:${pDate.minute.toString().padStart(2, '0')}:${pDate.second.toString().padStart(2, '0')}\n${pDate.shDay} ${pDate.monthName} ${pDate.shYear}"
+                    } else {
+                        "${pDate.dayEnglishName()}, ${pDate.hour.toString().padStart(2, '0')}:${pDate.minute.toString().padStart(2, '0')}:${pDate.second.toString().padStart(2, '0')}\n${pDate.grgDay} ${pDate.grgMonthName} ${pDate.grgYear}"
+                    }
+                } }
 
-            Box(
-                modifier = Modifier
-                    .size(45.dp)
-                    .shadow(6.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(
-                        if (viewModel.voiceState.value.duration > 0)
-                            PastelPink
-                        else {
-                            if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
-                        }
-                    )
-                    .clickable {
-                        scope.launch {
-                            if (!recorderTool.value.visibility.value) {
-                                closeTool(colorTool)
-                                closeTool(alarmTool)
-                                closeTool(drawingTool)
-                                openTool(recorderTool)
-                            } else {
-                                closeTool(recorderTool)
-                                closeTool(colorTool)
-                                closeTool(drawingTool)
-                                closeTool(alarmTool)
-                            }
-                        }
-                    },
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painterResource(R.drawable.mic),
-                        //modifier = Modifier.background(Color.Black),
-                        contentDescription = "",
-                        tint = Color.Black.copy(0.9f)
-                    )
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(45.dp)
-                    .shadow(6.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(
-                        if (noteState.value.drawing.isNotEmpty()) PastelLime else {
-                            if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
-                        }
-                    )
-                    .clickable {
-                        scope.launch {
-                            if (!drawingTool.value.visibility.value) {
-                                closeTool(colorTool)
-                                closeTool(alarmTool)
-                                closeTool(recorderTool)
-                                openTool(drawingTool)
-                            } else {
-                                closeTool(drawingTool)
-                                closeTool(recorderTool)
-                                closeTool(colorTool)
-                                closeTool(alarmTool)
-                            }
-                        }
-                    },
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painterResource(R.drawable.stylus_note),
-                        //modifier = Modifier.background(Color.Black),
-                        contentDescription = "",
-                        tint = Color.Black.copy(0.9f)
-                    )
-                }
+                Text(
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                    text = dateModified.value,
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
         }
 
@@ -492,6 +507,7 @@ fun EditNotesScreenMain(
                 onValueChange = {
                     scope.launch {
                         viewModel.onEvent(EditNotesEvent.TitleEntered(it))
+                        viewModel.setNoteModified(true)
                     }
                 },
                 onFocusChange = {
@@ -546,6 +562,7 @@ fun EditNotesScreenMain(
                 onValueChange = {
                     scope.launch {
                         viewModel.onEvent(EditNotesEvent.TextEntered(it))
+                        viewModel.setNoteModified(true)
                     }
                 },
                 onFocusChange = {

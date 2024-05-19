@@ -87,4 +87,6 @@
     <string name="zodiac">Zodiac</string>
     <string name="chinese_year">Chinese Year</string>
     <string name="go_to_date">Go to Date</string>
+    <string name="backup">Backup</string>
+    <string name="create_restore">Create/Restore</string>
 </resources>

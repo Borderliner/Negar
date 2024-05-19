@@ -88,4 +88,6 @@
     <string name="zodiac">برج فلکی</string>
     <string name="chinese_year">سال چینی</string>
     <string name="go_to_date">برو به تاریخ</string>
+    <string name="create_restore">ساخت/بارگذاری</string>
+    <string name="backup">پشتیبان</string>
 </resources>
