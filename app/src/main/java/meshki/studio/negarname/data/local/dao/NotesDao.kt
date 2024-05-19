@@ -2,9 +2,9 @@ package meshki.studio.negarname.data.local.dao
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
-import meshki.studio.negarname.ui.notes.NoteEntity
-import meshki.studio.negarname.ui.notes.NoteAndAlarm
-import meshki.studio.negarname.ui.notes.NotesAlarmsCrossRef
+import meshki.studio.negarname.ui.notes.entities.NoteEntity
+import meshki.studio.negarname.ui.notes.entities.NoteAndAlarm
+import meshki.studio.negarname.ui.notes.entities.NotesAlarmsCrossRef
 
 @Dao
 interface NotesDao : BaseDao<NoteEntity> {

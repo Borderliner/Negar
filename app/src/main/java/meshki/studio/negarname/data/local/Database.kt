@@ -11,8 +11,8 @@ import meshki.studio.negarname.data.local.dao.AppDao
 import meshki.studio.negarname.data.local.dao.NotesDao
 import meshki.studio.negarname.data.local.dao.TodosDao
 import meshki.studio.negarname.services.alarm.AlarmEntity
-import meshki.studio.negarname.ui.notes.NoteEntity
-import meshki.studio.negarname.ui.notes.NotesAlarmsCrossRef
+import meshki.studio.negarname.ui.notes.entities.NoteEntity
+import meshki.studio.negarname.ui.notes.entities.NotesAlarmsCrossRef
 import meshki.studio.negarname.ui.todos.TodoEntity
 
 @Database(

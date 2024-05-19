@@ -1,11 +1,10 @@
-package meshki.studio.negarname.ui.notes
+package meshki.studio.negarname.ui.notes.vm
 
 import android.app.AlarmManager
 import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -22,47 +21,40 @@ import kotlinx.coroutines.withContext
 import linc.com.amplituda.Amplituda
 import linc.com.amplituda.Cache
 import linc.com.amplituda.callback.AmplitudaErrorListener
+import meshki.studio.negarname.R
 import meshki.studio.negarname.data.repository.NotesRepository
-import meshki.studio.negarname.services.alarm.AlarmEntity
 import meshki.studio.negarname.entities.UiEvent
-import meshki.studio.negarname.entities.UiState
-import meshki.studio.negarname.services.alarm.AlarmData
-import meshki.studio.negarname.services.voice_recorder.VoiceRecorder
+import meshki.studio.negarname.services.alarm.AlarmEntity
 import meshki.studio.negarname.services.alarm.setAlarm
-import meshki.studio.negarname.ui.util.handleTryCatch
+import meshki.studio.negarname.services.voice_recorder.VoiceRecorder
+import meshki.studio.negarname.ui.notes.entities.EditNotesEvent
+import meshki.studio.negarname.ui.notes.entities.NoteEntity
+import meshki.studio.negarname.ui.notes.entities.NoteTextFieldState
+import meshki.studio.negarname.ui.notes.entities.VoiceState
 import timber.log.Timber
 import java.io.File
 import java.lang.ref.WeakReference
 import java.util.Calendar
 import java.util.Date
 import kotlin.coroutines.CoroutineContext
-
-sealed class EditNotesEvent {
-    data class TitleEntered(val value: String) : EditNotesEvent()
-    data class TextEntered(val value: String) : EditNotesEvent()
-    data class TitleFocusChanged(val focusState: FocusState) : EditNotesEvent()
-    data class TextFocusChanged(val focusState: FocusState) : EditNotesEvent()
-    data class ColorChanged(val color: Int) : EditNotesEvent()
-    data object NoteSaved : EditNotesEvent()
-    data class DrawingSaved(val serializedPaths: String) : EditNotesEvent()
-    data object DrawingRemoved : EditNotesEvent()
-    data object VoiceRemoved : EditNotesEvent()
-    data class SetAlarm(val alarmData: AlarmData) : EditNotesEvent()
-    data class DeleteNoteAlarms(val noteId: Long) : EditNotesEvent()
-}
-
-data class VoiceState(val duration: Long = 0, val amplitudes: List<Int> = listOf())
+import kotlin.coroutines.coroutineContext
 
 class EditNotesViewModel(
     private val notesRepository: NotesRepository,
     val alarmService: AlarmManager?,
     savedStateHandle: SavedStateHandle,
-    context: Context,
+    context: Context
 ) : ViewModel() {
     private val _noteEntityState = mutableStateOf(
         NoteEntity(color = NoteEntity.colors.random().toArgb(), title = "", text = "", drawing = "", voice = "")
     )
     val noteEntityState: State<NoteEntity> = _noteEntityState
+
+    val _noteTitleState = mutableStateOf(NoteTextFieldState(_noteEntityState.value.title, context.getString(R.string.title)))
+    val noteTitleState: State<NoteTextFieldState> = _noteTitleState
+
+    val _noteTextState = mutableStateOf(NoteTextFieldState(_noteEntityState.value.text, context.getString(R.string.note_text_hint)))
+    val noteTextState: State<NoteTextFieldState> = _noteTextState
 
     val alarmEntities = mutableStateListOf<AlarmEntity>()
     private val _voiceState = mutableStateOf(VoiceState())
@@ -71,25 +63,7 @@ class EditNotesViewModel(
     private val ctx = WeakReference(context)
 
     private val _isNoteModified = mutableStateOf(false)
-    var isNoteModified
-        get() = _isNoteModified.value
-        set(value) {
-            _isNoteModified.value = value
-        }
-
-    private val _isTextHintVisible = mutableStateOf(false)
-    var isTextHintVisible
-        get() = _isTextHintVisible.value
-        set(value) {
-            _isTextHintVisible.value = value
-        }
-
-    private val _isTitleHintVisible = mutableStateOf(false)
-    var isTitleHintVisible
-        get() = _isTitleHintVisible.value
-        set(value) {
-            _isTitleHintVisible.value = value
-        }
+    var isNoteModified: State<Boolean> = _isNoteModified
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -101,6 +75,10 @@ class EditNotesViewModel(
         super.onCleared()
     }
 
+    fun setNoteModified(flag: Boolean) {
+        _isNoteModified.value = flag
+    }
+
     init {
         savedStateHandle.get<Long>("id")?.let { noteId ->
             if (noteId > 0) {
@@ -109,15 +87,23 @@ class EditNotesViewModel(
                     notesRepository.getNoteById(noteId).collectLatest { note ->
                         Timber.tag("EditViewModel").i("$note")
                         _noteEntityState.value = note
-                        isTitleHintVisible = note.title.isEmpty()
-                        isTextHintVisible = note.title.isEmpty()
-                        notesRepository.getNoteAlarmsById(note.id).collectLatest { noteAlarms ->
-                            alarmEntities.addAll(noteAlarms)
-                            Timber.tag("EditViewModel").i("Alarms added: $noteAlarms")
-                            recorder.value.setPath(note.id.toString())
-                            readVoiceToState("records/${note.id}.aac").collectLatest {
-                                Timber.tag("EditViewModel").i("Voice added: $it")
-                                setVoiceState(it)
+                        _noteTitleState.value = noteTitleState.value.copy(
+                            text = note.title,
+                            isHintVisible = false
+                        )
+                        _noteTextState.value = noteTextState.value.copy(
+                            text = note.text,
+                            isHintVisible = false
+                        )
+                        viewModelScope.launch {
+                            notesRepository.getNoteAlarmsById(note.id).collectLatest { noteAlarms ->
+                                alarmEntities.addAll(noteAlarms)
+                                Timber.tag("EditViewModel").i("Alarms added: $noteAlarms")
+                                recorder.value.setPath(note.id.toString())
+                                readVoiceToState("records/${note.id}.aac").collectLatest {
+                                    Timber.tag("EditViewModel").i("Voice added: $it")
+                                    setVoiceState(it)
+                                }
                             }
                         }
                     }
@@ -126,12 +112,14 @@ class EditNotesViewModel(
         }
     }
 
-    fun getAlarms(): Flow<List<AlarmEntity>> {
-        return try {
-            notesRepository.getNoteAlarms(noteEntityState.value)
-        } catch (e: Exception) {
-            Timber.tag("EditViewModel:Alarms").e(e)
-            return emptyFlow()
+    suspend fun getAlarms(): Flow<List<AlarmEntity>> {
+        return withContext(coroutineContext) {
+            try {
+                notesRepository.getNoteAlarms(noteEntityState.value)
+            } catch (e: Exception) {
+                Timber.tag("EditViewModel:Alarms").e(e)
+                emptyFlow()
+            }
         }
     }
 
@@ -155,7 +143,7 @@ class EditNotesViewModel(
     }
 
     suspend fun readVoiceToState(path: String): Flow<VoiceState> {
-        return withContext(Dispatchers.IO) {
+        return withContext(coroutineContext) {
                 val duration = VoiceRecorder.getAudioFileDuration(
                     path,
                     ctx.get()!!
@@ -183,7 +171,7 @@ class EditNotesViewModel(
         }
     }
 
-    fun onEvent(event: EditNotesEvent) {
+    suspend fun onEvent(event: EditNotesEvent) {
         when (event) {
             is EditNotesEvent.DrawingSaved -> {
                 if (event.serializedPaths == "[]") {
@@ -204,13 +192,15 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.VoiceRemoved -> {
-                val path = ctx.get()!!.filesDir.path + File.separator + "records" + File.separator + noteEntityState.value.id + ".aac"
-                Timber.tag("BULLS").i(path)
-                val file = File(path)
-                if (file.exists()) {
-                    file.delete()
+                viewModelScope.launch(coroutineContext) {
+                    val path = ctx.get()!!.filesDir.path + File.separator + "records" + File.separator + noteEntityState.value.id + ".aac"
+                    Timber.tag("BULLS").i(path)
+                    val file = File(path)
+                    if (file.exists()) {
+                        file.delete()
+                    }
+                    _voiceState.value = VoiceState()
                 }
-                _voiceState.value = VoiceState()
             }
 
             is EditNotesEvent.TitleEntered -> {
@@ -220,9 +210,9 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.TitleFocusChanged -> {
-//                _noteTitle.value = noteTitle.value.copy(
-//                    isHintVisible = !event.focusState.isFocused && noteTitle.value.text.isBlank()
-//                )
+                _noteTitleState.value = noteTitleState.value.copy(
+                    isHintVisible = !event.focusState.isFocused && noteTitleState.value.text.isBlank()
+                )
             }
 
             is EditNotesEvent.TextEntered -> {
@@ -232,7 +222,9 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.TextFocusChanged -> {
-                //
+                _noteTextState.value = noteTextState.value.copy(
+                    isHintVisible = !event.focusState.isFocused && noteTextState.value.text.isBlank()
+                )
             }
 
             is EditNotesEvent.ColorChanged -> {
@@ -242,7 +234,7 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.NoteSaved -> {
-                viewModelScope.launch {
+                viewModelScope.launch(coroutineContext) {
                     try {
                         notesRepository.addNote(
                             NoteEntity(
@@ -268,7 +260,7 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.SetAlarm -> {
-                viewModelScope.launch {
+                viewModelScope.launch(coroutineContext) {
                     try {
                         val week = event.alarmData.week
                         var result = true
@@ -336,7 +328,7 @@ class EditNotesViewModel(
             }
 
             is EditNotesEvent.DeleteNoteAlarms -> {
-                viewModelScope.launch {
+                viewModelScope.launch(coroutineContext) {
                     try {
                         notesRepository.deleteNoteAlarms(noteEntityState.value.id)
                         alarmEntities.clear()

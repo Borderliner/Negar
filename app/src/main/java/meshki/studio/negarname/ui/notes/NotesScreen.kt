@@ -66,6 +66,8 @@ import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat.getString
 import meshki.studio.negarname.ui.app.AppState
 import meshki.studio.negarname.entities.Tool
+import meshki.studio.negarname.ui.notes.entities.NotesEvent
+import meshki.studio.negarname.ui.notes.vm.NotesViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 

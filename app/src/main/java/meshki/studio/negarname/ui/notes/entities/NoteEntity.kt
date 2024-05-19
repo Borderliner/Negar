@@ -1,4 +1,4 @@
-package meshki.studio.negarname.ui.notes
+package meshki.studio.negarname.ui.notes.entities
 
 import androidx.room.ColumnInfo
 import androidx.room.Embedded

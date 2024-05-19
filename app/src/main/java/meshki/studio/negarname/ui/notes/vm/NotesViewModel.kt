@@ -1,17 +1,25 @@
-package meshki.studio.negarname.ui.notes
+package meshki.studio.negarname.ui.notes.vm
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.data.repository.NotesRepository
 import meshki.studio.negarname.entities.OrderBy
 import meshki.studio.negarname.entities.OrderType
+import meshki.studio.negarname.ui.notes.entities.NoteEntity
+import meshki.studio.negarname.ui.notes.entities.NotesEvent
+import meshki.studio.negarname.ui.notes.entities.NotesState
+import kotlin.coroutines.CoroutineContext
 
-class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel() {
+class NotesViewModel(
+    private val notesRepository: NotesRepository,
+    private val coroutineContext: CoroutineContext = Dispatchers.IO
+) : ViewModel() {
     private val state = MutableStateFlow(NotesState(isLoading = true))
     val uiState = state.map(NotesState::toUiState).stateIn(
         viewModelScope, SharingStarted.Eagerly, state.value.toUiState()
@@ -23,12 +31,12 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
     private var noteJob: Job? = null
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(coroutineContext) {
             getNotesOrdered(OrderBy.Date(OrderType.Descending))
         }
     }
 
-    fun onEvent(event: NotesEvent) {
+    suspend fun onEvent(event: NotesEvent) {
         when (event) {
             is NotesEvent.NotesOrdered -> {
                 if (state.value.orderBy::class == event.orderBy::class &&
@@ -38,11 +46,13 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
                     // we don't need to change anything
                     return
                 }
-                getNotesOrdered(event.orderBy)
+                viewModelScope.launch(coroutineContext) {
+                    getNotesOrdered(event.orderBy)
+                }
             }
 
             is NotesEvent.NoteDeleted -> {
-                viewModelScope.launch {
+                viewModelScope.launch(coroutineContext) {
                     // save deleted note reference
                     notesRepository.deleteNote(event.noteEntity)
                     deletedNoteEntity = event.noteEntity
@@ -50,7 +60,7 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
             }
 
             is NotesEvent.NoteRestored -> {
-                viewModelScope.launch {
+                viewModelScope.launch(coroutineContext) {
                     notesRepository.addNote(deletedNoteEntity ?: return@launch)
                     deletedNoteEntity = null
                 }
@@ -75,11 +85,13 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
             }
 
             is NotesEvent.NoteQueried -> {
-                findNotesOrdered(event.query, event.orderBy)
+                viewModelScope.launch(coroutineContext) {
+                    findNotesOrdered(event.query, event.orderBy)
+                }
             }
 
             is NotesEvent.NotePinToggled -> {
-                viewModelScope.launch {
+                viewModelScope.launch(coroutineContext) {
                     if (event.noteEntity.pinned) {
                         notesRepository.unpinNote(event.noteEntity)
                     } else {
@@ -90,7 +102,7 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
         }
     }
 
-    private fun findNotesOrdered(query: String, orderBy: OrderBy) {
+    private suspend fun findNotesOrdered(query: String, orderBy: OrderBy) {
         noteJob?.cancel()
         noteJob = notesRepository.findNotesOrdered(
             query,
@@ -102,7 +114,7 @@ class NotesViewModel(private val notesRepository: NotesRepository) : ViewModel()
         }.launchIn(viewModelScope)
     }
 
-    private fun getNotesOrdered(orderBy: OrderBy) {
+    private suspend fun getNotesOrdered(orderBy: OrderBy) {
         noteJob?.cancel()
         noteJob = notesRepository.getNotesOrdered(orderBy).onEach { notes ->
             println("Notes ordered: $notes")

@@ -1,24 +1,26 @@
 package meshki.studio.negarname.data.repository
 
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import meshki.studio.negarname.data.local.dao.AlarmsDao
 import meshki.studio.negarname.data.local.dao.NotesDao
 import meshki.studio.negarname.entities.OrderBy
 import meshki.studio.negarname.entities.OrderType
 import meshki.studio.negarname.services.alarm.AlarmEntity
-import meshki.studio.negarname.ui.notes.InvalidNoteException
-import meshki.studio.negarname.ui.notes.NoteEntity
-import meshki.studio.negarname.ui.notes.NotesAlarmsCrossRef
+import meshki.studio.negarname.ui.notes.entities.InvalidNoteException
+import meshki.studio.negarname.ui.notes.entities.NoteEntity
+import meshki.studio.negarname.ui.notes.entities.NotesAlarmsCrossRef
+import kotlin.coroutines.CoroutineContext
 
 class NotesRepository(
     private val notesDao: NotesDao,
     private val alarmsDao: AlarmsDao,
+    private val coroutineContext: CoroutineContext = Dispatchers.IO
 ) {
-    fun addNote(noteEntity: NoteEntity): Long {
+    suspend fun addNote(noteEntity: NoteEntity): Long {
         if (noteEntity.title.isBlank() && noteEntity.text.isBlank()) {
             throw InvalidNoteException("Note title is needed")
         }
@@ -26,109 +28,138 @@ class NotesRepository(
             throw InvalidNoteException("Note id cannot be zero.")
         }
 
-        return notesDao.insert(noteEntity)
+        return withContext(coroutineContext) {
+            notesDao.insert(noteEntity)
+        }
     }
 
-    fun getNotes(): Flow<List<NoteEntity>> {
-        return notesDao.getAll()
+    suspend fun getNotes(): Flow<List<NoteEntity>> {
+        return withContext(coroutineContext) {
+            notesDao.getAll()
+        }
     }
 
-    fun getNoteById(id: Long): Flow<NoteEntity> {
-        return notesDao.getById(id)
+    suspend fun getNoteById(id: Long): Flow<NoteEntity> {
+        return withContext(coroutineContext) {
+            notesDao.getById(id)
+        }
     }
 
-    fun findNotes(query: String): Flow<List<NoteEntity>> {
-        return notesDao.find(query)
+    suspend fun findNotes(query: String): Flow<List<NoteEntity>> {
+        return withContext(coroutineContext) {
+            notesDao.find(query)
+        }
     }
 
-    fun updateNote(noteEntity: NoteEntity) {
-        return notesDao.update(noteEntity)
+    suspend fun updateNote(noteEntity: NoteEntity) {
+        return withContext(coroutineContext) {
+            notesDao.update(noteEntity)
+        }
     }
 
-    fun deleteNote(noteEntity: NoteEntity) {
-        return notesDao.delete(noteEntity)
+    suspend fun deleteNote(noteEntity: NoteEntity) {
+        return withContext(coroutineContext) {
+            notesDao.delete(noteEntity)
+        }
     }
 
-    fun pinNote(noteEntity: NoteEntity) {
-        return notesDao.update(noteEntity.copy(pinned = true))
+    suspend fun pinNote(noteEntity: NoteEntity) {
+        return withContext(coroutineContext) {
+            notesDao.update(noteEntity.copy(pinned = true))
+        }
     }
 
-    fun unpinNote(noteEntity: NoteEntity) {
-        return notesDao.update(noteEntity.copy(pinned = false))
+    suspend fun unpinNote(noteEntity: NoteEntity) {
+        return withContext(coroutineContext) {
+            notesDao.update(noteEntity.copy(pinned = false))
+        }
     }
 
-    fun togglePinNote(noteEntity: NoteEntity) {
-        return notesDao.update(noteEntity.copy(pinned = !noteEntity.pinned))
+    suspend fun togglePinNote(noteEntity: NoteEntity) {
+        return withContext(coroutineContext) {
+            notesDao.update(noteEntity.copy(pinned = !noteEntity.pinned))
+        }
     }
 
-    fun getNotesOrdered(orderBy: OrderBy): Flow<List<NoteEntity>> {
-        return notesDao.getAll().map { notes ->
-            if (orderBy.orderType == OrderType.Ascending) {
-                when (orderBy.getType()) {
-                    is OrderBy.Title -> notes.sortedBy { it.title.lowercase() }
-                    is OrderBy.Date -> notes.sortedBy { it.dateModified }
-                    is OrderBy.Color -> notes.sortedBy { it.color }
-                    // Fallback to date
-                    is OrderBy.Completed -> notes.sortedBy { it.dateModified }
-                }
-            } else {
-                when (orderBy.getType()) {
-                    is OrderBy.Title -> notes.sortedByDescending { it.title.lowercase() }
-                    is OrderBy.Date -> notes.sortedByDescending { it.dateModified }
-                    is OrderBy.Color -> notes.sortedByDescending { it.color }
-                    is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+    suspend fun getNotesOrdered(orderBy: OrderBy): Flow<List<NoteEntity>> {
+        return withContext(coroutineContext) {
+            notesDao.getAll().map { notes ->
+                if (orderBy.orderType == OrderType.Ascending) {
+                    when (orderBy.getType()) {
+                        is OrderBy.Title -> notes.sortedBy { it.title.lowercase() }
+                        is OrderBy.Date -> notes.sortedBy { it.dateModified }
+                        is OrderBy.Color -> notes.sortedBy { it.color }
+                        // Fallback to date
+                        is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                    }
+                } else {
+                    when (orderBy.getType()) {
+                        is OrderBy.Title -> notes.sortedByDescending { it.title.lowercase() }
+                        is OrderBy.Date -> notes.sortedByDescending { it.dateModified }
+                        is OrderBy.Color -> notes.sortedByDescending { it.color }
+                        is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                    }
                 }
             }
         }
     }
 
-    fun findNotesOrdered(query: String, orderBy: OrderBy): Flow<List<NoteEntity>> {
-        return notesDao.find(query).map { notes ->
-            if (orderBy.orderType == OrderType.Ascending) {
-                when (orderBy.getType()) {
-                    is OrderBy.Title -> notes.sortedBy { it.title.lowercase() }
-                    is OrderBy.Date -> notes.sortedBy { it.dateModified }
-                    is OrderBy.Color -> notes.sortedBy { it.color }
-                    is OrderBy.Completed -> notes.sortedBy { it.dateModified }
-                }
-            } else {
-                when (orderBy.getType()) {
-                    is OrderBy.Title -> notes.sortedByDescending { it.title.lowercase() }
-                    is OrderBy.Date -> notes.sortedByDescending { it.dateModified }
-                    is OrderBy.Color -> notes.sortedByDescending { it.color }
-                    is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+    suspend fun findNotesOrdered(query: String, orderBy: OrderBy): Flow<List<NoteEntity>> {
+        return withContext(coroutineContext) {
+            notesDao.find(query).map { notes ->
+                if (orderBy.orderType == OrderType.Ascending) {
+                    when (orderBy.getType()) {
+                        is OrderBy.Title -> notes.sortedBy { it.title.lowercase() }
+                        is OrderBy.Date -> notes.sortedBy { it.dateModified }
+                        is OrderBy.Color -> notes.sortedBy { it.color }
+                        is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                    }
+                } else {
+                    when (orderBy.getType()) {
+                        is OrderBy.Title -> notes.sortedByDescending { it.title.lowercase() }
+                        is OrderBy.Date -> notes.sortedByDescending { it.dateModified }
+                        is OrderBy.Color -> notes.sortedByDescending { it.color }
+                        is OrderBy.Completed -> notes.sortedBy { it.dateModified }
+                    }
                 }
             }
         }
     }
 
-    fun getNoteAlarms(noteEntity: NoteEntity): Flow<List<AlarmEntity>> {
-        return getNoteAlarmsById(noteEntity.id)
-    }
-
-    fun getNoteAlarmsById(id: Long): Flow<List<AlarmEntity>> {
-        return notesDao.getNoteAlarmsById(id).map {
-            it.alarmEntities
+    suspend fun getNoteAlarms(noteEntity: NoteEntity): Flow<List<AlarmEntity>> {
+        return withContext(coroutineContext) {
+            getNoteAlarmsById(noteEntity.id)
         }
     }
 
-    fun getAlarmById(id: Long): Flow<AlarmEntity> {
-        return alarmsDao.getById(id)
+    suspend fun getNoteAlarmsById(id: Long): Flow<List<AlarmEntity>> {
+        return withContext(coroutineContext) {
+            notesDao.getNoteAlarmsById(id).map {
+                it.alarmEntities
+            }
+        }
     }
 
-    fun addAlarm(noteId: Long, alarmEntity: AlarmEntity): Long {
-        val id = alarmsDao.insert(alarmEntity)
-        notesDao.insertNoteAlarm(NotesAlarmsCrossRef(
-            noteId,
-            id
-        ))
-        return id
+    suspend fun getAlarmById(id: Long): Flow<AlarmEntity> {
+        return withContext(coroutineContext) {
+            alarmsDao.getById(id)
+        }
+    }
+
+    suspend fun addAlarm(noteId: Long, alarmEntity: AlarmEntity): Long {
+        return withContext(coroutineContext) {
+            val id = alarmsDao.insert(alarmEntity)
+            notesDao.insertNoteAlarm(NotesAlarmsCrossRef(noteId, id))
+            return@withContext id
+        }
     }
 
     suspend fun deleteNoteAlarms(noteId: Long) {
-        return notesDao.getNoteAlarmsById(noteId).collectLatest {
-            alarmsDao.delete(it.alarmEntities)
-            notesDao.deleteNoteAlarmsRef(noteId)
+        return withContext(coroutineContext) {
+            notesDao.getNoteAlarmsById(noteId).collectLatest {
+                alarmsDao.delete(it.alarmEntities)
+                notesDao.deleteNoteAlarmsRef(noteId)
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ package meshki.studio.negarname.data.local.converters
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import meshki.studio.negarname.ui.notes.NoteEntity
+import meshki.studio.negarname.ui.notes.entities.NoteEntity
 
 class NoteConverter {
     private val gson = Gson()

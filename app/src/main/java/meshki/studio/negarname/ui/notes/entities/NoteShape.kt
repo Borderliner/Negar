@@ -1,4 +1,4 @@
-package meshki.studio.negarname.ui.notes
+package meshki.studio.negarname.ui.notes.entities
 
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline

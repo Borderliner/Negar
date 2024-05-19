@@ -30,6 +30,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import meshki.studio.negarname.R
+import meshki.studio.negarname.ui.notes.entities.NoteEntity
+import meshki.studio.negarname.ui.notes.entities.NoteShape
+import meshki.studio.negarname.ui.notes.entities.notePath
 
 @Composable
 fun SingleNote(

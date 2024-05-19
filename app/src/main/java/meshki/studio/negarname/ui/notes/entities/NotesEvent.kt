@@ -1,4 +1,4 @@
-package meshki.studio.negarname.ui.notes
+package meshki.studio.negarname.ui.notes.entities
 
 import meshki.studio.negarname.entities.OrderBy
 
