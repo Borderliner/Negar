@@ -80,6 +80,7 @@ fun CalendarScreen(appState: AppState) {
     val goToDateTool = remember { mutableStateOf(Tool("goto")) }
 
     val dataState = vm.dataState.collectAsState()
+    val zodiacState = vm.zodiacState.collectAsState()
     val uiState = vm.uiState.collectAsState()
 
     val headerMonthIndexSolar by remember { derivedStateOf { dataState.value.displayedSolar.shMonth.mod(12) } }
@@ -330,14 +331,14 @@ fun CalendarScreen(appState: AppState) {
 
                     if (appViewModel.isRtl) {
                         Text(
-                            text = ": ${vm.zodiacNameSolar.value} "
+                            text = ": ${zodiacState.value.zodiacSolar} "
                         )
                     } else {
-                        Text(text = ": ${vm.zodiacNameGreg.value} "
+                        Text(text = ": ${zodiacState.value.zodiacGreg} "
                         )
                     }
                     Text(
-                        text = vm.zodiacEmoji.value
+                        text = zodiacState.value.zodiacEmoji
                     )
                 }
                 Spacer(modifier = Modifier.height(spacing))
@@ -345,12 +346,12 @@ fun CalendarScreen(appState: AppState) {
                     Text(text = "\uD83C\uDC04 ")
                     Text(text = stringResource(R.string.chinese_year))
                     if (appViewModel.isRtl) {
-                        Text(text = ": ${vm.chineseZodiacNameSolar.value} ")
+                        Text(text = ": ${zodiacState.value.chineseZodiacSolar} ")
                     } else {
-                        Text(text = ": ${vm.chineseZodiacNameGreg.value} "
+                        Text(text = ": ${zodiacState.value.chineseZodiacGreg} "
                         )
                     }
-                    Text(text = vm.chineseZodiacEmoji.value)
+                    Text(text = zodiacState.value.chineseZodiacEmoji)
                 }
             }
         }
