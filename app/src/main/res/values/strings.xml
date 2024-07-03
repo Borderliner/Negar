@@ -89,4 +89,5 @@
     <string name="go_to_date">Go to Date</string>
     <string name="backup">Backup</string>
     <string name="create_restore">Create/Restore</string>
+    <string name="on_this_day">History on this day</string>
 </resources>

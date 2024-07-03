@@ -90,4 +90,5 @@
     <string name="go_to_date">برو به تاریخ</string>
     <string name="create_restore">ساخت/بارگذاری</string>
     <string name="backup">پشتیبان</string>
+    <string name="on_this_day">امروز در نگاه تاریخ</string>
 </resources>

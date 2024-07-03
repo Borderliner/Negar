@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
@@ -39,9 +42,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.himanshoe.kalendar.Kalendar
@@ -296,7 +304,9 @@ fun CalendarScreen(appState: AppState) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .offset(x = 24.dp, y = 16.dp),
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .verticalScroll(rememberScrollState())
+                    .weight(1f, false),
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.Top
             ) {
@@ -352,6 +362,28 @@ fun CalendarScreen(appState: AppState) {
                         )
                     }
                     Text(text = zodiacState.value.chineseZodiacEmoji)
+                }
+
+                Spacer(modifier = Modifier.height(spacing))
+                Row {
+                    Text(text = "\uD83D\uDCDC ")
+                    val annotatedString = buildAnnotatedString {
+                        if (appViewModel.isRtl) {
+                            pushStringAnnotation(tag = "URL", annotation = "https://www.time.ir/fa/event/list/0/${dataState.value.selectedSolar.shYear}/${dataState.value.selectedSolar.shMonth}")
+                        } else {
+                            pushStringAnnotation(tag = "URL", annotation = "https://www.onthisday.com/events/${dataState.value.selectedSolar.grgMonthName}/${dataState.value.selectedSolar.grgDay}")
+                        }
+                        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                            append(stringResource(R.string.on_this_day))
+                        }
+                        pop()
+                    }
+                    val uriHandler = LocalUriHandler.current
+                    ClickableText(text = annotatedString, style = MaterialTheme.typography.bodyLarge, onClick = { offset ->
+                        annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset).firstOrNull()?.let {
+                            uriHandler.openUri(it.item)
+                        }
+                    })
                 }
             }
         }
