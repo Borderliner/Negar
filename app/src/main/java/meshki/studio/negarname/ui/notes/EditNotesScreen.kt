@@ -158,19 +158,15 @@ fun EditNotesScreen(color: Int, appState: AppState, appViewModel: AppViewModel) 
         }
     }
     if (appViewModel.isRtl) {
-        LeftToRightLayout {
-            EditNotesScreenScaffold(viewModel, appState, appViewModel) {
-                RightToLeftLayout {
-                    EditNotesScreenMain(viewModel, appState, appViewModel)
-                }
+        EditNotesScreenScaffold(viewModel, appState, appViewModel) {
+            RightToLeftLayout {
+                EditNotesScreenMain(viewModel, appState, appViewModel)
             }
         }
     } else {
-        RightToLeftLayout {
-            EditNotesScreenScaffold(viewModel, appState, appViewModel) {
-                LeftToRightLayout {
-                    EditNotesScreenMain(viewModel, appState, appViewModel)
-                }
+        EditNotesScreenScaffold(viewModel, appState, appViewModel) {
+            LeftToRightLayout {
+                EditNotesScreenMain(viewModel, appState, appViewModel)
             }
         }
     }
