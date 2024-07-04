@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
@@ -28,6 +29,7 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -54,6 +56,7 @@ import io.embrace.android.embracesdk.Embrace
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.R
 import meshki.studio.negarname.ui.components.AboutDialog
+import meshki.studio.negarname.ui.components.BackupSheetModal
 import meshki.studio.negarname.ui.navigation.AppBottomBar
 import meshki.studio.negarname.ui.navigation.AppNavigation
 import meshki.studio.negarname.ui.navigation.AppTopBar
@@ -66,12 +69,16 @@ import org.koin.compose.koinInject
 import java.text.DecimalFormat
 import kotlin.math.abs
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScreen(appState: AppState) {
     val appViewModel = koinInject<AppViewModel>()
 
     val aboutDialog = remember { mutableStateOf(false) }
     AboutDialog(state = aboutDialog)
+
+    val backupSheetModalState = rememberModalBottomSheetState()
+    BackupSheetModal(appViewModel = appViewModel, sheetState = backupSheetModalState)
 
     ModalNavigationDrawer(
         modifier = Modifier
@@ -222,7 +229,8 @@ fun AppScreen(appState: AppState) {
                         selected = false,
                         onClick = {
                             appState.coroutineScope.launch {
-                                //
+                                appViewModel.drawerState.close()
+                                backupSheetModalState.show()
                             }
                         }
                     )

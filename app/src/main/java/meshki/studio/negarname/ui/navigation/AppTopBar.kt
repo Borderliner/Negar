@@ -47,126 +47,6 @@ fun AppTopBar(appState: AppState) {
     val appViewModel = koinInject<AppViewModel>()
     val logoSize = 125.dp
 
-    val modalSheetState = rememberModalBottomSheetState()
-
-    if (modalSheetState.currentValue != SheetValue.Hidden) {
-        ModalBottomSheet(onDismissRequest = {
-            appState.coroutineScope.launch { modalSheetState.hide() }
-        }) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(text = stringResource(R.string.import_export), fontSize = 20.sp)
-                Text(text = stringResource(R.string.import_export_desc))
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 48.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    ElevatedButton(
-                        colors = ButtonDefaults.elevatedButtonColors(
-                            containerColor = PastelGreen,
-                            contentColor = Color.Black
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        onClick = {}
-                    ) {
-                        Column(
-                            Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.vec_download),
-                                contentDescription = null,
-                                modifier = Modifier.size(42.dp),
-                                tint = Color.Black.copy(alpha = 0.9f)
-                            )
-                            Text(text = stringResource(R.string.import_data), fontSize = 16.sp)
-                        }
-                    }
-
-                    val ctx = LocalContext.current
-                    val permissionLauncher =
-                        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                            if (!granted) {
-                                appState.coroutineScope.launch {
-                                    val result = appState.snackbar.showSnackbar(
-                                        message = ctx.resources.getString(R.string.storage_permission),
-                                        actionLabel = ctx.resources.getString(R.string.allow),
-                                        withDismissAction = false,
-                                        duration = SnackbarDuration.Long
-                                    )
-
-                                    when (result) {
-                                        SnackbarResult.Dismissed -> println()
-                                        SnackbarResult.ActionPerformed -> {
-                                            ActivityCompat.requestPermissions(
-                                                ctx as Activity, arrayOf(
-                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                                                ), 0
-                                            )
-                                        }
-                                    }
-                                }
-//                                Toast.makeText(ctx, permissionText, Toast.LENGTH_LONG)
-//                                    .show()
-                            }
-                        }
-                    ElevatedButton(
-                        colors = ButtonDefaults.elevatedButtonColors(
-                            containerColor = PastelRed,
-                            contentColor = Color.Black
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        onClick = {
-                            appState.coroutineScope.launch {
-                                checkPermission(
-                                    ctx,
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                    permissionLauncher
-                                ) {
-                                    appViewModel.viewModelScope.launch {
-                                        appViewModel.database.close()
-                                        appViewModel.appRepository.checkpoint()
-                                        val path =
-                                            appViewModel.appRepository.getDatabaseFilePath()
-                                        if (path != null) {
-                                            val sourceFile = File(path)
-                                            Timber.tag("Import/Export").i("Export source file: $path")
-                                            val documentsFolder = ctx.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-                                            if (documentsFolder != null) {
-                                                val destinationPath = documentsFolder.absolutePath + File.separator + sourceFile.name
-                                                Timber.tag("Import/Export").i("Export destination file: $destinationPath")
-                                                val destinationFile = File(destinationPath)
-                                                copyFile(sourceFile, destinationFile)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    ) {
-                        Column(
-                            Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.vec_upload),
-                                contentDescription = null,
-                                modifier = Modifier.size(42.dp),
-                                tint = Color.Black.copy(alpha = 0.9f)
-                            )
-                            Text(text = stringResource(R.string.export_data), fontSize = 16.sp)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     TopAppBar(
         modifier = Modifier
             .fillMaxWidth()
@@ -227,11 +107,11 @@ fun AppTopBar(appState: AppState) {
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp),
                 onClick = {
                     appState.coroutineScope.launch {
-                        modalSheetState.show()
+                        // TODO: add help
                     }
                 }) {
                 Icon(
-                    painterResource(R.drawable.vec_export_notes),
+                    painterResource(R.drawable.vec_question),
                     "",
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = .85f)
                 )
