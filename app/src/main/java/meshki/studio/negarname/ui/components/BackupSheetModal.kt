@@ -2,8 +2,7 @@ package meshki.studio.negarname.ui.components
 
 import android.Manifest
 import android.os.Environment
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,24 +32,36 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.R
-import meshki.studio.negarname.ui.app.AppViewModel
-import meshki.studio.negarname.ui.navigation.copyFile
+import meshki.studio.negarname.data.repository.DatabaseRepository
 import meshki.studio.negarname.ui.theme.PastelGreen
 import meshki.studio.negarname.ui.theme.PastelRed
-import meshki.studio.negarname.ui.util.checkPermission
+import meshki.studio.negarname.ui.util.checkPermissions
+import meshki.studio.negarname.ui.util.copyTo
+import meshki.studio.negarname.ui.util.rememberMultiplePermissionLauncher
+import org.koin.compose.koinInject
 import timber.log.Timber
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BackupSheetModal(appViewModel: AppViewModel, sheetState: SheetState) {
+fun BackupSheetModal(snackbar: SnackbarHostState, sheetState: SheetState) {
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
+    val databaseRepository = koinInject<DatabaseRepository>()
+    val requiredPermissions = mutableListOf(
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    )
+    val permissionLauncher = rememberMultiplePermissionLauncher(snackbar)
+
     if (sheetState.currentValue != SheetValue.Hidden) {
         ModalBottomSheet(onDismissRequest = {
             scope.launch { sheetState.hide() }
         }) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(text = stringResource(R.string.import_export), fontSize = 24.sp)
@@ -67,7 +79,9 @@ fun BackupSheetModal(appViewModel: AppViewModel, sheetState: SheetState) {
                             contentColor = Color.Black
                         ),
                         shape = RoundedCornerShape(8.dp),
-                        onClick = {}
+                        onClick = {
+
+                        }
                     ) {
                         Column(
                             Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
@@ -83,33 +97,6 @@ fun BackupSheetModal(appViewModel: AppViewModel, sheetState: SheetState) {
                         }
                     }
 
-                    val ctx = LocalContext.current
-                    val permissionLauncher =
-                        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                            if (!granted) {
-                                scope.launch {
-//                                    val result = appState.snackbar.showSnackbar(
-//                                        message = ctx.resources.getString(R.string.storage_permission),
-//                                        actionLabel = ctx.resources.getString(R.string.allow),
-//                                        withDismissAction = false,
-//                                        duration = SnackbarDuration.Long
-//                                    )
-//
-//                                    when (result) {
-//                                        SnackbarResult.Dismissed -> println()
-//                                        SnackbarResult.ActionPerformed -> {
-//                                            ActivityCompat.requestPermissions(
-//                                                ctx as Activity, arrayOf(
-//                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-//                                                ), 0
-//                                            )
-//                                        }
-//                                    }
-                                }
-//                                Toast.makeText(ctx, permissionText, Toast.LENGTH_LONG)
-//                                    .show()
-                            }
-                        }
                     ElevatedButton(
                         colors = ButtonDefaults.elevatedButtonColors(
                             containerColor = PastelRed,
@@ -118,28 +105,29 @@ fun BackupSheetModal(appViewModel: AppViewModel, sheetState: SheetState) {
                         shape = RoundedCornerShape(8.dp),
                         onClick = {
                             scope.launch {
-                                checkPermission(
-                                    ctx,
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                    permissionLauncher
+                                checkPermissions(
+                                    ctx, requiredPermissions.toTypedArray(), permissionLauncher
                                 ) {
-                                    scope.launch {
-                                        appViewModel.database.close()
-                                        appViewModel.appRepository.checkpoint()
-                                        val path =
-                                            appViewModel.appRepository.getDatabaseFilePath()
-                                        if (path != null) {
-                                            val sourceFile = File(path)
+                                    try {
+                                        databaseRepository.checkpoint()
+                                        val path = databaseRepository.getDatabaseFilePath()
+                                        if (path.isNullOrEmpty()) throw Error(ctx.getString(R.string.error_backup_database_file_notfound))
+                                        else {
                                             Timber.tag("Import/Export").i("Export source file: $path")
-                                            val documentsFolder = ctx.getExternalFilesDir(
-                                                Environment.DIRECTORY_DOCUMENTS)
+                                            val documentsFolder = ctx.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
                                             if (documentsFolder != null) {
-                                                val destinationPath = documentsFolder.absolutePath + File.separator + sourceFile.name
+                                                val source = File(path)
+                                                val destinationPath = documentsFolder.absolutePath + File.separator + source.name
                                                 Timber.tag("Import/Export").i("Export destination file: $destinationPath")
-                                                val destinationFile = File(destinationPath)
-                                                copyFile(sourceFile, destinationFile)
+                                                val destination = File(destinationPath)
+                                                source.copyTo(destination)
+                                                Toast.makeText(ctx, R.string.backup_success, Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                throw Error(ctx.getString(R.string.error_backup_no_documents))
                                             }
                                         }
+                                    } catch (err: Error) {
+                                        Toast.makeText(ctx, err.message, Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }

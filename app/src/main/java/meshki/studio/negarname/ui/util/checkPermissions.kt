@@ -8,8 +8,88 @@ import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.launch
+import meshki.studio.negarname.R
 import timber.log.Timber
+
+@Composable
+fun rememberMultiplePermissionLauncher(snackbar: SnackbarHostState, onSuccess: () -> Unit = {}, onFail: () -> Unit = {}, onRetry: () -> Unit = {}): ManagedActivityResultLauncher<Array<String>, Map<String, @JvmSuppressWildcards Boolean>> {
+    val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
+
+    return rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissionMap ->
+        val areGranted =
+            permissionMap.values.reduce { acc, next -> acc && next }
+        if (areGranted) {
+            onSuccess()
+        } else {
+            scope.launch {
+                val result = snackbar.showSnackbar(
+                    message = ctx.resources.getString(R.string.permission_required_text),
+                    actionLabel = ctx.resources.getString(R.string.allow),
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Long
+                )
+
+                when (result) {
+                    SnackbarResult.Dismissed -> {
+                        Toast.makeText(
+                            ctx,
+                            ctx.resources.getString(R.string.permission_required_text),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        onFail()
+                    }
+
+                    SnackbarResult.ActionPerformed -> onRetry()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun rememberSinglePermissionLauncher(snackbar: SnackbarHostState, onSuccess: () -> Unit = {}, onFail: () -> Unit = {}, onRetry: () -> Unit = {}): ManagedActivityResultLauncher<String, Boolean> {
+    val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
+
+    return rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            onSuccess()
+        } else {
+            scope.launch {
+                val result = snackbar.showSnackbar(
+                    message = ctx.resources.getString(R.string.permission_required_text),
+                    actionLabel = ctx.resources.getString(R.string.allow),
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Long
+                )
+
+                when (result) {
+                    SnackbarResult.Dismissed -> {
+                        Toast.makeText(
+                            ctx,
+                            ctx.resources.getString(R.string.permission_required_text),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        onFail()
+                    }
+
+                    SnackbarResult.ActionPerformed -> onRetry()
+                }
+            }
+        }
+    }
+}
 
 fun checkPermission(
     context: Context,

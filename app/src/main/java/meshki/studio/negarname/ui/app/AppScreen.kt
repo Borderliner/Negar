@@ -78,7 +78,7 @@ fun AppScreen(appState: AppState) {
     AboutDialog(state = aboutDialog)
 
     val backupSheetModalState = rememberModalBottomSheetState()
-    BackupSheetModal(appViewModel = appViewModel, sheetState = backupSheetModalState)
+    BackupSheetModal(snackbar = appState.snackbar, sheetState = backupSheetModalState)
 
     ModalNavigationDrawer(
         modifier = Modifier

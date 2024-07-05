@@ -90,4 +90,7 @@
     <string name="backup">Backup</string>
     <string name="create_restore">Create/Restore</string>
     <string name="on_this_day">History on this day</string>
+    <string name="backup_success">Backup successfully exported to your \"Documents\" folder.</string>
+    <string name="error_backup_database_file_notfound">Cannot find database file.</string>
+    <string name="error_backup_no_documents">Could not access the \"Documents\" folder</string>
 </resources>
