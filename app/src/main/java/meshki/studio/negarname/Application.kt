@@ -17,13 +17,13 @@ import timber.log.Timber
 class Application : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Activate Timber debug log
+        if(BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
 
-        if(BuildConfig.DEBUG){
-            Timber.plant(Timber.DebugTree())
-        }
-
+        // Start Embrace error trace
         Embrace.getInstance().start(this)
 
+        // Setup Koin
         startKoin {
             androidLogger()
             androidContext(this@Application)

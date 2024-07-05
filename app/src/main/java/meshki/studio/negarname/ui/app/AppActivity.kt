@@ -1,5 +1,7 @@
 package meshki.studio.negarname.ui.app
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,17 +20,16 @@ import androidx.compose.ui.unit.dp
 import meshki.studio.negarname.ui.theme.NegarTheme
 import meshki.studio.negarname.ui.util.LeftToRightLayout
 import meshki.studio.negarname.ui.util.RightToLeftLayout
-import org.koin.compose.KoinContext
-import org.koin.compose.koinInject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
-class AppActivity : ComponentActivity() {
+class AppActivity : ComponentActivity(), KoinComponent {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val appViewModel: AppViewModel = get()
         enableEdgeToEdge()
 
         setContent {
-            KoinContext {
-                val appViewModel = koinInject<AppViewModel>()
                 val appState: AppState = rememberAppState()
 
                 NegarTheme(
@@ -77,8 +78,18 @@ class AppActivity : ComponentActivity() {
                         }
                     }
                 }
-            }
+
         }
     }
 }
 
+fun Context.getActivity(): ComponentActivity {
+    var currentContext = this
+    while (currentContext is ContextWrapper) {
+        if (currentContext is ComponentActivity) {
+            return currentContext
+        }
+        currentContext = currentContext.baseContext
+    }
+    throw IllegalStateException("Permissions should be called in the context of an Activity")
+}

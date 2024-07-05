@@ -1,7 +1,6 @@
 package meshki.studio.negarname.ui.app
 
 import android.content.Context
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.State
@@ -11,18 +10,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import meshki.studio.negarname.data.local.Database
-import meshki.studio.negarname.data.repository.AppRepository
 import meshki.studio.negarname.data.storage.Storage
 import meshki.studio.negarname.data.storage.StorageConstants
 import meshki.studio.negarname.ui.util.getCurrentLocale
 import java.lang.ref.WeakReference
 
-class AppViewModel(
-    private val dataStore: Storage,
-    val appRepository: AppRepository,
-    val database: Database,
-    ctx: Context) : ViewModel() {
+class AppViewModel(private val dataStore: Storage, ctx: Context) : ViewModel() {
     private val _ctx = WeakReference(ctx)
     private val _isReady = mutableStateOf(false)
     private val _locale = mutableStateOf("en")
