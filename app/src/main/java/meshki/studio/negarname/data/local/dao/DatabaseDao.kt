@@ -1,11 +1,12 @@
 package meshki.studio.negarname.data.local.dao
 
+import android.database.Cursor
 import androidx.room.Dao
 import androidx.room.RawQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 
 @Dao
-interface AppDao {
+interface DatabaseDao {
     @RawQuery
-    fun checkpoint(supportSQLiteQuery: SupportSQLiteQuery): Int
+    fun checkpoint(query: SupportSQLiteQuery): Cursor
 }

@@ -2,14 +2,14 @@ package meshki.studio.negarname.data.repository
 
 import androidx.sqlite.db.SimpleSQLiteQuery
 import meshki.studio.negarname.data.local.Database
-import meshki.studio.negarname.data.local.dao.AppDao
+import meshki.studio.negarname.data.local.dao.DatabaseDao
 
-class AppRepository(
+class DatabaseRepository(
     private val database: Database,
-    private val appDao: AppDao,
+    private val databaseDao: DatabaseDao,
 ) {
-    fun checkpoint(): Int {
-        return appDao.checkpoint(SimpleSQLiteQuery("pragma wal_checkpoint(full)"))
+    fun checkpoint() {
+        databaseDao.checkpoint(SimpleSQLiteQuery("pragma wal_checkpoint(full);"))
     }
 
     fun getDatabaseFilePath(): String? {

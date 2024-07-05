@@ -7,7 +7,7 @@ import meshki.studio.negarname.data.local.converters.DateConverter
 import meshki.studio.negarname.data.local.converters.NoteConverter
 import meshki.studio.negarname.data.local.converters.TodoConverter
 import meshki.studio.negarname.data.local.dao.AlarmsDao
-import meshki.studio.negarname.data.local.dao.AppDao
+import meshki.studio.negarname.data.local.dao.DatabaseDao
 import meshki.studio.negarname.data.local.dao.NotesDao
 import meshki.studio.negarname.data.local.dao.TodosDao
 import meshki.studio.negarname.services.alarm.AlarmEntity
@@ -22,7 +22,7 @@ import meshki.studio.negarname.ui.todos.TodoEntity
         AlarmEntity::class,
         NotesAlarmsCrossRef::class
     ],
-    version = 20,
+    version = 21,
     exportSchema = false
 )
 
@@ -35,13 +35,11 @@ import meshki.studio.negarname.ui.todos.TodoEntity
 )
 
 abstract class Database : RoomDatabase() {
-    abstract fun getAppDao(): AppDao
+    abstract fun getDatabaseDao(): DatabaseDao
     abstract fun getNotesDao(): NotesDao
     abstract fun getTodosDao(): TodosDao
     abstract fun getAlarmsDao(): AlarmsDao
 
-    fun clearDatabase() {
-        clearAllTables()
-    }
+    fun clearDatabase() { clearAllTables() }
 }
 
