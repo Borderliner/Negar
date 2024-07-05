@@ -82,14 +82,3 @@ class AppActivity : ComponentActivity(), KoinComponent {
         }
     }
 }
-
-fun Context.getActivity(): ComponentActivity {
-    var currentContext = this
-    while (currentContext is ContextWrapper) {
-        if (currentContext is ComponentActivity) {
-            return currentContext
-        }
-        currentContext = currentContext.baseContext
-    }
-    throw IllegalStateException("Permissions should be called in the context of an Activity")
-}

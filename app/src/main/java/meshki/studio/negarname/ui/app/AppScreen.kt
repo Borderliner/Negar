@@ -63,7 +63,7 @@ import meshki.studio.negarname.ui.navigation.AppTopBar
 import meshki.studio.negarname.ui.theme.PastelRed
 import meshki.studio.negarname.ui.util.LeftToRightLayout
 import meshki.studio.negarname.ui.util.RightToLeftLayout
-import meshki.studio.negarname.ui.util.getAppVersion
+import meshki.studio.negarname.ui.util.extensions.getAppVersion
 import meshki.studio.negarname.ui.util.isDarkTheme
 import org.koin.compose.koinInject
 import java.text.DecimalFormat
@@ -303,7 +303,7 @@ fun AppScreen(appState: AppState) {
                     )
                     Text(
                         stringResource(R.string.version) + ": " + DecimalFormat.getInstance()
-                            .format(getAppVersion(ctx).versionName.toDouble()),
+                            .format(ctx.getAppVersion().versionName.toDouble()),
                         modifier = Modifier.padding(16.dp)
                     )
                 }

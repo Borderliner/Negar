@@ -1,7 +1,6 @@
 package meshki.studio.negarname.ui.util
 
 import kotlinx.coroutines.withContext
-import meshki.studio.negarname.entities.UiState
 import timber.log.Timber
 import java.lang.Exception
 import kotlin.coroutines.CoroutineContext

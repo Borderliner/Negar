@@ -6,10 +6,6 @@ import meshki.studio.negarname.data.storage.Storage
 import org.koin.dsl.module
 
 val storageModule = module {
-
-    single<Storage> {
-        PersistentStorage(context = get())
-    }
-
+    single<Storage> { PersistentStorage(get()) }
     single { Gson() }
 }

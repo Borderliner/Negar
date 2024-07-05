@@ -12,11 +12,12 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.data.storage.Storage
 import meshki.studio.negarname.data.storage.StorageConstants
-import meshki.studio.negarname.ui.util.getCurrentLocale
+import meshki.studio.negarname.ui.util.extensions.getCurrentLocale
+import meshki.studio.negarname.ui.util.extensions.setLocale
 import java.lang.ref.WeakReference
 
-class AppViewModel(private val dataStore: Storage, ctx: Context) : ViewModel() {
-    private val _ctx = WeakReference(ctx)
+class AppViewModel(private val dataStore: Storage, context: Context) : ViewModel() {
+    private val ctx = WeakReference(context)
     private val _isReady = mutableStateOf(false)
     private val _locale = mutableStateOf("en")
     private val _bottomBarVisible = mutableStateOf(true)
@@ -29,11 +30,11 @@ class AppViewModel(private val dataStore: Storage, ctx: Context) : ViewModel() {
     val drawerState = DrawerState(DrawerValue.Closed)
 
     init {
+        _locale.value = context.getCurrentLocale()
         viewModelScope.launch {
             getTheme().collectLatest {
                 _theme.value = it
                 _isReady.value = true
-                _locale.value = getCurrentLocale(ctx)
             }
         }
     }
@@ -50,7 +51,7 @@ class AppViewModel(private val dataStore: Storage, ctx: Context) : ViewModel() {
 
     fun setLocale(tag: String) {
         _locale.value = tag
-        meshki.studio.negarname.ui.util.setLocale(_ctx.get()!!, tag)
+        ctx.get()!!.setLocale(tag)
     }
 
     fun setBottomBarVisible(value: Boolean) {

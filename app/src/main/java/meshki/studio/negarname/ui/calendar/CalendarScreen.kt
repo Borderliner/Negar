@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,19 +44,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.himanshoe.kalendar.Kalendar
-import com.himanshoe.kalendar.KalendarShamsi
-import com.himanshoe.kalendar.KalendarType
 import com.himanshoe.kalendar.color.KalendarColors
 import com.himanshoe.kalendar.color.KalendarColorsShamsi
-import com.himanshoe.kalendar.ui.component.day.toLocalDate
 import com.himanshoe.kalendar.ui.component.header.KalendarHeader
 import com.himanshoe.kalendar.ui.component.header.KalendarHeaderShamsi
 import com.himanshoe.kalendar.ui.component.header.KalendarTextKonfig
@@ -67,7 +61,6 @@ import com.himanshoe.kalendar.ui.firey.KalendarFireyShamsi
 import com.sd.lib.compose.wheel_picker.FVerticalWheelPicker
 import com.sd.lib.compose.wheel_picker.rememberFWheelPickerState
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Month
 import meshki.studio.negarname.ui.app.AppState
 import meshki.studio.negarname.R
 import meshki.studio.negarname.entities.Tool
@@ -75,7 +68,7 @@ import meshki.studio.negarname.ui.components.PopupSection
 import meshki.studio.negarname.ui.components.Toolbox
 import meshki.studio.negarname.ui.theme.PastelGreen
 import meshki.studio.negarname.ui.app.AppViewModel
-import meshki.studio.negarname.ui.util.grgMonthToPersian
+import meshki.studio.negarname.ui.util.extensions.grgMonthToPersian
 import org.koin.androidx.compose.koinViewModel
 import saman.zamani.persiandate.PersianDate
 import timber.log.Timber

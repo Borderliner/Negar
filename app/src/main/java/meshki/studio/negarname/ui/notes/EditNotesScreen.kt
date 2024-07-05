@@ -138,7 +138,7 @@ import meshki.studio.negarname.ui.util.RightToLeftLayout
 import meshki.studio.negarname.ui.util.checkAlarmsPermission
 import meshki.studio.negarname.ui.util.checkPermission
 import meshki.studio.negarname.ui.util.checkPermissions
-import meshki.studio.negarname.ui.util.dragMotionEvent
+import meshki.studio.negarname.ui.util.extensions.dragMotionEvent
 import org.koin.androidx.compose.koinViewModel
 import saman.zamani.persiandate.PersianDate
 import timber.log.Timber

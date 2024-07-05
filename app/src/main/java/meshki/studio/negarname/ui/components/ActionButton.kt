@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import meshki.studio.negarname.ui.theme.RoundedShapes
-import meshki.studio.negarname.ui.util.bounceClick
-import meshki.studio.negarname.ui.util.dpToPx
+import meshki.studio.negarname.ui.util.extensions.bounceClick
+import meshki.studio.negarname.ui.util.extensions.dpToPx
 import meshki.studio.negarname.ui.util.getNavigationBarHeight
 import meshki.studio.negarname.ui.util.keyboardAsState
 

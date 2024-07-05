@@ -1,4 +1,4 @@
-package meshki.studio.negarname.ui.util
+package meshki.studio.negarname.ui.util.extensions
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown

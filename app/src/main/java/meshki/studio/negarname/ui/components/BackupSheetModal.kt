@@ -36,7 +36,7 @@ import meshki.studio.negarname.data.repository.DatabaseRepository
 import meshki.studio.negarname.ui.theme.PastelGreen
 import meshki.studio.negarname.ui.theme.PastelRed
 import meshki.studio.negarname.ui.util.checkPermissions
-import meshki.studio.negarname.ui.util.copyTo
+import meshki.studio.negarname.ui.util.extensions.copyTo
 import meshki.studio.negarname.ui.util.rememberMultiplePermissionLauncher
 import org.koin.compose.koinInject
 import timber.log.Timber

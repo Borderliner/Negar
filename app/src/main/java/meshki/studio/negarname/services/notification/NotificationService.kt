@@ -16,9 +16,9 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import meshki.studio.negarname.R
-import meshki.studio.negarname.ui.util.getCurrentLocale
-import meshki.studio.negarname.ui.util.getParcelable
-import meshki.studio.negarname.ui.util.setLocale
+import meshki.studio.negarname.ui.util.extensions.getCurrentLocale
+import meshki.studio.negarname.ui.util.extensions.getParcelable
+import meshki.studio.negarname.ui.util.extensions.setLocale
 import timber.log.Timber
 
 class NotificationService : Service() {
@@ -115,7 +115,7 @@ class NotificationService : Service() {
                         lockscreenVisibility = NotificationCompat.VISIBILITY_PRIVATE
                         setShowBadge(true)
                         setImportance(importance)
-                        setLocale(ctx, getCurrentLocale(ctx))
+                        ctx.setLocale(ctx.getCurrentLocale())
                         // ringtone = ringtone!!
                     }
 
