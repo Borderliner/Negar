@@ -3,12 +3,17 @@ package meshki.studio.negarname.ui.app
 import android.content.Context
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.data.storage.Storage
 import meshki.studio.negarname.data.storage.StorageConstants
@@ -18,30 +23,47 @@ import java.lang.ref.WeakReference
 
 class AppViewModel(private val dataStore: Storage, context: Context) : ViewModel() {
     private val ctx = WeakReference(context)
-    private val _isReady = mutableStateOf(false)
-    private val _locale = mutableStateOf("en")
-    private val _bottomBarVisible = mutableStateOf(true)
-    private val _theme = mutableStateOf("system")
-    val theme get() = _theme.value
-    val isReady get() = _isReady.value
-    val isRtl get() = _locale.value == "fa"
-    val locale get() = _locale.value
-    val isBottomBarVisible: State<Boolean> = _bottomBarVisible
+    private val _appState = MutableStateFlow(AppState())
+    val appState: StateFlow<AppState> = _appState.asStateFlow()
+    val snackbarHost = SnackbarHostState()
     val drawerState = DrawerState(DrawerValue.Closed)
 
     init {
-        _locale.value = context.getCurrentLocale()
+        onEvent(AppEvent.SetLocale(context.getCurrentLocale()))
         viewModelScope.launch {
-            getTheme().collectLatest {
-                _theme.value = it
-                _isReady.value = true
+            getTheme().collectLatest { theme ->
+                _appState.update {
+                    it.copy(theme = theme, isReady = true)
+                }
             }
         }
     }
 
-    fun setTheme(themeName: String) {
+    fun onEvent(event: AppEvent) {
+        when (event) {
+            is AppEvent.SetTheme -> {
+                setTheme(event.theme)
+            }
+            is AppEvent.SetLocale -> {
+                setLocale(event.locale)
+            }
+            is AppEvent.SetBottomBarVisible -> {
+                setBottomBarVisible(event.value)
+            }
+            is AppEvent.ShowSnackbar -> {
+                viewModelScope.launch {
+                    snackbarHost.showSnackbar(event.message, event.label, event.withDismissAction, event.duration)
+                }
+            }
+        }
+    }
+
+    fun setTheme(theme: String) {
         viewModelScope.launch {
-            dataStore.putPreference(StorageConstants.THEME, themeName)
+            dataStore.putPreference(StorageConstants.THEME, theme)
+            _appState.update {
+                it.copy(theme = theme)
+            }
         }
     }
 
@@ -49,16 +71,30 @@ class AppViewModel(private val dataStore: Storage, context: Context) : ViewModel
         return dataStore.getPreference(StorageConstants.THEME, "system")
     }
 
-    fun setLocale(tag: String) {
-        _locale.value = tag
-        ctx.get()!!.setLocale(tag)
+    fun setLocale(locale: String) {
+        ctx.get()!!.setLocale(locale)
+        val needsRtl = ctx.get()!!.getCurrentLocale() == "fa"
+        _appState.update {
+            it.copy(locale = locale, isRtl = needsRtl)
+        }
     }
 
     fun setBottomBarVisible(value: Boolean) {
-        _bottomBarVisible.value = value
+        _appState.update {
+            it.copy(isBottomBarVisible = value)
+        }
     }
 
-    fun getLocaleName(): String = when(locale) {
+    suspend fun showSnackbar(label: String = "", message: String, duration: SnackbarDuration = SnackbarDuration.Short, withDismissAction: Boolean = false): SnackbarResult {
+        return snackbarHost.showSnackbar(
+            message = message,
+            actionLabel = label,
+            duration = duration,
+            withDismissAction = withDismissAction
+        )
+    }
+
+    fun getLocaleName(): String = when(appState.value.locale) {
         "fa" -> "پارسی \uD83C\uDDEE\uD83C\uDDF7"
         "en" -> "English \uD83C\uDDFA\uD83C\uDDF8"
         "fr" -> "Français \uD83C\uDDEB\uD83C\uDDF7"

@@ -3,26 +3,29 @@ package meshki.studio.negarname.ui.navigation
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import meshki.studio.negarname.ui.app.AppState
 import meshki.studio.negarname.ui.app.AppViewModel
-
 import meshki.studio.negarname.ui.calendar.CalendarScreen
 import meshki.studio.negarname.ui.notes.EditNotesScreen
-import meshki.studio.negarname.ui.todos.EditTodosScreen
 import meshki.studio.negarname.ui.notes.NotesScreen
 import meshki.studio.negarname.ui.settings.SettingsScreen
+import meshki.studio.negarname.ui.todos.EditTodosScreen
 import meshki.studio.negarname.ui.todos.TodosScreen
+import org.koin.compose.koinInject
 
 @Composable
-fun AppNavigation(appState: AppState, appViewModel: AppViewModel) {
+fun AppNavigation(navController: NavHostController) {
+    val appViewModel = koinInject<AppViewModel>()
+    val appState = appViewModel.appState.collectAsState()
     val navigationSpeed = 450
     val pageSpeed = 300
 
-    NavHost(appState.navController, startDestination = ScreenEntity.Notes.route) {
+    NavHost(navController, startDestination = ScreenEntity.Notes.route) {
         composable(
             ScreenEntity.Calendar.route,
             enterTransition = {
@@ -40,7 +43,7 @@ fun AppNavigation(appState: AppState, appViewModel: AppViewModel) {
                 }
             }
         ) {
-            CalendarScreen(appState)
+            CalendarScreen()
         }
 
         composable(
@@ -84,7 +87,7 @@ fun AppNavigation(appState: AppState, appViewModel: AppViewModel) {
             popExitTransition = {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(navigationSpeed))
             }) {
-            NotesScreen(appState)
+            NotesScreen(navController)
         }
 
         composable(
@@ -123,7 +126,7 @@ fun AppNavigation(appState: AppState, appViewModel: AppViewModel) {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = tween(navigationSpeed))
             }) {
             TodosScreen {
-                appState.navController.navigate(it)
+                navController.navigate(it)
             }
 
         }
@@ -158,7 +161,7 @@ fun AppNavigation(appState: AppState, appViewModel: AppViewModel) {
                 slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(pageSpeed))
             }
         ) { nav ->
-            EditNotesScreen(color = nav.arguments?.getInt("color") ?: -1, appState, appViewModel)
+            EditNotesScreen(navController, color = nav.arguments?.getInt("color") ?: -1)
         }
 
         composable(
@@ -192,7 +195,7 @@ fun AppNavigation(appState: AppState, appViewModel: AppViewModel) {
             }
         ) { nav ->
             EditTodosScreen(color = nav.arguments?.getInt("color") ?: -1) {
-                appState.navController.navigate(it)
+                navController.navigate(it)
             }
         }
 
@@ -206,7 +209,7 @@ fun AppNavigation(appState: AppState, appViewModel: AppViewModel) {
             }
         ) {
             SettingsScreen {
-                appState.navController.navigate(it)
+                navController.navigate(it)
             }
         }
     }

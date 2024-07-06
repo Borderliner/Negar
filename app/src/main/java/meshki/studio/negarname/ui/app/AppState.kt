@@ -10,7 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class AppState(
+class AppState2(
     val coroutineScope: CoroutineScope,
     val navController: NavHostController,
     val snackbar: SnackbarHostState,
@@ -31,9 +31,17 @@ fun rememberAppState(
     navController: NavHostController = rememberNavController(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) = remember(coroutineScope, navController, snackbarHostState) {
-    AppState(
+    AppState2(
         coroutineScope = coroutineScope,
         navController = navController,
         snackbar = snackbarHostState
     )
 }
+
+data class AppState(
+    val isReady: Boolean = false,
+    val isRtl: Boolean = false,
+    val locale: String = "en",
+    val isBottomBarVisible: Boolean = true,
+    val theme: String = "system"
+)

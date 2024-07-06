@@ -43,7 +43,7 @@ fun ActionButton(
     icon: @Composable () -> Unit,
     onClick: () -> Unit = {},
     modifier: Modifier,
-    isBottomBarVisible: State<Boolean> = mutableStateOf(false)
+    isBottomBarVisible: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -70,7 +70,7 @@ fun ActionButton(
     LaunchedEffect(isKeyboardOpen, isBottomBarVisible) {
         // 90 is hardcoded navigation bar height
         val keyboardHeight: Int = insets!!.getInsets(WindowInsetsCompat.Type.ime()).bottom
-        val bottomBarHeight: Int = if (isBottomBarVisible.value) ctx.dpToPx(90) else ctx.dpToPx(1)
+        val bottomBarHeight: Int = if (isBottomBarVisible) ctx.dpToPx(90) else ctx.dpToPx(1)
         val navigationBarHeight = getNavigationBarHeight()
         //Timber.tag("Action Button").i("Keyboard Height in Px: $keyboardHeight")
         //Timber.tag("Action Button").i("BottomBar Height in Px: $bottomBarHeight")

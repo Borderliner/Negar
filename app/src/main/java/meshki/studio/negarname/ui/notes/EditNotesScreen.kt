@@ -52,7 +52,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -62,6 +61,7 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -99,6 +99,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import com.google.gson.Gson
 import com.linc.audiowaveform.AudioWaveform
 import com.linc.audiowaveform.infiniteLinearGradient
@@ -116,7 +117,7 @@ import meshki.studio.negarname.entities.PathProperties
 import meshki.studio.negarname.entities.Tool
 import meshki.studio.negarname.services.alarm.AlarmData
 import meshki.studio.negarname.services.voice_recorder.VoiceRecorder
-import meshki.studio.negarname.ui.app.AppState
+import meshki.studio.negarname.ui.app.AppEvent
 import meshki.studio.negarname.ui.app.AppViewModel
 import meshki.studio.negarname.ui.calendar.Week
 import meshki.studio.negarname.ui.components.ActionButton
@@ -140,33 +141,36 @@ import meshki.studio.negarname.ui.util.checkPermission
 import meshki.studio.negarname.ui.util.checkPermissions
 import meshki.studio.negarname.ui.util.extensions.dragMotionEvent
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import saman.zamani.persiandate.PersianDate
 import timber.log.Timber
 import java.text.NumberFormat
 import java.util.Calendar
 
 @Composable
-fun EditNotesScreen(color: Int, appState: AppState, appViewModel: AppViewModel) {
-    appViewModel.setBottomBarVisible(false)
-    val viewModel = koinViewModel<EditNotesViewModel>()
+fun EditNotesScreen(navController: NavHostController, color: Int) {
+    val appViewModel = koinInject<AppViewModel>()
+    val appState = appViewModel.appState.collectAsState()
+    appViewModel.onEvent(AppEvent.SetBottomBarVisible(false))
+    val vm = koinViewModel<EditNotesViewModel>()
 
     LaunchedEffect(color) {
         if (color > 0) {
-            viewModel.viewModelScope.launch {
-                viewModel.onEvent(EditNotesEvent.ColorChanged(color))
+            vm.viewModelScope.launch {
+                vm.onEvent(EditNotesEvent.ColorChanged(color))
             }
         }
     }
-    if (appViewModel.isRtl) {
-        EditNotesScreenScaffold(viewModel, appState, appViewModel) {
+    if (appState.value.isRtl) {
+        EditNotesScreenScaffold(navController) {
             RightToLeftLayout {
-                EditNotesScreenMain(viewModel, appState, appViewModel)
+                EditNotesScreenMain(navController)
             }
         }
     } else {
-        EditNotesScreenScaffold(viewModel, appState, appViewModel) {
+        EditNotesScreenScaffold(navController) {
             LeftToRightLayout {
-                EditNotesScreenMain(viewModel, appState, appViewModel)
+                EditNotesScreenMain(navController)
             }
         }
     }
@@ -175,22 +179,23 @@ fun EditNotesScreen(color: Int, appState: AppState, appViewModel: AppViewModel) 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun EditNotesScreenScaffold(
-    viewModel: EditNotesViewModel,
-    appState: AppState,
-    appViewModel: AppViewModel,
+    navController: NavHostController,
     content: @Composable () -> Unit
 ) {
-    val snackbar = remember { SnackbarHostState() }
+    val appViewModel = koinInject<AppViewModel>()
+    val appState = appViewModel.appState.collectAsState()
+    val vm = koinViewModel<EditNotesViewModel>()
+
     Scaffold(
         containerColor = Color.Transparent,
         snackbarHost = {
-            if (appViewModel.isRtl) {
+            if (appState.value.isRtl) {
                 LeftToRightLayout {
-                    SnackbarHost(snackbar)
+                    SnackbarHost(appViewModel.snackbarHost)
                 }
             } else {
                 RightToLeftLayout {
-                    SnackbarHost(snackbar)
+                    SnackbarHost(appViewModel.snackbarHost)
                 }
             }
         },
@@ -205,13 +210,13 @@ fun EditNotesScreenScaffold(
                 },
                 modifier = Modifier,
                 onClick = {
-                    viewModel.viewModelScope.launch {
-                        viewModel.onEvent(EditNotesEvent.NoteSaved)
-                        viewModel.setNoteModified(false)
-                        appState.navController.navigateUp()
+                    vm.viewModelScope.launch {
+                        vm.onEvent(EditNotesEvent.NoteSaved)
+                        vm.setNoteModified(false)
+                        navController.navigateUp()
                     }
                 },
-                isBottomBarVisible = appViewModel.isBottomBarVisible
+                isBottomBarVisible = appState.value.isBottomBarVisible
             )
         },
         floatingActionButtonPosition = FabPosition.End,
@@ -223,12 +228,14 @@ fun EditNotesScreenScaffold(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditNotesScreenMain(
-    viewModel: EditNotesViewModel,
-    appState: AppState,
-    appViewModel: AppViewModel
+    navController: NavHostController
 ) {
+    val appViewModel = koinInject<AppViewModel>()
+    val appState = appViewModel.appState.collectAsState()
     val scope = rememberCoroutineScope()
-    val noteState = viewModel.noteEntityState
+    val vm = koinViewModel<EditNotesViewModel>()
+
+    val noteState = vm.noteEntityState
     val noteEntityColorsArgb = NoteEntity.colors.map {
         it.toArgb()
     }
@@ -242,8 +249,8 @@ fun EditNotesScreenMain(
     val offsetAnimation = remember { mutableStateOf(Animatable(0f)) }
     val ctx = LocalContext.current
 
-    val titleState = viewModel.noteTitleState
-    val textState = viewModel.noteTextState
+    val titleState = vm.noteTitleState
+    val textState = vm.noteTextState
 
     suspend fun openTool(tool: MutableState<Tool>, delay: Int = 0) {
         tool.value.visibility.value = true
@@ -262,10 +269,10 @@ fun EditNotesScreenMain(
     }
 
     BackPressHandler {
-        if ((titleState.value.text.isNotEmpty() || textState.value.text.isNotEmpty()) && viewModel.isNoteModified.value) {
+        if ((titleState.value.text.isNotEmpty() || textState.value.text.isNotEmpty()) && vm.isNoteModified.value) {
             workInProgressAlertVisible = true
         } else {
-            appState.navController.navigateUp()
+            navController.navigateUp()
         }
     }
 
@@ -274,7 +281,7 @@ fun EditNotesScreenMain(
             onDismissRequest = { workInProgressAlertVisible = false },
             onCancel = {
                 workInProgressAlertVisible = false
-                appState.navController.navigateUp()
+                navController.navigateUp()
             },
             onConfirm = {
                 workInProgressAlertVisible = false
@@ -290,7 +297,7 @@ fun EditNotesScreenMain(
                     .copy(
                         alpha =
                         if (
-                            (appViewModel.theme == "system" && isSystemInDarkTheme()) || appViewModel.theme == "dark"
+                            (appState.value.theme == "system" && isSystemInDarkTheme()) || appState.value.theme == "dark"
                         ) 0.125f
                         else 0.25f
                     )
@@ -353,7 +360,7 @@ fun EditNotesScreenMain(
                         .shadow(6.dp, CircleShape)
                         .clip(CircleShape)
                         .background(
-                            if (viewModel.alarmEntities.size > 0) PastelLavender else {
+                            if (vm.alarmEntities.size > 0) PastelLavender else {
                                 if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
                             }
                         )
@@ -393,7 +400,7 @@ fun EditNotesScreenMain(
                         .shadow(6.dp, CircleShape)
                         .clip(CircleShape)
                         .background(
-                            if (viewModel.voiceState.value.duration > 0)
+                            if (vm.voiceState.value.duration > 0)
                                 PastelPink
                             else {
                                 if (isSystemInDarkTheme()) Color.Gray else Color.LightGray
@@ -473,7 +480,7 @@ fun EditNotesScreenMain(
             Row {
                 val dateModified = remember { derivedStateOf {
                     val pDate = PersianDate(noteState.value.dateModified)
-                    if (appViewModel.isRtl) {
+                    if (appState.value.isRtl) {
                         "${pDate.dayName()}، ${pDate.hour.toString().padStart(2, '0')}:${pDate.minute.toString().padStart(2, '0')}:${pDate.second.toString().padStart(2, '0')}\n${pDate.shDay} ${pDate.monthName} ${pDate.shYear}"
                     } else {
                         "${pDate.dayEnglishName()}, ${pDate.hour.toString().padStart(2, '0')}:${pDate.minute.toString().padStart(2, '0')}:${pDate.second.toString().padStart(2, '0')}\n${pDate.grgDay} ${pDate.grgMonthName} ${pDate.grgYear}"
@@ -502,13 +509,13 @@ fun EditNotesScreenMain(
                 hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
                 onValueChange = {
                     scope.launch {
-                        viewModel.onEvent(EditNotesEvent.TitleEntered(it))
-                        viewModel.setNoteModified(true)
+                        vm.onEvent(EditNotesEvent.TitleEntered(it))
+                        vm.setNoteModified(true)
                     }
                 },
                 onFocusChange = {
                     scope.launch {
-                        viewModel.onEvent(EditNotesEvent.TitleFocusChanged(it))
+                        vm.onEvent(EditNotesEvent.TitleFocusChanged(it))
                     }
                 },
                 isHintVisible = titleState.value.isHintVisible,
@@ -557,13 +564,13 @@ fun EditNotesScreenMain(
                 hintColor = MaterialTheme.colorScheme.onBackground.copy(0.55f),
                 onValueChange = {
                     scope.launch {
-                        viewModel.onEvent(EditNotesEvent.TextEntered(it))
-                        viewModel.setNoteModified(true)
+                        vm.onEvent(EditNotesEvent.TextEntered(it))
+                        vm.setNoteModified(true)
                     }
                 },
                 onFocusChange = {
                     scope.launch {
-                        viewModel.onEvent(EditNotesEvent.TextFocusChanged(it))
+                        vm.onEvent(EditNotesEvent.TextFocusChanged(it))
                     }
                 },
                 expanded = true,
@@ -617,7 +624,7 @@ fun EditNotesScreenMain(
                             .background(it)
                             .clickable {
                                 scope.launch {
-                                    viewModel.onEvent(
+                                    vm.onEvent(
                                         EditNotesEvent.ColorChanged(colorInt)
                                     )
                                 }
@@ -683,16 +690,16 @@ fun EditNotesScreenMain(
                         modifier = Modifier.padding(vertical = 8.dp),
                         fontSize = 28.sp,
                         text = "${
-                            if (viewModel.voiceState.value.duration / 1000 / 60 < 10) formatter.format(
+                            if (vm.voiceState.value.duration / 1000 / 60 < 10) formatter.format(
                                 0
                             ) else ""
-                        }${formatter.format((viewModel.voiceState.value.duration / 1000) / 60)}:${
-                            if (viewModel.voiceState.value.duration / 1000 % 60 < 10) formatter.format(
+                        }${formatter.format((vm.voiceState.value.duration / 1000) / 60)}:${
+                            if (vm.voiceState.value.duration / 1000 % 60 < 10) formatter.format(
                                 0
                             ) else ""
                         }${
                             formatter.format(
-                                (viewModel.voiceState.value.duration / 1000) % 60
+                                (vm.voiceState.value.duration / 1000) % 60
                             )
                         }"
                     )
@@ -707,7 +714,7 @@ fun EditNotesScreenMain(
                         width = 128F
                     )
 
-                    if (viewModel.voiceState.value.duration > 0) {
+                    if (vm.voiceState.value.duration > 0) {
                         AudioWaveform(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -715,7 +722,7 @@ fun EditNotesScreenMain(
                             style = Fill,
                             waveformAlignment = WaveformAlignment.Center,
                             amplitudeType = AmplitudeType.Avg,
-                            amplitudes = viewModel.voiceState.value.amplitudes,
+                            amplitudes = vm.voiceState.value.amplitudes,
                             progressBrush = animatedGradientBrush,
                             waveformBrush = SolidColor(Color.LightGray),
                             spikeWidth = 4.dp,
@@ -724,7 +731,7 @@ fun EditNotesScreenMain(
                             progress = waveformProgress,
                             onProgressChange = {
                                 waveformProgress = it
-                                viewModel.recorder.value.seekTo((it * viewModel.voiceState.value.duration).toInt())
+                                vm.recorder.value.seekTo((it * vm.voiceState.value.duration).toInt())
                             }
                         )
                     }
@@ -771,8 +778,8 @@ fun EditNotesScreenMain(
                                         ),
                                         onClick = {
                                             replaceRecordAlert = false
-                                            viewModel.recorder.value.startRecording()
-                                            isRecording = viewModel.recorder.value.isRecording()
+                                            vm.recorder.value.startRecording()
+                                            isRecording = vm.recorder.value.isRecording()
                                         }
                                     ) {
                                         Text(stringResource(R.string.yes), fontSize = 14.sp)
@@ -822,7 +829,7 @@ fun EditNotesScreenMain(
                                         onClick = {
                                             scope.launch {
                                                 deleteRecordAlert = false
-                                                viewModel.onEvent(EditNotesEvent.VoiceRemoved)
+                                                vm.onEvent(EditNotesEvent.VoiceRemoved)
                                             }
                                         }
                                     ) {
@@ -856,7 +863,7 @@ fun EditNotesScreenMain(
                                     PastelOrange,
                                     Color.Black.copy(0.9f)
                                 ),
-                                enabled = viewModel.voiceState.value.duration > 0,
+                                enabled = vm.voiceState.value.duration > 0,
                                 elevation = ButtonDefaults.buttonElevation(4.dp),
                                 onClick = { deleteRecordAlert = true }) {
                                 Icon(
@@ -887,25 +894,25 @@ fun EditNotesScreenMain(
                                                 voicePermissionLauncher
                                             ) {
 
-                                                if (!viewModel.recorder.value.isRecording()) {
-                                                    if (viewModel.voiceState.value.duration > 0) {
+                                                if (!vm.recorder.value.isRecording()) {
+                                                    if (vm.voiceState.value.duration > 0) {
                                                         replaceRecordAlert = true
                                                     } else {
-                                                        viewModel.recorder.value.startRecording()
+                                                        vm.recorder.value.startRecording()
                                                     }
                                                 } else {
-                                                    viewModel.recorder.value.stopRecording()
+                                                    vm.recorder.value.stopRecording()
                                                     scope.launch {
-                                                        viewModel.readVoiceToState(
+                                                        vm.readVoiceToState(
                                                             "records/${noteState.value.id}.aac"
                                                         ).collectLatest {
-                                                            viewModel.setVoiceState(it)
+                                                            vm.setVoiceState(it)
                                                             Timber.tag("Edit Screen").i(it.toString())
                                                         }
                                                     }
                                                 }
 
-                                                isRecording = viewModel.recorder.value.isRecording()
+                                                isRecording = vm.recorder.value.isRecording()
                                             }
                                         }
                                     }) {
@@ -928,7 +935,7 @@ fun EditNotesScreenMain(
                                         PastelGreen,
                                         Color.Black.copy(0.9f)
                                     ),
-                                    enabled = viewModel.voiceState.value.duration > 0,
+                                    enabled = vm.voiceState.value.duration > 0,
                                     elevation = ButtonDefaults.buttonElevation(4.dp),
                                     onClick = {
                                         scope.launch {
@@ -990,9 +997,9 @@ fun EditNotesScreenMain(
                     val alarmTime = remember { mutableLongStateOf(0L) }
                     val cal = remember {
                         mutableStateOf(Calendar.getInstance().apply {
-                            if (viewModel.alarmEntities.size > 0) {
+                            if (vm.alarmEntities.size > 0) {
                                 val tempCal = Calendar.getInstance().apply {
-                                    timeInMillis = viewModel.alarmEntities[0].time
+                                    timeInMillis = vm.alarmEntities[0].time
                                 }
                                 val hour = tempCal.get(Calendar.HOUR_OF_DAY)
                                 val minute = tempCal.get(Calendar.MINUTE)
@@ -1016,15 +1023,15 @@ fun EditNotesScreenMain(
                     )
                     TimeInput(state = timePicker, modifier = Modifier.padding(8.dp))
 
-                    var repeating by remember { mutableStateOf(viewModel.alarmEntities.size > 1) }
+                    var repeating by remember { mutableStateOf(vm.alarmEntities.size > 1) }
                     var critical by remember {
                         mutableStateOf(
-                            if (viewModel.alarmEntities.size > 0) {
-                                viewModel.alarmEntities[0].critical
+                            if (vm.alarmEntities.size > 0) {
+                                vm.alarmEntities[0].critical
                             } else false
                         )
                     }
-                    val week by remember { mutableStateOf(Week.fromAlarms(viewModel.alarmEntities)) }
+                    val week by remember { mutableStateOf(Week.fromAlarms(vm.alarmEntities)) }
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(18.dp)
@@ -1068,7 +1075,7 @@ fun EditNotesScreenMain(
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             val sliceRange = remember {
-                                if (appViewModel.isRtl) mutableStateOf(IntRange(0, 0))
+                                if (appState.value.isRtl) mutableStateOf(IntRange(0, 0))
                                 else mutableStateOf(IntRange(0, 2))
                             }
 
@@ -1118,7 +1125,7 @@ fun EditNotesScreenMain(
                                     ).show()
                                 }
                             }
-                        if (viewModel.alarmEntities.size > 0) {
+                        if (vm.alarmEntities.size > 0) {
                             ElevatedButton(
                                 colors = ButtonDefaults.elevatedButtonColors(
                                     PastelRed,
@@ -1127,8 +1134,8 @@ fun EditNotesScreenMain(
                                 elevation = ButtonDefaults.buttonElevation(4.dp),
                                 onClick = {
                                     scope.launch {
-                                        viewModel.onEvent(EditNotesEvent.DeleteNoteAlarms(noteState.value.id))
-                                        viewModel.alarmEntities.clear()
+                                        vm.onEvent(EditNotesEvent.DeleteNoteAlarms(noteState.value.id))
+                                        vm.alarmEntities.clear()
                                         repeating = false
                                         critical = false
                                     }
@@ -1169,7 +1176,7 @@ fun EditNotesScreenMain(
                                             alarmTime.longValue = cal.value.timeInMillis
 
                                             scope.launch {
-                                                viewModel.onEvent(
+                                                vm.onEvent(
                                                     EditNotesEvent.SetAlarm(
                                                         AlarmData(
                                                             id = noteState.value.id,
@@ -1421,7 +1428,7 @@ fun EditNotesScreenMain(
                                 scope.launch {
                                     val serialized = Gson().toJson(paths.toList())
                                     println("PATH: $serialized")
-                                    viewModel.onEvent(EditNotesEvent.DrawingSaved(serialized))
+                                    vm.onEvent(EditNotesEvent.DrawingSaved(serialized))
                                     closeTool(drawingTool)
                                 }
                             }) {
@@ -1445,7 +1452,7 @@ fun EditNotesScreenMain(
                                 scope.launch {
                                     if (paths.isNotEmpty()) {
                                         paths.clear()
-                                        viewModel.onEvent(EditNotesEvent.DrawingRemoved)
+                                        vm.onEvent(EditNotesEvent.DrawingRemoved)
                                     }
                                 }
                             }) {

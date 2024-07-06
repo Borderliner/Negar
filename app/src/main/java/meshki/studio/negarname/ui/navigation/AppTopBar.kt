@@ -1,50 +1,45 @@
 package meshki.studio.negarname.ui.navigation
 
-import android.Manifest
-import android.app.Activity
-import android.os.Environment
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import meshki.studio.negarname.ui.app.AppState
 import meshki.studio.negarname.R
-import meshki.studio.negarname.ui.theme.PastelGreen
-import meshki.studio.negarname.ui.theme.PastelRed
-import meshki.studio.negarname.ui.util.checkPermission
 import meshki.studio.negarname.ui.app.AppViewModel
 import org.koin.compose.koinInject
-import timber.log.Timber
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.nio.channels.FileChannel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppTopBar(appState: AppState) {
+fun AppTopBar() {
+    val scope = rememberCoroutineScope()
     val appViewModel = koinInject<AppViewModel>()
+    val appState = appViewModel.appState.collectAsState()
     val logoSize = 125.dp
 
     TopAppBar(
@@ -57,7 +52,7 @@ fun AppTopBar(appState: AppState) {
                 //enabled = !appMenuState.value,
                 modifier = Modifier.padding(top = 8.dp, start = 8.dp),
                 onClick = {
-                    appState.coroutineScope.launch {
+                    scope.launch {
                         if (appViewModel.drawerState.isOpen) {
                             appViewModel.drawerState.close()
                         } else {
@@ -78,7 +73,7 @@ fun AppTopBar(appState: AppState) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (appViewModel.theme.lowercase() == "light" || (appViewModel.theme.lowercase() == "system" && !isSystemInDarkTheme())) {
+                if (appState.value.theme.lowercase() == "light" || (appState.value.theme.lowercase() == "system" && !isSystemInDarkTheme())) {
                     Image(
                         modifier = Modifier
                             .size(logoSize, logoSize)
@@ -88,7 +83,7 @@ fun AppTopBar(appState: AppState) {
                         colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.85f)),
                         contentDescription = stringResource(R.string.app_name)
                     )
-                } else if (appViewModel.theme.lowercase() == "dark" || (appViewModel.theme.lowercase() == "system" && isSystemInDarkTheme())) {
+                } else if (appState.value.theme.lowercase() == "dark" || (appState.value.theme.lowercase() == "system" && isSystemInDarkTheme())) {
                     Image(
                         modifier = Modifier
                             .size(logoSize, logoSize)
@@ -106,7 +101,7 @@ fun AppTopBar(appState: AppState) {
             IconButton(
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp),
                 onClick = {
-                    appState.coroutineScope.launch {
+                    scope.launch {
                         // TODO: add help
                     }
                 }) {
@@ -118,22 +113,4 @@ fun AppTopBar(appState: AppState) {
             }
         },
     )
-}
-
-@Throws(IOException::class)
-fun copyFile(sourceFile: File?, destFile: File) {
-    if (!destFile.parentFile?.exists()!!) destFile.parentFile?.mkdirs()
-    if (!destFile.exists()) {
-        destFile.createNewFile()
-    }
-    var source: FileChannel? = null
-    var destination: FileChannel? = null
-    try {
-        source = FileInputStream(sourceFile).channel
-        destination = FileOutputStream(destFile).channel
-        destination.transferFrom(source, 0, source.size())
-    } finally {
-        source?.close()
-        destination?.close()
-    }
 }

@@ -32,10 +32,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +54,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.compose.rememberNavController
 import io.embrace.android.embracesdk.Embrace
 import kotlinx.coroutines.launch
 import meshki.studio.negarname.R
@@ -71,14 +74,17 @@ import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppScreen(appState: AppState) {
+fun AppScreen() {
     val appViewModel = koinInject<AppViewModel>()
+    val appState = appViewModel.appState.collectAsState()
+    val scope = rememberCoroutineScope()
+    val navController = rememberNavController()
 
     val aboutDialog = remember { mutableStateOf(false) }
     AboutDialog(state = aboutDialog)
 
     val backupSheetModalState = rememberModalBottomSheetState()
-    BackupSheetModal(snackbar = appState.snackbar, sheetState = backupSheetModalState)
+    BackupSheetModal(snackbar = appViewModel.snackbarHost, sheetState = backupSheetModalState)
 
     ModalNavigationDrawer(
         modifier = Modifier
@@ -86,7 +92,7 @@ fun AppScreen(appState: AppState) {
                 Brush.verticalGradient(
                     listOf(
                         MaterialTheme.colorScheme.primary.copy(
-                            alpha = if (isDarkTheme(theme = appViewModel.theme)) 1f else 0.755f
+                            alpha = if (isDarkTheme(theme = appState.value.theme)) 1f else 0.755f
                         ),
                         Color.Transparent
                     )
@@ -131,12 +137,12 @@ fun AppScreen(appState: AppState) {
                         },
                         selected = false,
                         onClick = {
-                            appState.coroutineScope.launch {
+                            scope.launch {
                                 appViewModel.drawerState.close()
-                                if (appViewModel.locale == "fa") {
-                                    appViewModel.setLocale(Locale("en").toLanguageTag())
+                                if (appState.value.locale == "fa") {
+                                    appViewModel.onEvent(AppEvent.SetLocale(Locale("en").toLanguageTag()))
                                 } else {
-                                    appViewModel.setLocale(Locale("fa").toLanguageTag())
+                                    appViewModel.onEvent(AppEvent.SetLocale(Locale("fa").toLanguageTag()))
                                 }
                             }
                         }
@@ -150,7 +156,7 @@ fun AppScreen(appState: AppState) {
                                 )
                                 Text(
                                     stringResource(
-                                        when (appViewModel.theme.lowercase()) {
+                                        when (appState.value.theme.lowercase()) {
                                             "light" -> R.string.light
                                             "dark" -> R.string.dark
                                             "system" -> R.string.system
@@ -163,7 +169,7 @@ fun AppScreen(appState: AppState) {
                         badge = {
                             Icon(
                                 painter = painterResource(
-                                    when (appViewModel.theme.lowercase()) {
+                                    when (appState.value.theme.lowercase()) {
                                         "light" -> R.drawable.vec_light_mode
                                         "dark" -> R.drawable.dark_mode
                                         "system" -> R.drawable.vec_routine
@@ -175,13 +181,11 @@ fun AppScreen(appState: AppState) {
                         },
                         selected = false,
                         onClick = {
-                            appState.coroutineScope.launch {
-                                appViewModel.viewModelScope.launch {
-                                    when (appViewModel.theme) {
-                                        "system" -> appViewModel.setTheme("dark")
-                                        "dark" -> appViewModel.setTheme("light")
-                                        "light" -> appViewModel.setTheme("system")
-                                    }
+                            scope.launch {
+                                when (appState.value.theme) {
+                                    "system" -> appViewModel.onEvent(AppEvent.SetTheme("dark"))
+                                    "dark" -> appViewModel.onEvent(AppEvent.SetTheme("light"))
+                                    "light" -> appViewModel.onEvent(AppEvent.SetTheme("system"))
                                 }
                             }
                         }
@@ -204,7 +208,7 @@ fun AppScreen(appState: AppState) {
                         },
                         selected = false,
                         onClick = {
-                            appState.coroutineScope.launch {
+                            scope.launch {
                                 //
                             }
                         }
@@ -228,7 +232,7 @@ fun AppScreen(appState: AppState) {
                         },
                         selected = false,
                         onClick = {
-                            appState.coroutineScope.launch {
+                            scope.launch {
                                 appViewModel.drawerState.close()
                                 backupSheetModalState.show()
                             }
@@ -252,7 +256,7 @@ fun AppScreen(appState: AppState) {
                         },
                         selected = false,
                         onClick = {
-                            appState.coroutineScope.launch {
+                            scope.launch {
                                 Embrace.getInstance().showBugReportForm()
                             }
                         }
@@ -295,10 +299,8 @@ fun AppScreen(appState: AppState) {
                         },
                         selected = false,
                         onClick = {
-                            appState.coroutineScope.launch {
-                                val activity = (ctx as? Activity)
-                                activity?.finishAndRemoveTask()
-                            }
+                            val activity = (ctx as? Activity)
+                            activity?.finishAndRemoveTask()
                         }
                     )
                     Text(
@@ -329,13 +331,13 @@ fun AppScreen(appState: AppState) {
 
         Scaffold(
             snackbarHost = {
-                if (appViewModel.isRtl) {
+                if (appState.value.isRtl) {
                     LeftToRightLayout {
-                        SnackbarHost(appState.snackbar)
+                        SnackbarHost(appViewModel.snackbarHost)
                     }
                 } else {
                     RightToLeftLayout {
-                        SnackbarHost(appState.snackbar)
+                        SnackbarHost(appViewModel.snackbarHost)
                     }
                 }
             },
@@ -347,10 +349,10 @@ fun AppScreen(appState: AppState) {
                     (xPos.value / 500).toDp()
                 })
                 .clip(RoundedCornerShape(30.dp)),
-            topBar = { AppTopBar(appState) },
+            topBar = { AppTopBar() },
             bottomBar = {
                 AnimatedVisibility(
-                    visible = appViewModel.isBottomBarVisible.value,
+                    visible = appState.value.isBottomBarVisible,
                     enter = fadeIn() + slideInVertically(initialOffsetY = {
                         it / 12
                     }),
@@ -358,7 +360,7 @@ fun AppScreen(appState: AppState) {
                         it / 12
                     }),
                 ) {
-                    AppBottomBar(appState.navController)
+                    AppBottomBar(navController)
                 }
             },
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -369,8 +371,8 @@ fun AppScreen(appState: AppState) {
                     .padding(top = it.calculateTopPadding())
             ) {
                 Divider(color = Color.Gray.copy(0.4f), thickness = 1.dp)
-                if (appViewModel.isReady) {
-                    AppNavigation(appState, appViewModel)
+                if (appState.value.isReady) {
+                    AppNavigation(navController)
                 } else {
                     Column(
                         modifier = Modifier.fillMaxSize(),

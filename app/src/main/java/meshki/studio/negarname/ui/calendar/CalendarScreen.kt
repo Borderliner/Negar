@@ -74,8 +74,9 @@ import saman.zamani.persiandate.PersianDate
 import timber.log.Timber
 
 @Composable
-fun CalendarScreen(appState: AppState) {
+fun CalendarScreen() {
     val appViewModel = koinViewModel<AppViewModel>()
+    val appState = appViewModel.appState.collectAsState()
     val vm = koinViewModel<CalendarViewModel>()
     val scope = rememberCoroutineScope()
     val goToDateTool = remember { mutableStateOf(Tool("goto")) }
@@ -123,7 +124,7 @@ fun CalendarScreen(appState: AppState) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (appViewModel.isRtl) {
+        if (appState.value.isRtl) {
             KalendarFireyShamsi(
                 currentDay = dataState.value.selectedSolar,
                 displayedYear = dataState.value.displayedSolar.shYear,
@@ -308,7 +309,7 @@ fun CalendarScreen(appState: AppState) {
                     Text(text = "✝\uFE0F ")
                     Text(text = stringResource(R.string.gregorian))
                     Text(text = ": ${dataState.value.selectedSolar.grgDay} / ")
-                    if (appViewModel.isRtl) {
+                    if (appState.value.isRtl) {
                         Text(text = "${grgMonthToPersian(dataState.value.selectedSolar.grgMonthName)} / ")
                     } else {
                         Text(text = "${dataState.value.selectedSolar.grgMonthName} / ")
@@ -320,7 +321,7 @@ fun CalendarScreen(appState: AppState) {
                     Text(text = "☀\uFE0F ")
                     Text(text = stringResource(R.string.solar))
                     Text(text = ": ${dataState.value.selectedSolar.shDay} / ")
-                    if (appViewModel.isRtl) {
+                    if (appState.value.isRtl) {
                         Text(text = "${dataState.value.selectedSolar.monthName} / ")
                     } else {
                         Text(text = "${dataState.value.selectedSolar.FinglishMonthName()} / ")
@@ -332,7 +333,7 @@ fun CalendarScreen(appState: AppState) {
                     Text(text = "\uD83D\uDD2E ")
                     Text(text = stringResource(R.string.zodiac))
 
-                    if (appViewModel.isRtl) {
+                    if (appState.value.isRtl) {
                         Text(
                             text = ": ${zodiacState.value.zodiacSolar} "
                         )
@@ -348,7 +349,7 @@ fun CalendarScreen(appState: AppState) {
                 Row {
                     Text(text = "\uD83C\uDC04 ")
                     Text(text = stringResource(R.string.chinese_year))
-                    if (appViewModel.isRtl) {
+                    if (appState.value.isRtl) {
                         Text(text = ": ${zodiacState.value.chineseZodiacSolar} ")
                     } else {
                         Text(text = ": ${zodiacState.value.chineseZodiacGreg} "
@@ -361,7 +362,7 @@ fun CalendarScreen(appState: AppState) {
                 Row {
                     Text(text = "\uD83D\uDCDC ")
                     val annotatedString = buildAnnotatedString {
-                        if (appViewModel.isRtl) {
+                        if (appState.value.isRtl) {
                             pushStringAnnotation(tag = "URL", annotation = "https://www.time.ir/fa/event/list/0/${dataState.value.selectedSolar.shYear}/${dataState.value.selectedSolar.shMonth}")
                         } else {
                             pushStringAnnotation(tag = "URL", annotation = "https://www.onthisday.com/events/${dataState.value.selectedSolar.grgMonthName}/${dataState.value.selectedSolar.grgDay}")
@@ -394,7 +395,7 @@ fun CalendarScreen(appState: AppState) {
             offsetPercent = 0.23f,
             color = MaterialTheme.colorScheme.secondaryContainer,
         ) {
-            if (appViewModel.isRtl) {
+            if (appState.value.isRtl) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
