@@ -33,7 +33,7 @@ class AppViewModel(private val dataStore: Storage, context: Context) : ViewModel
         viewModelScope.launch {
             getTheme().collectLatest { theme ->
                 _appState.update {
-                    it.copy(theme = theme, isReady = true)
+                    it.copy(theme = theme)
                 }
             }
         }
@@ -46,6 +46,11 @@ class AppViewModel(private val dataStore: Storage, context: Context) : ViewModel
             }
             is AppEvent.SetLocale -> {
                 setLocale(event.locale)
+            }
+            is AppEvent.SetReady -> {
+                _appState.update {
+                    it.copy(isReady = event.value)
+                }
             }
             is AppEvent.SetBottomBarVisible -> {
                 setBottomBarVisible(event.value)

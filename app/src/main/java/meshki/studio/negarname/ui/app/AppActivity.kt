@@ -1,8 +1,12 @@
 package meshki.studio.negarname.ui.app
 
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Bundle
+import android.view.View
+import android.view.Window
+import android.view.animation.OvershootInterpolator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,17 +22,49 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.core.animation.doOnEnd
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import meshki.studio.negarname.R
 import meshki.studio.negarname.ui.theme.NegarTheme
 import meshki.studio.negarname.ui.util.LeftToRightLayout
 import meshki.studio.negarname.ui.util.RightToLeftLayout
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
+import org.koin.core.component.inject
 
 class AppActivity : ComponentActivity(), KoinComponent {
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val appViewModel: AppViewModel = get()
         enableEdgeToEdge()
+
+        val appViewModel: AppViewModel = get()
+
+        val splashScreen = installSplashScreen().apply {
+            setOnExitAnimationListener { viewProvider ->
+                ObjectAnimator.ofFloat(
+                    viewProvider.view,
+                    View.ALPHA,
+                    1f,
+                    0f
+                ).apply {
+                    duration = 500L
+                    doOnEnd {
+                        viewProvider.remove()
+                    }
+                    start()
+                }
+            }
+        }
+
+        super.onCreate(savedInstanceState)
+
+        splashScreen.setKeepOnScreenCondition {
+            !appViewModel.appState.value.isReady
+        }
 
         setContent {
             val appState = appViewModel.appState.collectAsState()

@@ -385,4 +385,6 @@ fun AppScreen() {
             }
         }
     }
+
+    appViewModel.onEvent(AppEvent.SetReady(true))
 }
