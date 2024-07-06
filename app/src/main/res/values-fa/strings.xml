@@ -97,4 +97,8 @@
     <string name="restore_success">پشتیبان با موفقیت بارگذاری شد. لطفا برنامه را دوباره شروع کنید.</string>
     <string name="restartApp">شروع دوباره</string>
     <string name="close">بستن</string>
+    <string name="password">رمز عبور</string>
+    <string name="backup_password_desc">شما می‌توانید برای پشتیبان خود رمز عبور تنظیم کنید. حواستان باشد که رمز عبورتان فراموش نشود. اگه نیازی به رمزگذاری ندارید، کافیست این پنجره را ببندید.</string>
+    <string name="password_protection">رمزگذاری</string>
+    <string name="password_needed">لطفا یک رمز وارد کنید.</string>
 </resources>
