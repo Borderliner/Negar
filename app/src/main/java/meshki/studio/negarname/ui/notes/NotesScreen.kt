@@ -213,8 +213,8 @@ fun NotesScreenMain(navController: NavHostController) {
                     vm.onEvent(NotesEvent.NoteDeleted(note))
                     val result =
                         appViewModel.showSnackbar(
-                            label = getString(ctx, R.string.restore),
                             message = getString(ctx, R.string.note_removed),
+                            actionLabel = getString(ctx, R.string.restore),
                             duration = SnackbarDuration.Long
                         )
                     if (result == SnackbarResult.ActionPerformed) {
@@ -226,8 +226,9 @@ fun NotesScreenMain(navController: NavHostController) {
                 if (!note.pinned) {
                     scope.launch {
                         appViewModel.showSnackbar(
-                            message = getString(ctx, R.string.restore),
-                            duration = SnackbarDuration.Short
+                            message = getString(ctx, R.string.note_pinned),
+                            duration = SnackbarDuration.Short,
+                            withDismissAction = true
                         )
                     }
                 }

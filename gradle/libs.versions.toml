@@ -24,6 +24,7 @@ timber = "5.0.1"
 datastore-core = "1.0.0"
 datastore-preferences-core = "1.0.0"
 splashscreen = "1.0.1"
+zip4j = "2.11.5"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -58,6 +59,7 @@ richtext = { group = "com.mohamedrejeb.richeditor", name = "richeditor-compose",
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "datastore-preferences-core" }
 splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
+zip4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

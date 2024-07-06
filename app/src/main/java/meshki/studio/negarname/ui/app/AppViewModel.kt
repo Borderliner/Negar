@@ -8,13 +8,17 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import meshki.studio.negarname.data.repository.DatabaseRepository
 import meshki.studio.negarname.data.storage.Storage
 import meshki.studio.negarname.data.storage.StorageConstants
 import meshki.studio.negarname.ui.util.extensions.getCurrentLocale
@@ -90,10 +94,10 @@ class AppViewModel(private val dataStore: Storage, context: Context) : ViewModel
         }
     }
 
-    suspend fun showSnackbar(label: String = "", message: String, duration: SnackbarDuration = SnackbarDuration.Short, withDismissAction: Boolean = false): SnackbarResult {
+    suspend fun showSnackbar(message: String, actionLabel: String? = null, duration: SnackbarDuration = SnackbarDuration.Short, withDismissAction: Boolean = false): SnackbarResult {
         return snackbarHost.showSnackbar(
             message = message,
-            actionLabel = label,
+            actionLabel = actionLabel,
             duration = duration,
             withDismissAction = withDismissAction
         )

@@ -76,8 +76,8 @@
     <string name="developer_email">ایمیل: hajianpour.mr@gmail.com</string>
     <string name="back">بازگشت</string>
     <string name="about_text_2">اگر نگارنامه برایتان مفید واقع شده است، خواهشمندیم که خرید نسخه‌ی حرفه‌ای این برنامه با امکانات امنیتی بیشتر را در نظر بگیرید.</string>
-    <string name="import_data">تهیه پشتیبان</string>
-    <string name="export_data">بارگذاری</string>
+    <string name="import_data">بارگذاری</string>
+    <string name="export_data">تهیه پشتیبان</string>
     <string name="storage_permission">لطفا به برنامه اجازه دهید تا به پرونده‌های تلفن همراه دسترسی داشته باشد.</string>
     <string name="allow">اجازه بده</string>
     <string name="import_export">تهیه پشتیبان</string>
@@ -91,7 +91,10 @@
     <string name="create_restore">ساخت/بارگذاری</string>
     <string name="backup">پشتیبان</string>
     <string name="on_this_day">امروز در نگاه تاریخ</string>
-    <string name="backup_success">پشتیبانی با موفقیت انجام و نتیجه در پوشه‌ی Documents ذخیره شد.</string>
+    <string name="backup_success">پشتیبانی با موفقیت انجام و نتیجه در پوشه‌ی منتخب شما ذخیره شد.</string>
     <string name="error_backup_database_file_notfound">فایل اطلاعاتی پیدا نشد.</string>
-    <string name="error_backup_no_documents">پوشه‌ی Documents قابل دسترسی نیست.</string>
+    <string name="error_backup_no_access">پوشه‌ی منتخب قابل دسترسی نیست.</string>
+    <string name="restore_success">پشتیبان با موفقیت بارگذاری شد. لطفا برنامه را دوباره شروع کنید.</string>
+    <string name="restartApp">شروع دوباره</string>
+    <string name="close">بستن</string>
 </resources>

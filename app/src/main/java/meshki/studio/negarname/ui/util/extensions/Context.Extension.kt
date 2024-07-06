@@ -3,6 +3,7 @@ package meshki.studio.negarname.ui.util.extensions
 import android.app.LocaleManager
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.LocaleList
@@ -70,4 +71,16 @@ fun Context.getAppVersion(): AppVersion {
     } catch (e: Exception) {
         AppVersion("", 0)
     }
+}
+
+fun Context.restartApp() {
+    val packageManager = packageManager
+    val intent = packageManager.getLaunchIntentForPackage(packageName)
+    val componentName = intent!!.component
+    val mainIntent = Intent.makeRestartActivityTask(componentName)
+    // Required for API 34 and later
+    // Ref: https://developer.android.com/about/versions/14/behavior-changes-14#safer-intents
+    mainIntent.setPackage(packageName)
+    startActivity(mainIntent)
+    Runtime.getRuntime().exit(0)
 }

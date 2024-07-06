@@ -14,7 +14,7 @@ import meshki.studio.negarname.data.repository.TodosRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
-const val DATABASE_NAME = "app_database"
+const val DATABASE_NAME = "app_database.sql"
 val databaseModule = module {
     single { provideRoomDatabase(androidContext()) }
 

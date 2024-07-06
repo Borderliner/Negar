@@ -99,6 +99,7 @@ dependencies {
     implementation("com.github.samanzamani:PersianDate:1.7.1")
     implementation("com.github.zj565061763:compose-wheel-picker:1.0.0-beta04")
     implementation(libs.splashscreen)
+    implementation(libs.zip4j)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
